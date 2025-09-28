@@ -1,8 +1,19 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Zap } from "lucide-react";
-import { Link } from "react-router-dom";
+import { ArrowRight, Zap, LogOut } from "lucide-react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Navbar = () => {
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const isDashboard = location.pathname === '/dashboard';
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/');
+  };
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 glass-card border-b border-border/20">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -41,31 +52,48 @@ const Navbar = () => {
 
           {/* CTA Buttons */}
           <div className="flex items-center space-x-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              asChild
-            >
-              <Link to="/login/user">Sign In</Link>
-            </Button>
-            <Button
-              variant="default"
-              size="sm"
-              className="bg-gradient-primary hover-glow"
-              asChild
-            >
-              <Link to="/login/user" className="flex items-center space-x-2">
-                <span>Get Started</span>
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              asChild
-            >
-              <Link to="/login/admin">Admin</Link>
-            </Button>
+            {user && isDashboard ? (
+              // Show logout when user is authenticated and on dashboard
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleLogout}
+                className="flex items-center space-x-2"
+                aria-label="Logout and return to landing"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Logout</span>
+              </Button>
+            ) : (
+              // Show auth buttons when not authenticated or not on dashboard
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  asChild
+                >
+                  <Link to="/auth">Sign In</Link>
+                </Button>
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="bg-gradient-primary hover-glow"
+                  asChild
+                >
+                  <Link to="/auth" className="flex items-center space-x-2">
+                    <span>Get Started</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  asChild
+                >
+                  <Link to="/login/admin">Admin</Link>
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </div>
