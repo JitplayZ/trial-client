@@ -80,7 +80,7 @@ const Navbar = () => {
                   className="bg-gradient-primary hover-glow"
                   asChild
                 >
-                  <Link to="/auth" className="flex items-center space-x-2">
+                  <Link to="/login/user" className="flex items-center space-x-2">
                     <span>Get Started</span>
                     <ArrowRight className="h-4 w-4" />
                   </Link>

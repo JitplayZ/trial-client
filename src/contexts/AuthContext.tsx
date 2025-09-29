@@ -9,6 +9,7 @@ interface AuthContextType {
   loading: boolean;
   signUp: (email: string, password: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signInWithGoogle: (displayName?: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
 }
 
@@ -89,6 +90,64 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error };
   };
 
+  const signInWithGoogle = async (displayName?: string) => {
+    const redirectUrl = `${window.location.origin}/dashboard`;
+    
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: redirectUrl,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'select_account',
+        },
+      },
+    });
+    
+    if (error) {
+      toast({
+        title: "Google Sign In Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+    
+    // If displayName is provided, we'll update the profile after auth
+    if (displayName) {
+      // Store displayName in localStorage to use after OAuth redirect
+      localStorage.setItem('pendingDisplayName', displayName);
+    }
+    
+    return { error };
+  };
+
+  // Update profile with displayName after OAuth
+  useEffect(() => {
+    const updateDisplayName = async () => {
+      const pendingDisplayName = localStorage.getItem('pendingDisplayName');
+      if (user && pendingDisplayName) {
+        try {
+          const { error } = await supabase
+            .from('profiles')
+            .update({ display_name: pendingDisplayName })
+            .eq('user_id', user.id);
+          
+          if (!error) {
+            localStorage.removeItem('pendingDisplayName');
+            toast({
+              title: "Profile Updated",
+              description: "Your display name has been set successfully.",
+            });
+          }
+        } catch (err) {
+          console.error('Error updating display name:', err);
+        }
+      }
+    };
+
+    updateDisplayName();
+  }, [user, toast]);
+
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
@@ -106,7 +165,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, signUp, signIn, signInWithGoogle, signOut }}>
       {children}
     </AuthContext.Provider>
   );

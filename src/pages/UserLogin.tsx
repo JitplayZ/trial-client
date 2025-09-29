@@ -1,17 +1,27 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Shield, Zap } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ArrowLeft, Shield, Zap, User } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const UserLogin = () => {
-  const handleGoogleLogin = () => {
-    // Mock Google OAuth flow
-    console.log("Initiating Google OAuth...");
-    // In a real app, this would redirect to Google OAuth
-    // For now, simulate success and redirect to onboarding
-    setTimeout(() => {
-      window.location.href = "/onboarding";
-    }, 1000);
+  const [fullName, setFullName] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const { signInWithGoogle } = useAuth();
+
+  const handleGoogleLogin = async () => {
+    setIsLoading(true);
+    
+    // Use the real Google OAuth flow with optional displayName
+    const { error } = await signInWithGoogle(fullName.trim() || undefined);
+    
+    if (error) {
+      setIsLoading(false);
+    }
+    // If successful, the OAuth flow will redirect automatically
   };
 
   return (
@@ -47,11 +57,31 @@ const UserLogin = () => {
           </CardHeader>
 
           <CardContent className="space-y-6">
+            {/* Optional Full Name Input */}
+            <div className="space-y-2">
+              <Label htmlFor="fullName" className="flex items-center space-x-2">
+                <User className="h-4 w-4" />
+                <span>Full Name (Optional)</span>
+              </Label>
+              <Input
+                id="fullName"
+                type="text"
+                placeholder="Enter your full name"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                className="w-full"
+              />
+              <p className="text-xs text-foreground-secondary">
+                This will be used as your display name in the app
+              </p>
+            </div>
+
             {/* Google Sign In Button */}
             <Button
               onClick={handleGoogleLogin}
               size="lg"
               className="w-full bg-gradient-primary hover-glow text-lg py-6"
+              disabled={isLoading}
             >
               <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
                 <path
@@ -71,7 +101,7 @@ const UserLogin = () => {
                   d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                 />
               </svg>
-              Sign in with Google
+              {isLoading ? 'Connecting to Google...' : 'Sign in with Google'}
             </Button>
 
             {/* Security note */}
