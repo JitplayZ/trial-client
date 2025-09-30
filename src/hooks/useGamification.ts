@@ -97,19 +97,24 @@ export function useGamification() {
       // Update local state
       setUserXP({ total_xp: newTotalXP, level: newLevel });
 
-      // Show XP gained toast
+      // Show XP gained toast with subtle animation
       toast({
         title: `+${xpAmount} XP`,
         description: getEventMessage(eventType),
         duration: 3000,
+        className: 'animate-fade-in',
       });
 
       // Show level up toast if leveled up
       if (leveledUp) {
+        // Check for reduced motion preference
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        
         toast({
           title: `🎉 Level Up!`,
           description: `You reached Level ${newLevel}!`,
           duration: 5000,
+          className: prefersReducedMotion ? '' : 'animate-scale-in',
         });
         
         // Award level up badge

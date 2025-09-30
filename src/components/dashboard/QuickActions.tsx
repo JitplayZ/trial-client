@@ -73,14 +73,14 @@ const QuickActions = () => {
                   variant={action.variant}
                   size="lg"
                   onClick={action.onClick}
-                  className={`h-auto p-6 flex flex-col items-center space-y-3 ${
+                  className={`h-auto p-6 flex flex-col items-center justify-center space-y-3 min-h-[120px] ${
                     action.variant === 'default' ? 'bg-gradient-primary hover-glow' : 'hover-lift'
                   }`}
                 >
-                  <Icon className="h-8 w-8" />
-                  <div className="text-center">
-                    <div className="font-semibold">{action.title}</div>
-                    <div className="text-sm opacity-80">{action.description}</div>
+                  <Icon className="h-8 w-8 flex-shrink-0" />
+                  <div className="text-center w-full">
+                    <div className="font-semibold text-base line-clamp-1">{action.title}</div>
+                    <div className="text-sm opacity-80 line-clamp-2 mt-1">{action.description}</div>
                   </div>
                 </Button>
               );

@@ -7,6 +7,9 @@ import RecentProjectsList from '@/components/dashboard/RecentProjectsList';
 import QuickActions from '@/components/dashboard/QuickActions';
 import GamificationBar from '@/components/dashboard/GamificationBar';
 
+// Feature flag for gamification
+const GAMIFICATION_ENABLED = true; // Set to false to disable
+
 const ClientDashboard = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
@@ -37,17 +40,21 @@ const ClientDashboard = () => {
       <main className="pt-20 pb-12">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-display font-bold text-gradient mb-2">
-              Welcome back! 👋
+          <div className="mb-6">
+            <h1 className="text-2xl sm:text-3xl font-display font-bold mb-2">
+              <span className="hidden sm:inline">Hello, </span>
+              <span className="text-gradient">
+                {user?.user_metadata?.display_name || user?.email?.split('@')[0] || 'there'}
+              </span>
+              <span className="hidden sm:inline"> 👋</span>
             </h1>
-            <p className="text-foreground-secondary">
+            <p className="text-sm sm:text-base text-foreground-secondary">
               Ready to build something amazing today?
             </p>
           </div>
 
           {/* Gamification Bar */}
-          <GamificationBar />
+          {GAMIFICATION_ENABLED && <GamificationBar />}
 
           {/* Quick Action Hero Card */}
           <div className="mb-8">
