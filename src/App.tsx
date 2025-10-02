@@ -13,6 +13,7 @@ import Onboarding from "./pages/Onboarding";
 import Dashboard from "./pages/Dashboard";
 import ClientDashboard from "./pages/ClientDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
+import History from "./pages/History";
 import { ForbiddenPage, ServerErrorPage, MaintenancePage } from "./pages/ErrorPages";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/login/admin" element={<AdminLogin />} />
             <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/dashboard" element={<ClientDashboard />} />
+            <Route path="/history" element={<History />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/403" element={<ForbiddenPage />} />
             <Route path="/500" element={<ServerErrorPage />} />

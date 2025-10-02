@@ -21,6 +21,7 @@ import {
   Crown,
   Settings,
   LogOut,
+  History,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -34,13 +35,19 @@ const UserMenu = ({ onReferClick }: UserMenuProps) => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const [credits, setCredits] = useState<number>(100); // Mock credits
 
   useEffect(() => {
-    // Get current theme from document
+    // Initialize dark mode as default
     const isDark = document.documentElement.classList.contains('dark');
-    setTheme(isDark ? 'dark' : 'light');
+    if (!isDark && !localStorage.getItem('theme')) {
+      // If no theme preference saved and not dark, set dark as default
+      document.documentElement.classList.add('dark');
+      setTheme('dark');
+    } else {
+      setTheme(isDark ? 'dark' : 'light');
+    }
   }, []);
 
   const displayName = user?.user_metadata?.display_name || user?.email?.split('@')[0] || 'User';
@@ -49,6 +56,7 @@ const UserMenu = ({ onReferClick }: UserMenuProps) => {
   const handleThemeToggle = (newTheme: 'light' | 'dark') => {
     setTheme(newTheme);
     document.documentElement.classList.toggle('dark', newTheme === 'dark');
+    localStorage.setItem('theme', newTheme);
     
     toast({
       title: 'Appearance Updated',
@@ -57,6 +65,10 @@ const UserMenu = ({ onReferClick }: UserMenuProps) => {
     });
 
     // In production: PUT /api/user/settings { appearance: newTheme }
+  };
+
+  const handleHistory = () => {
+    navigate('/history');
   };
 
   const handleSignOut = async () => {
@@ -147,6 +159,11 @@ const UserMenu = ({ onReferClick }: UserMenuProps) => {
         <DropdownMenuItem onClick={handleProfile} className="cursor-pointer">
           <User className="mr-2 h-4 w-4" />
           <span>Profile</span>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem onClick={handleHistory} className="cursor-pointer">
+          <History className="mr-2 h-4 w-4" />
+          <span>History</span>
         </DropdownMenuItem>
 
         <DropdownMenuItem
