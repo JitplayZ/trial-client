@@ -41,10 +41,14 @@ const ClientDashboard = () => {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <div className="mb-6">
-            <h1 className="text-2xl sm:text-3xl font-display font-bold mb-2">
+            <h1 className="text-2xl sm:text-3xl font-display font-bold mb-2 text-foreground">
               <span className="hidden sm:inline">Hello, </span>
               <span className="text-gradient">
-                {user?.user_metadata?.display_name || user?.email?.split('@')[0] || 'there'}
+                {user?.user_metadata?.display_name || 
+                 user?.user_metadata?.full_name || 
+                 user?.user_metadata?.name ||
+                 user?.email?.split('@')[0] || 
+                 'there'}
               </span>
               <span className="hidden sm:inline"> 👋</span>
             </h1>

@@ -28,9 +28,9 @@ const RecentProjectsList = () => {
   ];
 
   return (
-    <Card className="glass-card">
+    <Card className="bg-card/50 backdrop-blur-sm border-border/30">
       <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
+        <CardTitle className="flex items-center space-x-2 text-foreground">
           <FolderOpen className="h-5 w-5" />
           <span>Recent Projects</span>
         </CardTitle>
@@ -38,10 +38,10 @@ const RecentProjectsList = () => {
       <CardContent>
         <div className="space-y-4">
           {projects.map((project) => (
-            <div key={project.id} className="flex items-center justify-between p-4 bg-surface-hover rounded-lg border border-border/50">
+            <div key={project.id} className="flex items-center justify-between p-4 bg-background/40 backdrop-blur-sm rounded-lg border border-border/30 hover:bg-background/60 transition-colors">
               <div className="flex-1">
                 <h3 className="font-semibold text-foreground">{project.title}</h3>
-                <p className="text-sm text-foreground-secondary">{project.description}</p>
+                <p className="text-sm text-muted-foreground">{project.description}</p>
                 <div className="flex items-center space-x-4 mt-2">
                   <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
                     {project.type}

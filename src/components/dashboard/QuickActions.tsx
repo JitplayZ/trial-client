@@ -59,9 +59,9 @@ const QuickActions = () => {
 
   return (
     <>
-      <Card className="glass-card">
+      <Card className="bg-card/50 backdrop-blur-sm border-border/30">
         <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
+          <CardTitle className="text-foreground">Quick Actions</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

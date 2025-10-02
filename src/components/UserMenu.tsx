@@ -50,7 +50,11 @@ const UserMenu = ({ onReferClick }: UserMenuProps) => {
     }
   }, []);
 
-  const displayName = user?.user_metadata?.display_name || user?.email?.split('@')[0] || 'User';
+  const displayName = user?.user_metadata?.display_name || 
+                     user?.user_metadata?.full_name || 
+                     user?.user_metadata?.name ||
+                     user?.email?.split('@')[0] || 
+                     'User';
   const initials = displayName.slice(0, 2).toUpperCase();
 
   const handleThemeToggle = (newTheme: 'light' | 'dark') => {
