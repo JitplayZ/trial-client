@@ -22,6 +22,7 @@ import {
   Settings,
   LogOut,
   History,
+  Bell,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -81,30 +82,19 @@ const UserMenu = ({ onReferClick }: UserMenuProps) => {
   };
 
   const handleProfile = () => {
-    // Navigate to profile or open profile modal
-    toast({
-      title: 'Profile',
-      description: 'Profile editing coming soon',
-      duration: 2000,
-    });
+    navigate('/account/profile');
   };
 
   const handleUpgrade = () => {
-    toast({
-      title: 'Upgrade',
-      description: 'Redirecting to pricing...',
-      duration: 2000,
-    });
-    // navigate('/pricing');
+    navigate('/pricing');
   };
 
   const handleSettings = () => {
-    toast({
-      title: 'Settings',
-      description: 'Settings page coming soon',
-      duration: 2000,
-    });
-    // navigate('/account/settings');
+    navigate('/account/profile');
+  };
+
+  const handleNotifications = () => {
+    navigate('/notifications');
   };
 
   return (
@@ -168,6 +158,11 @@ const UserMenu = ({ onReferClick }: UserMenuProps) => {
         <DropdownMenuItem onClick={handleHistory} className="cursor-pointer">
           <History className="mr-2 h-4 w-4" />
           <span>History</span>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem onClick={handleNotifications} className="cursor-pointer">
+          <Bell className="mr-2 h-4 w-4" />
+          <span>Notifications</span>
         </DropdownMenuItem>
 
         <DropdownMenuItem

@@ -2,13 +2,10 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import Navbar from '@/components/navbar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { FileText, Calendar, Download, Eye } from 'lucide-react';
-import { format } from 'date-fns';
 
 interface Project {
   id: string;
@@ -16,7 +13,6 @@ interface Project {
   description: string | null;
   type: string | null;
   created_at: string;
-  updated_at: string;
 }
 
 const History = () => {
@@ -56,7 +52,7 @@ const History = () => {
     }
   }, [user]);
 
-  if (authLoading) {
+  if (authLoading || !user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -64,108 +60,82 @@ const History = () => {
     );
   }
 
-  if (!user) {
-    return null;
-  }
-
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      
-      <main className="pt-20 pb-12">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="mb-8">
-            <h1 className="text-3xl font-display font-bold mb-2">Project History</h1>
-            <p className="text-foreground-secondary">
-              View and manage all your previously generated projects
-            </p>
-          </div>
-
-          {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(6)].map((_, i) => (
-                <Card key={i}>
-                  <CardHeader>
-                    <Skeleton className="h-6 w-3/4 mb-2" />
-                    <Skeleton className="h-4 w-full" />
-                  </CardHeader>
-                  <CardContent>
-                    <Skeleton className="h-4 w-1/2" />
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : projects.length === 0 ? (
-            <Card className="text-center py-12">
-              <CardContent className="space-y-4">
-                <div className="flex justify-center">
-                  <FileText className="h-16 w-16 text-muted-foreground" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-semibold mb-2">No Projects Yet</h3>
-                  <p className="text-foreground-secondary mb-6">
-                    You haven't generated any projects yet. Start building something amazing!
-                  </p>
-                  <Button onClick={() => navigate('/dashboard')}>
-                    Generate Your First Project
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {projects.map((project) => (
-                <Card key={project.id} className="hover-lift">
-                  <CardHeader>
-                    <CardTitle className="flex items-start justify-between">
-                      <span className="line-clamp-2">{project.title}</span>
-                      {project.type && (
-                        <Badge variant="secondary" className="ml-2 flex-shrink-0">
-                          {project.type}
-                        </Badge>
-                      )}
-                    </CardTitle>
-                    {project.description && (
-                      <CardDescription className="line-clamp-2">
-                        {project.description}
-                      </CardDescription>
-                    )}
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center text-sm text-foreground-secondary">
-                      <Calendar className="h-4 w-4 mr-2" />
-                      <span>Created {format(new Date(project.created_at), 'MMM d, yyyy')}</span>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex-1"
-                        onClick={() => navigate('/dashboard')}
-                      >
-                        <Eye className="h-4 w-4 mr-2" />
-                        View
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex-1"
-                        onClick={() => {
-                          // Download functionality placeholder
-                          console.log('Download project:', project.id);
-                        }}
-                      >
-                        <Download className="h-4 w-4 mr-2" />
-                        Download
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
+    <div className="min-h-screen bg-background py-12">
+      <div className="container mx-auto px-4">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-foreground mb-2">Project History</h1>
+          <p className="text-muted-foreground">View all your generated projects</p>
         </div>
-      </main>
+
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <Card key={i} className="glass-card">
+                <CardHeader>
+                  <Skeleton className="h-6 w-3/4 mb-2" />
+                  <Skeleton className="h-4 w-1/2" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-20 w-full mb-4" />
+                  <div className="flex space-x-2">
+                    <Skeleton className="h-9 flex-1" />
+                    <Skeleton className="h-9 flex-1" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : projects.length === 0 ? (
+          <Card className="glass-card">
+            <CardContent className="py-12 text-center">
+              <FileText className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
+              <h3 className="text-xl font-semibold text-foreground mb-2">No projects yet</h3>
+              <p className="text-muted-foreground mb-6">Generate your first project to get started</p>
+              <Button onClick={() => navigate('/dashboard')} className="bg-gradient-primary">
+                Generate Project
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {projects.map((project) => (
+              <Card key={project.id} className="glass-card hover-lift">
+                <CardHeader>
+                  <CardTitle className="text-foreground">{project.title}</CardTitle>
+                  <CardDescription className="text-muted-foreground">
+                    {project.type || 'Web Project'}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground mb-4 line-clamp-3">
+                    {project.description || 'No description available'}
+                  </p>
+                  <div className="flex items-center text-xs text-muted-foreground mb-4">
+                    <Calendar className="h-4 w-4 mr-1" />
+                    {new Date(project.created_at).toLocaleDateString()}
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex-1"
+                      onClick={() => navigate(`/projects/${project.id}`)}
+                    >
+                      <Eye className="h-4 w-4 mr-1" />
+                      View
+                    </Button>
+                    <Button variant="outline" size="sm" className="flex-1">
+                      <Download className="h-4 w-4 mr-1" />
+                      Download
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

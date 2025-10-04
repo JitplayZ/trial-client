@@ -14,6 +14,11 @@ import Dashboard from "./pages/Dashboard";
 import ClientDashboard from "./pages/ClientDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import History from "./pages/History";
+import ProjectWorkspace from "./pages/ProjectWorkspace";
+import Pricing from "./pages/Pricing";
+import Profile from "./pages/Profile";
+import Help from "./pages/Help";
+import Notifications from "./pages/Notifications";
 import { ForbiddenPage, ServerErrorPage, MaintenancePage } from "./pages/ErrorPages";
 
 const queryClient = new QueryClient();
@@ -33,6 +38,11 @@ const App = () => (
             <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/dashboard" element={<ClientDashboard />} />
             <Route path="/history" element={<History />} />
+            <Route path="/projects/:id" element={<ProjectWorkspace />} />
+            <Route path="/pricing" element={<Pricing />} />
+            <Route path="/account/profile" element={<Profile />} />
+            <Route path="/help" element={<Help />} />
+            <Route path="/notifications" element={<Notifications />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/403" element={<ForbiddenPage />} />
             <Route path="/500" element={<ServerErrorPage />} />
