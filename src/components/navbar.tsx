@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Zap } from "lucide-react";
+import { ArrowRight, Zap, Bell } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import UserMenu from "@/components/UserMenu";
@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Share2, Copy, MessageCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { NotificationsPanel } from "@/components/NotificationsPanel";
+import { Badge } from "@/components/ui/badge";
 
 const Navbar = () => {
   const { user } = useAuth();
@@ -16,6 +18,10 @@ const Navbar = () => {
   const { toast } = useToast();
   const isDashboard = location.pathname === '/dashboard';
   const [referralModalOpen, setReferralModalOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  
+  // Mock unread count - in real app would come from API
+  const unreadCount = 2;
 
   // Mock referral code
   const referralCode = 'AIProj2024';
@@ -75,8 +81,26 @@ const Navbar = () => {
           {/* CTA Buttons */}
           <div className="flex items-center space-x-3">
             {user && isDashboard ? (
-              // Show user menu when authenticated and on dashboard
-              <UserMenu onReferClick={() => setReferralModalOpen(true)} />
+              // Show notifications bell and user menu when authenticated and on dashboard
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="relative"
+                  onClick={() => setNotificationsOpen(!notificationsOpen)}
+                >
+                  <Bell className="h-5 w-5" />
+                  {unreadCount > 0 && (
+                    <Badge
+                      variant="destructive"
+                      className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                    >
+                      {unreadCount}
+                    </Badge>
+                  )}
+                </Button>
+                <UserMenu onReferClick={() => setReferralModalOpen(true)} />
+              </div>
             ) : (
               // Show auth buttons when not authenticated or not on dashboard
               <>
@@ -165,6 +189,12 @@ const Navbar = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Notifications Panel */}
+      <NotificationsPanel 
+        isOpen={notificationsOpen} 
+        onClose={() => setNotificationsOpen(false)} 
+      />
     </nav>
   );
 };
