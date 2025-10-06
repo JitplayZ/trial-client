@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, X, Check, Trash2 } from 'lucide-react';
+import { Bell, X, Check, Trash2, CheckCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -22,48 +22,162 @@ interface NotificationsPanelProps {
 
 export const NotificationsPanel = ({ isOpen, onClose }: NotificationsPanelProps) => {
   const { toast } = useToast();
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: '1',
-      type: 'project',
-      title: 'Project Generated',
-      message: 'Your Fashion Website project brief is ready to view.',
-      timestamp: '2h ago',
-      read: false
-    },
-    {
-      id: '2',
-      type: 'referral',
-      title: 'Referral Bonus',
-      message: 'You earned 100 XP for referring a friend!',
-      timestamp: '1d ago',
-      read: false
-    },
-    {
-      id: '3',
-      type: 'system',
-      title: 'New Features',
-      message: 'Check out our new project templates.',
-      timestamp: '1w ago',
-      read: true
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Load notifications from API/localStorage on mount
+  useEffect(() => {
+    const loadNotifications = async () => {
+      try {
+        // Try to load from localStorage first (persistence)
+        const stored = localStorage.getItem('notifications');
+        if (stored) {
+          setNotifications(JSON.parse(stored));
+          return;
+        }
+        
+        // Mock API call - replace with actual endpoint
+        const mockNotifications: Notification[] = [
+          {
+            id: '1',
+            type: 'project',
+            title: 'Project Generated',
+            message: 'Your Fashion Website project brief is ready to view.',
+            timestamp: '2h ago',
+            read: false
+          },
+          {
+            id: '2',
+            type: 'referral',
+            title: 'Referral Bonus',
+            message: 'You earned 100 XP for referring a friend!',
+            timestamp: '1d ago',
+            read: false
+          },
+          {
+            id: '3',
+            type: 'system',
+            title: 'New Features',
+            message: 'Check out our new project templates.',
+            timestamp: '1w ago',
+            read: true
+          }
+        ];
+        
+        setNotifications(mockNotifications);
+        localStorage.setItem('notifications', JSON.stringify(mockNotifications));
+      } catch (error) {
+        console.error('Failed to load notifications:', error);
+      }
+    };
+
+    loadNotifications();
+  }, []);
+
+  // Save to localStorage whenever notifications change
+  useEffect(() => {
+    if (notifications.length > 0) {
+      localStorage.setItem('notifications', JSON.stringify(notifications));
     }
-  ]);
+  }, [notifications]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  const markAsRead = (id: string) => {
+  const markAsRead = async (id: string) => {
+    // Optimistic update
     setNotifications(prev =>
       prev.map(notif =>
         notif.id === id ? { ...notif, read: true } : notif
       )
     );
+
+    try {
+      // Mock API call - replace with actual endpoint
+      // await fetch(`/api/notifications/${id}/read`, { method: 'POST' });
+      console.info('[notifications] Marked as read:', id);
+    } catch (error) {
+      // Rollback on error
+      setNotifications(prev =>
+        prev.map(notif =>
+          notif.id === id ? { ...notif, read: false } : notif
+        )
+      );
+      toast({
+        title: 'Failed to mark as read',
+        description: 'Please try again later.',
+        variant: 'destructive',
+      });
+    }
   };
 
-  const deleteNotification = (id: string) => {
+  const markAllAsRead = async () => {
+    const unreadIds = notifications.filter(n => !n.read).map(n => n.id);
+    
+    // Optimistic update
+    setNotifications(prev => prev.map(notif => ({ ...notif, read: true })));
+
+    try {
+      // Mock API call
+      console.info('[notifications] Marked all as read:', unreadIds);
+      toast({
+        title: 'All notifications marked as read',
+      });
+    } catch (error) {
+      toast({
+        title: 'Failed to mark all as read',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const deleteNotification = async (id: string) => {
+    setDeletingId(id);
+    const notificationToDelete = notifications.find(n => n.id === id);
+    
+    // Optimistic removal
     setNotifications(prev => prev.filter(notif => notif.id !== id));
-    toast({
+
+    const undoToast = toast({
       title: 'Notification deleted',
+      description: 'Undo',
+      action: (
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => {
+            // Restore notification
+            if (notificationToDelete) {
+              setNotifications(prev => [...prev, notificationToDelete].sort((a, b) => 
+                parseInt(a.id) - parseInt(b.id)
+              ));
+              toast({ title: 'Notification restored' });
+            }
+          }}
+        >
+          Undo
+        </Button>
+      ),
     });
+
+    // Simulate API call with delay for undo window
+    setTimeout(async () => {
+      try {
+        // Mock API call - replace with actual endpoint
+        // await fetch(`/api/notifications/${id}`, { method: 'DELETE' });
+        console.info('[notifications] Deleted:', id);
+      } catch (error) {
+        // Restore on error
+        if (notificationToDelete) {
+          setNotifications(prev => [...prev, notificationToDelete]);
+        }
+        toast({
+          title: 'Failed to delete notification',
+          variant: 'destructive',
+        });
+      } finally {
+        setDeletingId(null);
+      }
+    }, 5000); // 5s undo window
   };
 
   const getTypeColor = (type: string) => {
@@ -108,14 +222,27 @@ export const NotificationsPanel = ({ isOpen, onClose }: NotificationsPanelProps)
                   </Badge>
                 )}
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onClose}
-                className="h-8 w-8"
-              >
-                <X className="h-4 w-4" />
-              </Button>
+              <div className="flex gap-1">
+                {unreadCount > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={markAllAsRead}
+                    className="h-8 w-8"
+                    title="Mark all as read"
+                  >
+                    <CheckCheck className="h-4 w-4" />
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onClose}
+                  className="h-8 w-8"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
 
             {/* Content */}

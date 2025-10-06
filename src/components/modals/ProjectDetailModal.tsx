@@ -225,8 +225,8 @@ export const ProjectDetailModal = ({ isOpen, onClose }: ProjectDetailModalProps)
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
           onClick={onClose}
         >
-          {/* Backdrop blur - dark translucent */}
-          <div className="absolute inset-0 bg-background/60 backdrop-blur-md" />
+          {/* Backdrop blur - dark translucent (no white) */}
+          <div className="absolute inset-0 bg-[rgba(8,10,16,0.75)] backdrop-blur-md" />
 
           {/* Modal content */}
           <motion.div

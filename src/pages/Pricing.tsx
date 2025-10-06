@@ -1,7 +1,8 @@
-import { Check } from 'lucide-react';
+import { Check, ArrowLeft, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 
 const plans = [
   {
@@ -53,9 +54,31 @@ const plans = [
 ];
 
 export default function Pricing() {
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-background py-20">
       <div className="container mx-auto px-4">
+        {/* Close/Back buttons */}
+        <div className="flex items-center justify-between mb-8 max-w-6xl mx-auto">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/dashboard')}
+            className="gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Dashboard
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate('/dashboard')}
+            title="Close"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
         <div className="text-center mb-16">
           <h1 className="text-4xl font-bold text-foreground mb-4">
             Simple, Transparent Pricing

@@ -7,11 +7,13 @@ import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Camera, Save } from 'lucide-react';
+import { Camera, Save, ArrowLeft, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function Profile() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [displayName, setDisplayName] = useState(
     user?.user_metadata?.display_name || 
     user?.user_metadata?.full_name || 
@@ -19,6 +21,23 @@ export default function Profile() {
   );
   const [gamificationEnabled, setGamificationEnabled] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(true);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  const initialDisplayName = user?.user_metadata?.display_name || 
+    user?.user_metadata?.full_name || 
+    user?.email?.split('@')[0] || '';
+
+  const handleFieldChange = () => {
+    setHasUnsavedChanges(true);
+  };
+
+  const handleClose = () => {
+    if (hasUnsavedChanges) {
+      const confirmed = window.confirm('You have unsaved changes. Are you sure you want to leave?');
+      if (!confirmed) return;
+    }
+    navigate('/dashboard');
+  };
 
   const handleSave = async () => {
     try {
@@ -27,6 +46,7 @@ export default function Profile() {
         title: 'Profile Updated',
         description: 'Your settings have been saved.',
       });
+      setHasUnsavedChanges(false);
     } catch (error) {
       toast({
         title: 'Error',
@@ -39,6 +59,27 @@ export default function Profile() {
   return (
     <div className="min-h-screen bg-background py-12">
       <div className="container mx-auto px-4 max-w-4xl">
+        {/* Close/Back buttons */}
+        <div className="flex items-center justify-between mb-8">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleClose}
+            className="gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Dashboard
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleClose}
+            title="Close"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+
         <h1 className="text-3xl font-bold text-foreground mb-8">Account Settings</h1>
 
         <div className="space-y-6">
@@ -67,7 +108,10 @@ export default function Profile() {
                   <Input
                     id="displayName"
                     value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
+                    onChange={(e) => {
+                      setDisplayName(e.target.value);
+                      handleFieldChange();
+                    }}
                     className="mt-2"
                   />
                 </div>
@@ -103,7 +147,10 @@ export default function Profile() {
                 </div>
                 <Switch
                   checked={gamificationEnabled}
-                  onCheckedChange={setGamificationEnabled}
+                  onCheckedChange={(checked) => {
+                    setGamificationEnabled(checked);
+                    handleFieldChange();
+                  }}
                 />
               </div>
 
@@ -116,7 +163,10 @@ export default function Profile() {
                 </div>
                 <Switch
                   checked={emailNotifications}
-                  onCheckedChange={setEmailNotifications}
+                  onCheckedChange={(checked) => {
+                    setEmailNotifications(checked);
+                    handleFieldChange();
+                  }}
                 />
               </div>
             </CardContent>
