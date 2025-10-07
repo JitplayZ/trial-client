@@ -44,36 +44,51 @@ const Navbar = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2 hover-lift">
+          <a href="#hero" className="flex items-center space-x-2 hover-lift cursor-pointer" onClick={(e) => {
+            e.preventDefault();
+            document.getElementById('hero')?.scrollIntoView({ behavior: 'smooth' });
+          }}>
             <div className="bg-gradient-primary p-2 rounded-lg">
               <Zap className="h-5 w-5 text-primary-foreground" />
             </div>
             <span className="font-display font-bold text-xl text-gradient">
               AIProjects
             </span>
-          </Link>
+          </a>
 
           {/* Navigation Links - Hidden on dashboard */}
           {!isDashboard && (
             <div className="hidden md:flex items-center space-x-8">
-              <Link 
-                to="#features" 
-                className="text-foreground-secondary hover:text-foreground transition-colors"
+              <a 
+                href="#features" 
+                className="text-foreground-secondary hover:text-foreground transition-colors cursor-pointer"
+                onClick={(e) => {
+                  e.preventDefault();
+                  document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
+                }}
               >
                 Features
-              </Link>
-              <Link 
-                to="#pricing" 
-                className="text-foreground-secondary hover:text-foreground transition-colors"
+              </a>
+              <a 
+                href="#pricing" 
+                className="text-foreground-secondary hover:text-foreground transition-colors cursor-pointer"
+                onClick={(e) => {
+                  e.preventDefault();
+                  document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
+                }}
               >
                 Pricing
-              </Link>
-              <Link 
-                to="#testimonials" 
-                className="text-foreground-secondary hover:text-foreground transition-colors"
+              </a>
+              <a 
+                href="#testimonials" 
+                className="text-foreground-secondary hover:text-foreground transition-colors cursor-pointer"
+                onClick={(e) => {
+                  e.preventDefault();
+                  document.getElementById('testimonials')?.scrollIntoView({ behavior: 'smooth' });
+                }}
               >
                 Testimonials
-              </Link>
+              </a>
             </div>
           )}
 

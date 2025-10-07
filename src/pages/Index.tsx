@@ -54,7 +54,7 @@ const Index = () => {
           
           <div className="border-t border-border mt-12 pt-8 flex flex-col sm:flex-row justify-between items-center">
             <p className="text-sm text-foreground-secondary">
-              © 2024 AIProjects. All rights reserved.
+              © 2025-26 AIProjects. All rights reserved.
             </p>
             <div className="flex space-x-6 mt-4 sm:mt-0">
               <a href="#" className="text-sm text-foreground-secondary hover:text-foreground">Privacy</a>
