@@ -69,9 +69,8 @@ const QuickActions = () => {
                 <Button
                   key={index}
                   variant={action.variant}
-                  size="lg"
                   onClick={action.onClick}
-                  className={`h-auto p-4 flex flex-col items-center justify-center space-y-2 min-h-[100px] ${
+                  className={`h-auto p-3 flex flex-col items-center justify-center space-y-2 ${
                     action.variant === 'default' ? 'bg-gradient-primary hover-glow' : 'hover-lift'
                   }`}
                 >
