@@ -23,6 +23,7 @@ import {
   LogOut,
   History,
   Bell,
+  HelpCircle,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -97,6 +98,10 @@ const UserMenu = ({ onReferClick }: UserMenuProps) => {
     navigate('/notifications');
   };
 
+  const handleHelp = () => {
+    navigate('/help');
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -163,6 +168,11 @@ const UserMenu = ({ onReferClick }: UserMenuProps) => {
         <DropdownMenuItem onClick={handleNotifications} className="cursor-pointer">
           <Bell className="mr-2 h-4 w-4" />
           <span>Notifications</span>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem onClick={handleHelp} className="cursor-pointer">
+          <HelpCircle className="mr-2 h-4 w-4" />
+          <span>Help</span>
         </DropdownMenuItem>
 
         <DropdownMenuItem
