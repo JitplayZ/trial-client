@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { FileText, Calendar, Download, Eye } from 'lucide-react';
+import { FileText, Calendar, Download, Eye, X } from 'lucide-react';
 
 interface Project {
   id: string;
@@ -63,9 +63,14 @@ const History = () => {
   return (
     <div className="min-h-screen bg-background py-12">
       <div className="container mx-auto px-4">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Project History</h1>
-          <p className="text-muted-foreground">View all your generated projects</p>
+        <div className="flex justify-between items-start mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground mb-2">Project History</h1>
+            <p className="text-muted-foreground">View all your generated projects</p>
+          </div>
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+            <X className="h-5 w-5" />
+          </Button>
         </div>
 
         {loading ? (

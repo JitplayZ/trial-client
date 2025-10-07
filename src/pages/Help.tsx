@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Book, MessageCircle, Mail } from 'lucide-react';
+import { Search, Book, MessageCircle, Mail, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +8,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 const faqs = [
   {
@@ -37,6 +38,7 @@ const faqs = [
 ];
 
 export default function Help() {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [supportMessage, setSupportMessage] = useState('');
   const { toast } = useToast();
@@ -58,6 +60,12 @@ export default function Help() {
   return (
     <div className="min-h-screen bg-background py-12">
       <div className="container mx-auto px-4 max-w-4xl">
+        <div className="flex justify-end mb-4">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+            <X className="h-5 w-5" />
+          </Button>
+        </div>
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
