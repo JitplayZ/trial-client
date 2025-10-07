@@ -1,87 +1,19 @@
-import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Bell, Check, CheckCheck, Trash2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/hooks/use-toast';
-
-interface Notification {
-  id: string;
-  type: 'project' | 'referral' | 'billing' | 'system';
-  title: string;
-  message: string;
-  timestamp: string;
-  read: boolean;
-}
+import { useNotifications } from '@/hooks/useNotifications';
 
 export default function Notifications() {
-  const { toast } = useToast();
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: '1',
-      type: 'project',
-      title: 'Project Generated',
-      message: 'Your Fashion Website project brief is ready to view.',
-      timestamp: '2 hours ago',
-      read: false
-    },
-    {
-      id: '2',
-      type: 'referral',
-      title: 'Referral Bonus',
-      message: 'You earned 100 XP for referring a friend!',
-      timestamp: '1 day ago',
-      read: false
-    },
-    {
-      id: '3',
-      type: 'billing',
-      title: 'Payment Successful',
-      message: 'Your Pro subscription has been renewed.',
-      timestamp: '3 days ago',
-      read: true
-    },
-    {
-      id: '4',
-      type: 'system',
-      title: 'New Features',
-      message: 'Check out our new project templates and advanced filters.',
-      timestamp: '1 week ago',
-      read: true
-    }
-  ]);
-
-  const markAsRead = (id: string) => {
-    setNotifications(prev =>
-      prev.map(notif =>
-        notif.id === id ? { ...notif, read: true } : notif
-      )
-    );
-  };
-
-  const markAllAsRead = () => {
-    setNotifications(prev =>
-      prev.map(notif => ({ ...notif, read: true }))
-    );
-    toast({
-      title: 'All notifications marked as read',
-    });
-  };
-
-  const deleteNotification = (id: string) => {
-    setNotifications(prev => prev.filter(notif => notif.id !== id));
-    toast({
-      title: 'Notification deleted',
-    });
-  };
-
-  const clearAll = () => {
-    setNotifications([]);
-    toast({
-      title: 'All notifications cleared',
-    });
-  };
+  const {
+    notifications,
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification,
+    clearAll,
+  } = useNotifications();
 
   const getTypeColor = (type: string) => {
     switch (type) {
@@ -92,16 +24,14 @@ export default function Notifications() {
     }
   };
 
-  const unreadCount = notifications.filter(n => !n.read).length;
-
   return (
-    <div className="min-h-screen bg-background py-12">
+    <div className="min-h-screen bg-background py-6 sm:py-12">
       <div className="container mx-auto px-4 max-w-3xl">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8 gap-4">
           <div className="flex items-center space-x-3">
-            <Bell className="h-8 w-8 text-foreground" />
+            <Bell className="h-6 sm:h-8 w-6 sm:w-8 text-foreground" />
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Notifications</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Notifications</h1>
               {unreadCount > 0 && (
                 <p className="text-sm text-muted-foreground">
                   {unreadCount} unread notification{unreadCount !== 1 ? 's' : ''}
@@ -110,16 +40,18 @@ export default function Notifications() {
             </div>
           </div>
 
-          <div className="flex space-x-2">
+          <div className="flex flex-wrap gap-2 w-full sm:w-auto">
             {unreadCount > 0 && (
-              <Button variant="outline" size="sm" onClick={markAllAsRead}>
+              <Button variant="outline" size="sm" onClick={markAllAsRead} className="flex-1 sm:flex-none">
                 <CheckCheck className="h-4 w-4 mr-2" />
-                Mark all read
+                <span className="hidden sm:inline">Mark all read</span>
+                <span className="sm:hidden">Mark all</span>
               </Button>
             )}
-            <Button variant="outline" size="sm" onClick={clearAll}>
+            <Button variant="outline" size="sm" onClick={clearAll} className="flex-1 sm:flex-none">
               <Trash2 className="h-4 w-4 mr-2" />
-              Clear all
+              <span className="hidden sm:inline">Clear all</span>
+              <span className="sm:hidden">Clear</span>
             </Button>
           </div>
         </div>

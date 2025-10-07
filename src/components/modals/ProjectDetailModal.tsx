@@ -74,27 +74,25 @@ const LevelCard = ({ level, estimatedTime, onGenerate }: LevelCardProps) => {
     <motion.div
       whileHover={{ scale: 1.02, y: -6 }}
       whileTap={{ scale: 0.98 }}
-      className={`relative p-6 rounded-2xl bg-card/40 backdrop-blur-xl border ${config.border} group transition-all duration-300 ${config.glow} hover:shadow-[${config.glow.match(/rgba\([^)]+\)/)?.[0].replace('0.15', '0.35')}]`}
+      className={`relative p-6 rounded-2xl bg-card/40 backdrop-blur-xl border ${config.border} group transition-all duration-300 ${config.glow} hover:shadow-[${config.glow.match(/rgba\([^)]+\)/)?.[0].replace('0.15', '0.35')}] min-h-[450px] flex flex-col`}
     >
       {/* Animated gradient overlay */}
       <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
         <div className={`absolute inset-0 bg-gradient-to-br ${config.accent} opacity-10`} />
       </div>
 
-      <div className="relative z-10">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className={`p-2 rounded-lg ${config.badge}`}>
-              <LevelIcon className="h-5 w-5" />
-            </div>
-            <h3 className="text-xl font-bold capitalize text-foreground">{level}</h3>
+      <div className="relative z-10 flex flex-col h-full">
+        <div className="flex flex-col items-center text-center mb-6">
+          <div className={`p-3 rounded-lg ${config.badge} mb-3`}>
+            <LevelIcon className="h-8 w-8" />
           </div>
+          <h3 className="text-xl font-bold capitalize text-foreground mb-1">{level}</h3>
           <span className={`px-3 py-1 rounded-full text-xs font-medium ${config.badge}`}>
             {level}
           </span>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-4 flex-1 flex flex-col">
           <div>
             <Label htmlFor={`${level}-type`} className="text-sm text-foreground/80 mb-2 font-medium">
               Project Type
@@ -131,31 +129,33 @@ const LevelCard = ({ level, estimatedTime, onGenerate }: LevelCardProps) => {
             </Select>
           </div>
 
-          <div className="pt-2 text-xs text-muted-foreground">
+          <div className="pt-2 text-xs text-muted-foreground text-center">
             <p>Estimated time: {estimatedTime}</p>
           </div>
 
-          <Button
-            onClick={handleGenerate}
-            disabled={!isValid || isLoading}
-            className="w-full bg-gradient-primary hover:opacity-90 transition-opacity"
-            size="lg"
-          >
-            {isLoading ? (
-              <>
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                  className="mr-2"
-                >
-                  <Sparkles className="h-4 w-4" />
-                </motion.div>
-                Generating...
-              </>
-            ) : (
-              'Generate Brief'
-            )}
-          </Button>
+          <div className="mt-auto pt-4">
+            <Button
+              onClick={handleGenerate}
+              disabled={!isValid || isLoading}
+              className="w-full bg-gradient-primary hover:opacity-90 transition-opacity"
+              size="lg"
+            >
+              {isLoading ? (
+                <>
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                    className="mr-2"
+                  >
+                    <Sparkles className="h-4 w-4" />
+                  </motion.div>
+                  Generating...
+                </>
+              ) : (
+                'Generate Brief'
+              )}
+            </Button>
+          </div>
         </div>
       </div>
     </motion.div>

@@ -74,12 +74,12 @@ const Dashboard = () => {
       {/* Header */}
       <header className="border-b border-border bg-surface">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between py-4 sm:h-16 gap-3 sm:gap-0">
             <div>
-              <h1 className="text-2xl font-display font-bold">Dashboard</h1>
-              <p className="text-foreground-secondary">Welcome back! Ready to build something amazing?</p>
+              <h1 className="text-xl sm:text-2xl font-display font-bold">Dashboard</h1>
+              <p className="text-sm sm:text-base text-foreground-secondary hidden sm:block">Welcome back! Ready to build something amazing?</p>
             </div>
-            <Button className="bg-gradient-primary hover-glow">
+            <Button className="bg-gradient-primary hover-glow w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
               New Project
             </Button>
@@ -87,30 +87,30 @@ const Dashboard = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* Quick Action Card */}
-        <Card className="glass-card mb-8 border-primary/20 bg-gradient-hero">
-          <CardContent className="p-8">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4 sm:space-y-0">
-              <div>
-                <h2 className="text-2xl font-display font-bold mb-2">
+        <Card className="glass-card mb-6 sm:mb-8 border-primary/20 bg-gradient-hero">
+          <CardContent className="p-4 sm:p-8">
+            <div className="flex flex-col items-start space-y-4">
+              <div className="w-full">
+                <h2 className="text-xl sm:text-2xl font-display font-bold mb-2">
                   Ready to create your next project?
                 </h2>
-                <p className="text-foreground-secondary mb-4">
+                <p className="text-sm sm:text-base text-foreground-secondary mb-4">
                   Generate a complete project in minutes with our AI-powered tools.
                 </p>
-                <div className="flex items-center space-x-4 text-sm text-foreground-secondary">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-foreground-secondary">
                   <div className="flex items-center space-x-1">
-                    <Zap className="h-4 w-4 text-accent" />
+                    <Zap className="h-4 w-4 text-accent flex-shrink-0" />
                     <span>8 credits remaining</span>
                   </div>
                   <div className="flex items-center space-x-1">
-                    <Clock className="h-4 w-4 text-warning" />
+                    <Clock className="h-4 w-4 text-warning flex-shrink-0" />
                     <span>~5 min generation time</span>
                   </div>
                 </div>
               </div>
-              <Button size="lg" className="bg-gradient-primary hover-glow">
+              <Button size="lg" className="bg-gradient-primary hover-glow w-full sm:w-auto">
                 <Zap className="h-5 w-5 mr-2" />
                 Generate Project
                 <ArrowRight className="h-5 w-5 ml-2" />
@@ -120,10 +120,10 @@ const Dashboard = () => {
         </Card>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
           {stats.map((stat, index) => (
             <Card key={index} className="hover-lift">
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className={`w-10 h-10 rounded-lg bg-gradient-primary flex items-center justify-center ${stat.color}`}>
                     <stat.icon className="h-5 w-5 text-primary-foreground" />
@@ -140,7 +140,7 @@ const Dashboard = () => {
           ))}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8">
           {/* Recent Projects */}
           <Card>
             <CardHeader>

@@ -57,18 +57,19 @@ export default function Pricing() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-background py-20">
+    <div className="min-h-screen bg-background py-8 sm:py-20">
       <div className="container mx-auto px-4">
         {/* Close/Back buttons */}
-        <div className="flex items-center justify-between mb-8 max-w-6xl mx-auto">
+        <div className="flex items-center justify-between mb-6 sm:mb-8 max-w-6xl mx-auto">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => navigate('/dashboard')}
-            className="gap-2"
+            className="gap-2 text-xs sm:text-sm"
           >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Dashboard
+            <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Back to Dashboard</span>
+            <span className="sm:hidden">Back</span>
           </Button>
           <Button
             variant="ghost"
@@ -79,16 +80,16 @@ export default function Pricing() {
             <X className="h-4 w-4" />
           </Button>
         </div>
-        <div className="text-center mb-16">
-          <h1 className="text-4xl font-bold text-foreground mb-4">
+        <div className="text-center mb-8 sm:mb-16">
+          <h1 className="text-2xl sm:text-4xl font-bold text-foreground mb-3 sm:mb-4">
             Simple, Transparent Pricing
           </h1>
-          <p className="text-xl text-muted-foreground">
+          <p className="text-base sm:text-xl text-muted-foreground">
             Choose the plan that's right for you
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8 max-w-6xl mx-auto">
           {plans.map((plan, index) => (
             <motion.div
               key={plan.name}

@@ -11,6 +11,7 @@ import { Share2, Copy, MessageCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { NotificationsPanel } from "@/components/NotificationsPanel";
 import { Badge } from "@/components/ui/badge";
+import { useNotifications } from "@/hooks/useNotifications";
 
 const Navbar = () => {
   const { user } = useAuth();
@@ -19,9 +20,7 @@ const Navbar = () => {
   const isDashboard = location.pathname === '/dashboard';
   const [referralModalOpen, setReferralModalOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  
-  // Mock unread count - in real app would come from API
-  const unreadCount = 2;
+  const { unreadCount } = useNotifications();
 
   // Mock referral code
   const referralCode = 'AIProj2024';

@@ -57,18 +57,19 @@ export default function Profile() {
   };
 
   return (
-    <div className="min-h-screen bg-background py-12">
+    <div className="min-h-screen bg-background py-6 sm:py-12">
       <div className="container mx-auto px-4 max-w-4xl">
         {/* Close/Back buttons */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-6 sm:mb-8">
           <Button
             variant="ghost"
             size="sm"
             onClick={handleClose}
-            className="gap-2"
+            className="gap-2 text-xs sm:text-sm"
           >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Dashboard
+            <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Back to Dashboard</span>
+            <span className="sm:hidden">Back</span>
           </Button>
           <Button
             variant="ghost"
