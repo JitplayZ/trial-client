@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,19 +9,46 @@ import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Camera, Save, ArrowLeft, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Profile() {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [displayName, setDisplayName] = useState(
     user?.user_metadata?.display_name || 
     user?.user_metadata?.full_name || 
     user?.email?.split('@')[0] || ''
   );
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [gamificationEnabled, setGamificationEnabled] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchProfile();
+    }
+  }, [user?.id]);
+
+  const fetchProfile = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('avatar_url')
+        .eq('user_id', user?.id)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (data?.avatar_url) {
+        setAvatarUrl(data.avatar_url);
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    }
+  };
 
   const initialDisplayName = user?.user_metadata?.display_name || 
     user?.user_metadata?.full_name || 
@@ -39,9 +66,88 @@ export default function Profile() {
     navigate('/dashboard');
   };
 
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      const file = event.target.files?.[0];
+      if (!file || !user?.id) return;
+
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: 'Invalid File',
+          description: 'Please upload an image file.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Validate file size (max 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        toast({
+          title: 'File Too Large',
+          description: 'Please upload an image smaller than 2MB.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      setUploading(true);
+
+      // Upload to storage
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${user.id}/avatar.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      // Update profile
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: publicUrl })
+        .eq('user_id', user.id);
+
+      if (updateError) throw updateError;
+
+      setAvatarUrl(publicUrl);
+      toast({
+        title: 'Avatar Updated',
+        description: 'Your profile picture has been changed.',
+      });
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      toast({
+        title: 'Upload Failed',
+        description: 'Failed to upload avatar. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSave = async () => {
     try {
-      // Call API to update profile
+      if (!user?.id) return;
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({ display_name: displayName })
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
       toast({
         title: 'Profile Updated',
         description: 'Your settings have been saved.',
@@ -92,15 +198,32 @@ export default function Profile() {
             <CardContent className="space-y-6">
               <div className="flex items-center space-x-4">
                 <Avatar className="h-20 w-20">
-                  <AvatarImage src={user?.user_metadata?.avatar_url} />
+                  <AvatarImage src={avatarUrl || undefined} />
                   <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
                     {displayName.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <Button variant="outline" size="sm">
-                  <Camera className="h-4 w-4 mr-2" />
-                  Change Avatar
-                </Button>
+                <div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarUpload}
+                    className="hidden"
+                  />
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleAvatarClick}
+                    disabled={uploading}
+                  >
+                    <Camera className="h-4 w-4 mr-2" />
+                    {uploading ? 'Uploading...' : 'Change Avatar'}
+                  </Button>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Max 2MB, JPG/PNG
+                  </p>
+                </div>
               </div>
 
               <div className="space-y-4">

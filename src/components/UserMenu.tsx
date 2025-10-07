@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,7 +12,7 @@ import {
   DropdownMenuSubContent,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   User,
   Moon,
@@ -38,19 +39,40 @@ const UserMenu = ({ onReferClick }: UserMenuProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
-  const [credits, setCredits] = useState<number>(100); // Mock credits
+  const [credits, setCredits] = useState<number>(100);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   useEffect(() => {
     // Initialize dark mode as default
     const isDark = document.documentElement.classList.contains('dark');
     if (!isDark && !localStorage.getItem('theme')) {
-      // If no theme preference saved and not dark, set dark as default
       document.documentElement.classList.add('dark');
       setTheme('dark');
     } else {
       setTheme(isDark ? 'dark' : 'light');
     }
-  }, []);
+
+    // Fetch avatar
+    if (user?.id) {
+      fetchAvatar();
+    }
+  }, [user?.id]);
+
+  const fetchAvatar = async () => {
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('avatar_url')
+        .eq('user_id', user?.id)
+        .maybeSingle();
+
+      if (data?.avatar_url) {
+        setAvatarUrl(data.avatar_url);
+      }
+    } catch (error) {
+      console.error('Error fetching avatar:', error);
+    }
+  };
 
   const displayName = user?.user_metadata?.display_name || 
                      user?.user_metadata?.full_name || 
@@ -112,6 +134,7 @@ const UserMenu = ({ onReferClick }: UserMenuProps) => {
           aria-haspopup="true"
         >
           <Avatar className="h-8 w-8">
+            <AvatarImage src={avatarUrl || undefined} alt={displayName} />
             <AvatarFallback className="bg-gradient-primary text-primary-foreground text-sm">
               {initials}
             </AvatarFallback>
