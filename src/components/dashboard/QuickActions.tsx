@@ -8,6 +8,8 @@ import { Zap, Share2, Copy, MessageCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useGamification } from '@/hooks/useGamification';
 import { ProjectDetailModal } from '@/components/modals/ProjectDetailModal';
+import Lottie from 'lottie-react';
+import globalNetworkAnimation from '@/assets/global-network.json';
 
 const QuickActions = () => {
   const [referralModalOpen, setReferralModalOpen] = useState(false);
@@ -40,7 +42,7 @@ const QuickActions = () => {
     {
       title: 'Generate Project',
       description: 'Create a new AI-powered project',
-      icon: Zap,
+      icon: 'lottie' as const,
       onClick: handleGenerateProject,
       variant: 'default' as const
     },
@@ -73,7 +75,13 @@ const QuickActions = () => {
                     action.variant === 'default' ? 'bg-gradient-primary hover-glow' : 'hover-lift'
                   }`}
                 >
-                  <Icon className="h-8 w-8 flex-shrink-0" />
+                  {Icon === 'lottie' ? (
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0">
+                      <Lottie animationData={globalNetworkAnimation} loop={true} />
+                    </div>
+                  ) : (
+                    <Icon className="h-8 w-8 flex-shrink-0" />
+                  )}
                   <div className="text-center w-full">
                     <div className="font-semibold text-base line-clamp-1">{action.title}</div>
                     <div className="text-sm opacity-80 line-clamp-2 mt-1">{action.description}</div>

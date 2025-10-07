@@ -12,6 +12,8 @@ import {
   Users,
   TrendingUp
 } from "lucide-react";
+import Lottie from "lottie-react";
+import globalNetworkAnimation from "@/assets/global-network.json";
 
 const Dashboard = () => {
   const stats = [
@@ -111,9 +113,11 @@ const Dashboard = () => {
                 </div>
               </div>
               <Button size="lg" className="bg-gradient-primary hover-glow w-full sm:w-auto">
-                <Zap className="h-5 w-5 mr-2" />
+                <div className="w-5 h-5 mr-2 flex-shrink-0">
+                  <Lottie animationData={globalNetworkAnimation} loop={true} />
+                </div>
                 Generate Project
-                <ArrowRight className="h-5 w-5 ml-2" />
+                <ArrowRight className="h-5 w-5 ml-2 flex-shrink-0" />
               </Button>
             </div>
           </CardContent>
@@ -198,7 +202,9 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent className="space-y-3">
               <Button variant="outline" className="w-full justify-start" size="lg">
-                <Zap className="h-4 w-4 mr-3" />
+                <div className="w-4 h-4 mr-3 flex-shrink-0">
+                  <Lottie animationData={globalNetworkAnimation} loop={true} />
+                </div>
                 Generate New Project
               </Button>
               <Button variant="outline" className="w-full justify-start" size="lg">
