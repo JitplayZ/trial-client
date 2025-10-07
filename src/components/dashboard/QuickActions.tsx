@@ -71,12 +71,12 @@ const QuickActions = () => {
                   variant={action.variant}
                   size="lg"
                   onClick={action.onClick}
-                  className={`h-auto p-6 flex flex-col items-center justify-center space-y-3 min-h-[120px] ${
+                  className={`h-auto p-4 flex flex-col items-center justify-center space-y-2 min-h-[100px] ${
                     action.variant === 'default' ? 'bg-gradient-primary hover-glow' : 'hover-lift'
                   }`}
                 >
                   {Icon === 'lottie' ? (
-                    <div className="w-32 h-32 sm:w-36 sm:h-36 flex-shrink-0">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0">
                       <Lottie animationData={globalNetworkAnimation} loop={true} />
                     </div>
                   ) : (

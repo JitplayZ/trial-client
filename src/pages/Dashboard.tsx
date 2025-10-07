@@ -113,7 +113,7 @@ const Dashboard = () => {
                 </div>
               </div>
               <Button size="lg" className="bg-gradient-primary hover-glow w-full sm:w-auto">
-                <div className="w-20 h-20 sm:w-24 sm:h-24 mr-2 flex-shrink-0">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 mr-2 flex-shrink-0">
                   <Lottie animationData={globalNetworkAnimation} loop={true} />
                 </div>
                 Generate Project
@@ -201,8 +201,8 @@ const Dashboard = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button variant="outline" className="w-full justify-start" size="lg">
-                <div className="w-14 h-14 mr-3 flex-shrink-0">
+              <Button variant="outline" className="w-full justify-start">
+                <div className="w-10 h-10 mr-3 flex-shrink-0">
                   <Lottie animationData={globalNetworkAnimation} loop={true} />
                 </div>
                 Generate New Project
