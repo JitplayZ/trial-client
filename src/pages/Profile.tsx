@@ -121,6 +121,7 @@ export default function Profile() {
       if (updateError) throw updateError;
 
       setAvatarUrl(publicUrl);
+      window.dispatchEvent(new Event('profile-updated'));
       toast({
         title: 'Avatar Updated',
         description: 'Your profile picture has been changed.',
@@ -148,6 +149,7 @@ export default function Profile() {
 
       if (error) throw error;
 
+      window.dispatchEvent(new Event('profile-updated'));
       toast({
         title: 'Profile Updated',
         description: 'Your settings have been saved.',

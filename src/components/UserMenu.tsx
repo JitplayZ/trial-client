@@ -41,6 +41,7 @@ const UserMenu = ({ onReferClick }: UserMenuProps) => {
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const [credits, setCredits] = useState<number>(100);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [displayName, setDisplayName] = useState<string>('');
 
   useEffect(() => {
     // Initialize dark mode as default
@@ -52,33 +53,43 @@ const UserMenu = ({ onReferClick }: UserMenuProps) => {
       setTheme(isDark ? 'dark' : 'light');
     }
 
-    // Fetch avatar
+    // Fetch profile
     if (user?.id) {
-      fetchAvatar();
+      fetchProfile();
     }
   }, [user?.id]);
 
-  const fetchAvatar = async () => {
+  useEffect(() => {
+    const handleProfileUpdate = () => {
+      if (user?.id) {
+        fetchProfile();
+      }
+    };
+
+    window.addEventListener('profile-updated', handleProfileUpdate);
+    return () => window.removeEventListener('profile-updated', handleProfileUpdate);
+  }, [user?.id]);
+
+  const fetchProfile = async () => {
     try {
       const { data } = await supabase
         .from('profiles')
-        .select('avatar_url')
+        .select('avatar_url, display_name')
         .eq('user_id', user?.id)
         .maybeSingle();
 
-      if (data?.avatar_url) {
+      if (data) {
         setAvatarUrl(data.avatar_url);
+        setDisplayName(data.display_name || user?.email?.split('@')[0] || 'User');
+      } else {
+        setDisplayName(user?.email?.split('@')[0] || 'User');
       }
     } catch (error) {
-      console.error('Error fetching avatar:', error);
+      console.error('Error fetching profile:', error);
+      setDisplayName(user?.email?.split('@')[0] || 'User');
     }
   };
 
-  const displayName = user?.user_metadata?.display_name || 
-                     user?.user_metadata?.full_name || 
-                     user?.user_metadata?.name ||
-                     user?.email?.split('@')[0] || 
-                     'User';
   const initials = displayName.slice(0, 2).toUpperCase();
 
   const handleThemeToggle = (newTheme: 'light' | 'dark') => {
