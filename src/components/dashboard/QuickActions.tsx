@@ -76,7 +76,7 @@ const QuickActions = () => {
                   }`}
                 >
                   {Icon === 'lottie' ? (
-                    <div className="w-24 h-24 sm:w-28 sm:h-28 flex-shrink-0">
+                    <div className="w-32 h-32 sm:w-36 sm:h-36 flex-shrink-0">
                       <Lottie animationData={globalNetworkAnimation} loop={true} />
                     </div>
                   ) : (
