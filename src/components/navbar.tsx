@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Zap, Bell } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import UserMenu from "@/components/UserMenu";
 import { useState } from "react";
@@ -16,6 +16,7 @@ import { useNotifications } from "@/hooks/useNotifications";
 const Navbar = () => {
   const { user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const isDashboard = location.pathname === '/dashboard';
   const [referralModalOpen, setReferralModalOpen] = useState(false);
@@ -44,9 +45,15 @@ const Navbar = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <a href="#hero" className="flex items-center space-x-2 hover-lift cursor-pointer" onClick={(e) => {
-            e.preventDefault();
-            document.getElementById('hero')?.scrollIntoView({ behavior: 'smooth' });
+          <div className="flex items-center space-x-2 hover-lift cursor-pointer" onClick={() => {
+            if (location.pathname === '/') {
+              document.getElementById('hero')?.scrollIntoView({ behavior: 'smooth' });
+            } else {
+              navigate('/');
+              setTimeout(() => {
+                document.getElementById('hero')?.scrollIntoView({ behavior: 'smooth' });
+              }, 100);
+            }
           }}>
             <div className="bg-gradient-primary p-2 rounded-lg">
               <Zap className="h-5 w-5 text-primary-foreground" />
@@ -54,7 +61,7 @@ const Navbar = () => {
             <span className="font-display font-bold text-xl text-gradient">
               AIProjects
             </span>
-          </a>
+          </div>
 
           {/* Navigation Links - Hidden on dashboard */}
           {!isDashboard && (
