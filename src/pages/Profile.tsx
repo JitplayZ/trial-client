@@ -84,8 +84,8 @@ export default function Profile() {
 
         <div className="space-y-6">
           {/* Profile Info */}
-          <Card className="glass-card">
-            <CardHeader>
+          <Card className="glass-card bg-card/50 backdrop-blur-xl border-border/50">
+            <CardHeader className="bg-surface/20 border-b border-border/50">
               <CardTitle>Profile Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -133,8 +133,8 @@ export default function Profile() {
           </Card>
 
           {/* Preferences */}
-          <Card className="glass-card">
-            <CardHeader>
+          <Card className="glass-card bg-card/50 backdrop-blur-xl border-border/50">
+            <CardHeader className="bg-surface/20 border-b border-border/50">
               <CardTitle>Preferences</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">

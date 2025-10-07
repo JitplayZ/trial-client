@@ -108,38 +108,46 @@
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
 
-    --card: 222.2 84% 4.9%;
+    --card: 220 30% 8%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222.2 84% 4.9%;
+    --popover: 220 30% 10%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 252 78% 60%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 217.2 32.6% 17.5%;
+    --secondary: 220 20% 14%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 217.2 32.6% 17.5%;
+    --muted: 220 20% 14%;
     --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 142 76% 55%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
+    --border: 220 20% 18%;
+    --input: 220 20% 14%;
+    --ring: 252 78% 60%;
+    
+    /* Dark glass effects */
+    --glass: 220 30% 12% / 0.6;
+    --glass-border: 210 40% 98% / 0.08;
+    --surface: 220 30% 10%;
+    --surface-elevated: 220 30% 12%;
+    --surface-hover: 220 25% 16%;
+    
+    --sidebar-background: 220 30% 8%;
     --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary: 252 78% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent: 220 25% 14%;
     --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-border: 220 20% 18%;
+    --sidebar-ring: 252 78% 60%;
   }
 }
 
@@ -160,14 +168,18 @@
 @layer components {
   /* Glass morphism effects */
   .glass {
-    background: var(--gradient-glass);
+    background: linear-gradient(135deg, hsl(var(--glass)), hsl(var(--glass)));
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1px solid hsl(var(--border) / 0.2);
+    border: 1px solid hsl(var(--glass-border, var(--border) / 0.2));
   }
 
   .glass-card {
-    @apply glass rounded-xl shadow-glass;
+    @apply glass rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)];
+  }
+  
+  .dark .glass-card {
+    @apply bg-gradient-to-br from-[hsl(220,30%,10%)] to-[hsl(220,30%,8%)] border-[hsl(210,40%,98%,0.06)];
   }
 
   /* Gradient backgrounds */

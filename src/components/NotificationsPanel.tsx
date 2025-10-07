@@ -208,13 +208,13 @@ export const NotificationsPanel = ({ isOpen, onClose }: NotificationsPanelProps)
             animate={{ opacity: 1, x: 0, y: 0 }}
             exit={{ opacity: 0, x: 20, y: -10 }}
             transition={{ type: 'spring', damping: 25 }}
-            className="fixed right-4 top-16 z-50 w-96 max-h-[32rem] glass-card border border-border/50 rounded-xl shadow-xl overflow-hidden"
+            className="fixed right-4 top-16 z-50 w-96 max-h-[32rem] bg-card/95 backdrop-blur-xl border border-border/50 rounded-xl shadow-xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-border/50">
+            <div className="flex items-center justify-between p-4 border-b border-border/50 bg-surface/20">
               <div className="flex items-center gap-2">
-                <Bell className="h-5 w-5 text-foreground" />
+                <Bell className="h-5 w-5 text-primary" />
                 <h3 className="font-semibold text-foreground">Notifications</h3>
                 {unreadCount > 0 && (
                   <Badge variant="destructive" className="h-5 px-2 text-xs">
@@ -228,7 +228,7 @@ export const NotificationsPanel = ({ isOpen, onClose }: NotificationsPanelProps)
                     variant="ghost"
                     size="icon"
                     onClick={markAllAsRead}
-                    className="h-8 w-8"
+                    className="h-8 w-8 hover:bg-surface-hover"
                     title="Mark all as read"
                   >
                     <CheckCheck className="h-4 w-4" />
@@ -238,7 +238,7 @@ export const NotificationsPanel = ({ isOpen, onClose }: NotificationsPanelProps)
                   variant="ghost"
                   size="icon"
                   onClick={onClose}
-                  className="h-8 w-8"
+                  className="h-8 w-8 hover:bg-surface-hover"
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -259,8 +259,8 @@ export const NotificationsPanel = ({ isOpen, onClose }: NotificationsPanelProps)
                       key={notification.id}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className={`p-3 rounded-lg hover:bg-muted/50 transition-colors mb-1 ${
-                        !notification.read ? 'bg-muted/30' : ''
+                      className={`p-3 rounded-lg hover:bg-surface-hover transition-colors mb-1 ${
+                        !notification.read ? 'bg-surface/40 border-l-2 border-l-primary' : 'bg-surface/20'
                       }`}
                     >
                       <div className="flex items-start justify-between gap-2">

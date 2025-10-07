@@ -74,11 +74,11 @@ const LevelCard = ({ level, estimatedTime, onGenerate }: LevelCardProps) => {
     <motion.div
       whileHover={{ scale: 1.02, y: -6 }}
       whileTap={{ scale: 0.98 }}
-      className={`relative p-6 rounded-2xl bg-gradient-to-br ${config.accent} border ${config.border} backdrop-blur-sm group transition-all duration-300 ${config.glow} hover:${config.glow.replace('0.15', '0.25')}`}
+      className={`relative p-6 rounded-2xl bg-card/40 backdrop-blur-xl border ${config.border} group transition-all duration-300 ${config.glow} hover:shadow-[${config.glow.match(/rgba\([^)]+\)/)?.[0].replace('0.15', '0.35')}]`}
     >
       {/* Animated gradient overlay */}
       <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent animate-pulse" />
+        <div className={`absolute inset-0 bg-gradient-to-br ${config.accent} opacity-10`} />
       </div>
 
       <div className="relative z-10">
@@ -100,7 +100,7 @@ const LevelCard = ({ level, estimatedTime, onGenerate }: LevelCardProps) => {
               Project Type
             </Label>
             <Select value={projectType} onValueChange={setProjectType} disabled={isLoading}>
-              <SelectTrigger id={`${level}-type`} className="bg-background/80 backdrop-blur-sm border-border/50 focus:ring-2 focus:ring-primary/20">
+              <SelectTrigger id={`${level}-type`} className="bg-surface/50 backdrop-blur-sm border-border/50 focus:ring-2 focus:ring-primary/20 hover:bg-surface-hover">
                 <SelectValue placeholder="Select type..." />
               </SelectTrigger>
               <SelectContent>
@@ -118,7 +118,7 @@ const LevelCard = ({ level, estimatedTime, onGenerate }: LevelCardProps) => {
               Industry
             </Label>
             <Select value={industry} onValueChange={setIndustry} disabled={isLoading}>
-              <SelectTrigger id={`${level}-industry`} className="bg-background/80 backdrop-blur-sm border-border/50 focus:ring-2 focus:ring-primary/20">
+              <SelectTrigger id={`${level}-industry`} className="bg-surface/50 backdrop-blur-sm border-border/50 focus:ring-2 focus:ring-primary/20 hover:bg-surface-hover">
                 <SelectValue placeholder="Select industry..." />
               </SelectTrigger>
               <SelectContent>
@@ -235,14 +235,14 @@ export const ProjectDetailModal = ({ isOpen, onClose }: ProjectDetailModalProps)
             exit={{ scale: 0.9, y: 20 }}
             transition={{ type: 'spring', damping: 25 }}
             onClick={(e) => e.stopPropagation()}
-            className="relative z-10 w-full max-w-6xl glass-card p-8"
+            className="relative z-10 w-full max-w-6xl bg-card/95 backdrop-blur-xl border border-border/50 rounded-2xl p-8 shadow-xl"
           >
             <button
               onClick={onClose}
-              className="absolute top-4 right-4 p-2 rounded-lg hover:bg-muted/50 transition-colors"
+              className="absolute top-4 right-4 p-2 rounded-lg hover:bg-surface-hover transition-colors"
               aria-label="Close modal"
             >
-              <X className="h-5 w-5 text-muted-foreground" />
+              <X className="h-5 w-5 text-muted-foreground hover:text-foreground" />
             </button>
 
             <div className="mb-8 text-center">

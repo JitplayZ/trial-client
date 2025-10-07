@@ -13,12 +13,12 @@ const GamificationBar = () => {
 
   if (loading) {
     return (
-      <Card className="glass-card mb-6">
+      <Card className="glass-card mb-6 bg-card/50 backdrop-blur-xl border-border/50">
         <CardContent className="p-4">
           <div className="flex items-center space-x-4">
-            <div className="h-4 w-4 bg-muted rounded animate-pulse" />
-            <div className="flex-1 h-2 bg-muted rounded animate-pulse" />
-            <div className="h-4 w-8 bg-muted rounded animate-pulse" />
+            <div className="h-4 w-4 bg-surface-hover rounded animate-pulse" />
+            <div className="flex-1 h-2 bg-surface-hover rounded animate-pulse" />
+            <div className="h-4 w-8 bg-surface-hover rounded animate-pulse" />
           </div>
         </CardContent>
       </Card>
@@ -29,7 +29,7 @@ const GamificationBar = () => {
 
   return (
     <>
-      <Card className="glass-card mb-6">
+      <Card className="glass-card mb-6 bg-card/50 backdrop-blur-xl border-border/50">
         <CardContent className="p-4">
           <div className="flex items-center space-x-4">
             {/* Level indicator */}
@@ -40,11 +40,11 @@ const GamificationBar = () => {
 
             {/* XP Progress bar */}
             <div className="flex-1">
-              <div className="flex justify-between text-sm text-foreground-secondary mb-1">
+              <div className="flex justify-between text-sm text-muted-foreground mb-1">
                 <span>XP: {progressXP} / {neededXP}</span>
                 <span>{userXP.total_xp} total</span>
               </div>
-              <Progress value={progressPercentage} className="h-2" />
+              <Progress value={progressPercentage} className="h-2" variant="gradient" />
             </div>
 
             {/* Badges */}
@@ -52,7 +52,7 @@ const GamificationBar = () => {
               variant="outline"
               size="sm"
               onClick={() => setShowBadgesModal(true)}
-              className="flex items-center space-x-2"
+              className="flex items-center space-x-2 bg-surface/50 border-border/50 hover:bg-surface-hover"
             >
               <Trophy className="h-4 w-4" />
               <span>{badges.length}</span>
@@ -69,10 +69,10 @@ const GamificationBar = () => {
 
       {/* Badges Modal */}
       <Dialog open={showBadgesModal} onOpenChange={setShowBadgesModal}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md bg-card/95 backdrop-blur-xl border-border/50">
           <DialogHeader>
             <DialogTitle className="flex items-center space-x-2">
-              <Trophy className="h-5 w-5" />
+              <Trophy className="h-5 w-5 text-primary" />
               <span>Your Achievements</span>
             </DialogTitle>
           </DialogHeader>
@@ -81,7 +81,7 @@ const GamificationBar = () => {
             {badges.length > 0 ? (
               <div className="grid grid-cols-2 gap-3">
                 {badges.map((badge, index) => (
-                  <div key={index} className="text-center p-4 bg-surface-hover rounded-lg border border-border/50">
+                  <div key={index} className="text-center p-4 bg-surface/50 rounded-lg border border-border/50 backdrop-blur">
                     <div className="text-2xl mb-2">{getBadgeIcon(badge.badge_type)}</div>
                     <div className="font-medium text-sm">{getBadgeDisplayName(badge.badge_type)}</div>
                     <div className="text-xs text-muted-foreground mt-1">
@@ -93,14 +93,14 @@ const GamificationBar = () => {
             ) : (
               <div className="text-center py-8">
                 <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                <p className="text-foreground-secondary">No badges yet!</p>
+                <p className="text-foreground">No badges yet!</p>
                 <p className="text-sm text-muted-foreground">Complete projects and actions to earn your first badge.</p>
               </div>
             )}
 
             {/* Available badges */}
-            <div className="border-t pt-4">
-              <h4 className="font-medium mb-3 text-sm text-foreground-secondary">Available Badges</h4>
+            <div className="border-t border-border/50 pt-4">
+              <h4 className="font-medium mb-3 text-sm text-foreground">Available Badges</h4>
               <div className="grid grid-cols-3 gap-2">
                 {[
                   { type: 'first_project', name: 'First Project' },
@@ -112,7 +112,7 @@ const GamificationBar = () => {
                 ].map((availableBadge) => {
                   const earned = badges.find(b => b.badge_type === availableBadge.type);
                   return (
-                    <div key={availableBadge.type} className={`text-center p-2 rounded ${earned ? 'bg-accent/10' : 'bg-muted/50'}`}>
+                    <div key={availableBadge.type} className={`text-center p-2 rounded ${earned ? 'bg-accent/10 border border-accent/20' : 'bg-surface/30 border border-border/30'}`}>
                       <div className={`text-lg ${earned ? '' : 'grayscale opacity-50'}`}>
                         {getBadgeIcon(availableBadge.type)}
                       </div>
