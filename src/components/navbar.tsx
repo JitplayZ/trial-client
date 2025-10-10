@@ -56,7 +56,15 @@ const Navbar = () => {
               }, 100);
             }
           }}>
-            <img src={logo} alt="tRIAL - cLIENTS logo" className="h-10 w-10" />
+            <img 
+              src={logo} 
+              alt="tRIAL - cLIENTS logo" 
+              className="h-10 w-10" 
+              width="40" 
+              height="40"
+              loading="eager"
+              fetchPriority="high"
+            />
             <span className="font-display font-bold text-xl text-gradient">
               tRIAL - cLIENTS
             </span>
