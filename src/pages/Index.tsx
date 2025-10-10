@@ -61,35 +61,9 @@ const Index = () => {
       
       <Navbar />
       <Hero />
-      
-      {/* Ad Slot: Leaderboard under hero (desktop) */}
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 flex justify-center">
-        <AdSlot slot="leaderboard" className="hidden md:flex" />
-      </div>
-      
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Main content */}
-          <div className="flex-1">
-            <Features />
-            
-            {/* Mobile native ad */}
-            <div className="lg:hidden flex justify-center my-8">
-              <AdSlot slot="native-mobile" />
-            </div>
-            
-            <Testimonials />
-            <Pricing />
-          </div>
-          
-          {/* Sidebar ad (desktop only) */}
-          <aside className="hidden lg:block lg:w-[300px] flex-shrink-0">
-            <div className="sticky top-24">
-              <AdSlot slot="sidebar" />
-            </div>
-          </aside>
-        </div>
-      </div>
+      <Features />
+      <Testimonials />
+      <Pricing />
       
       {/* Footer */}
       <footer className="bg-surface border-t border-border py-16">
