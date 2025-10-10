@@ -12,8 +12,14 @@ import {
   Users,
   TrendingUp
 } from "lucide-react";
+import { AdSlot } from "@/components/AdSlot";
+import { Helmet } from "react-helmet";
+import { useQuotaManagement } from "@/hooks/useQuotaManagement";
 
 const Dashboard = () => {
+  const { quotaData, getQuotaStatus, getResetDate } = useQuotaManagement();
+  const veteranStatus = getQuotaStatus('veteran');
+  const resetDate = getResetDate();
   const stats = [
     {
       title: "Projects Generated",
@@ -71,13 +77,24 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>tRIAL - cLIENTS — Dashboard</title>
+      </Helmet>
+      
       {/* Header */}
       <header className="border-b border-border bg-surface">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between py-4 sm:h-16 gap-3 sm:gap-0">
             <div>
               <h1 className="text-xl sm:text-2xl font-display font-bold">Dashboard</h1>
-              <p className="text-sm sm:text-base text-foreground-secondary hidden sm:block">Welcome back! Ready to build something amazing?</p>
+              <div className="flex items-center gap-3 flex-wrap">
+                <p className="text-sm sm:text-base text-foreground-secondary">Welcome back! Ready to build something amazing?</p>
+                {quotaData && veteranStatus.remaining !== 'unlimited' && veteranStatus.remaining !== 'locked' && (
+                  <Badge variant="outline" className="text-xs">
+                    Veteran: {veteranStatus.remaining}/{veteranStatus.limit} left · Reset: {resetDate?.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  </Badge>
+                )}
+              </div>
             </div>
             <Button className="bg-gradient-primary hover-glow w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
@@ -140,9 +157,9 @@ const Dashboard = () => {
           ))}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8">
           {/* Recent Projects */}
-          <Card>
+          <Card className="lg:col-span-2">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 Recent Projects
@@ -188,37 +205,44 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          {/* Quick Actions */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-              <CardDescription>
-                Common tasks and shortcuts
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Button variant="outline" className="w-full justify-start" size="lg">
-                <Zap className="h-4 w-4 mr-3" />
-                Generate New Project
-              </Button>
-              <Button variant="outline" className="w-full justify-start" size="lg">
-                <Folder className="h-4 w-4 mr-3" />
-                Browse Templates
-              </Button>
-              <Button variant="outline" className="w-full justify-start" size="lg">
-                <BarChart3 className="h-4 w-4 mr-3" />
-                View Analytics
-              </Button>
-              <Button variant="outline" className="w-full justify-start" size="lg">
-                <Users className="h-4 w-4 mr-3" />
-                Invite Team Members
-              </Button>
-              <Button variant="outline" className="w-full justify-start" size="lg">
-                <Star className="h-4 w-4 mr-3" />
-                Upgrade to Pro
-              </Button>
-            </CardContent>
-          </Card>
+          {/* Quick Actions & Ad Rail */}
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Quick Actions</CardTitle>
+                <CardDescription>
+                  Common tasks and shortcuts
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Button variant="outline" className="w-full justify-start" size="lg">
+                  <Zap className="h-4 w-4 mr-3" />
+                  Generate New Project
+                </Button>
+                <Button variant="outline" className="w-full justify-start" size="lg">
+                  <Folder className="h-4 w-4 mr-3" />
+                  Browse Templates
+                </Button>
+                <Button variant="outline" className="w-full justify-start" size="lg">
+                  <BarChart3 className="h-4 w-4 mr-3" />
+                  View Analytics
+                </Button>
+                <Button variant="outline" className="w-full justify-start" size="lg">
+                  <Users className="h-4 w-4 mr-3" />
+                  Invite Team Members
+                </Button>
+                <Button variant="outline" className="w-full justify-start" size="lg">
+                  <Star className="h-4 w-4 mr-3" />
+                  Upgrade to Pro
+                </Button>
+              </CardContent>
+            </Card>
+            
+            {/* Dashboard Ad Rail (desktop) */}
+            <div className="hidden lg:block">
+              <AdSlot slot="dashboard-rail" />
+            </div>
+          </div>
         </div>
       </main>
     </div>

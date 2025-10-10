@@ -3,15 +3,93 @@ import Hero from "@/components/hero";
 import Features from "@/components/features";
 import Testimonials from "@/components/testimonials";
 import Pricing from "@/components/pricing";
+import { AdSlot } from "@/components/AdSlot";
+import { Helmet } from "react-helmet";
 
 const Index = () => {
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "https://yourdomain.com/#website",
+        "url": "https://yourdomain.com/",
+        "name": "tRIAL - cLIENTS",
+        "description": "AI-powered client brief & project generator for designers and developers",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "https://yourdomain.com/search?q={search_term_string}",
+          "query-input": "required name=search_term_string"
+        }
+      },
+      {
+        "@type": "Organization",
+        "@id": "https://yourdomain.com/#organization",
+        "name": "tRIAL - cLIENTS",
+        "url": "https://yourdomain.com/",
+        "logo": "https://yourdomain.com/favicon.png",
+        "sameAs": [
+          "https://twitter.com/aiprojects_dev"
+        ]
+      },
+      {
+        "@type": "SoftwareApplication",
+        "name": "tRIAL - cLIENTS",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "Web",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": "4.9",
+          "ratingCount": "1000"
+        }
+      }
+    ]
+  };
+
   return (
     <div className="min-h-screen">
+      <Helmet>
+        <script type="application/ld+json">
+          {JSON.stringify(structuredData)}
+        </script>
+      </Helmet>
+      
       <Navbar />
       <Hero />
-      <Features />
-      <Testimonials />
-      <Pricing />
+      
+      {/* Ad Slot: Leaderboard under hero (desktop) */}
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 flex justify-center">
+        <AdSlot slot="leaderboard" className="hidden md:flex" />
+      </div>
+      
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Main content */}
+          <div className="flex-1">
+            <Features />
+            
+            {/* Mobile native ad */}
+            <div className="lg:hidden flex justify-center my-8">
+              <AdSlot slot="native-mobile" />
+            </div>
+            
+            <Testimonials />
+            <Pricing />
+          </div>
+          
+          {/* Sidebar ad (desktop only) */}
+          <aside className="hidden lg:block lg:w-[300px] flex-shrink-0">
+            <div className="sticky top-24">
+              <AdSlot slot="sidebar" />
+            </div>
+          </aside>
+        </div>
+      </div>
       
       {/* Footer */}
       <footer className="bg-surface border-t border-border py-16">

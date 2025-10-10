@@ -20,6 +20,8 @@ import Pricing from "./pages/Pricing";
 import Profile from "./pages/Profile";
 import Help from "./pages/Help";
 import Notifications from "./pages/Notifications";
+import Blog from "./pages/Blog";
+import Sitemap from "./pages/Sitemap";
 import { ForbiddenPage, ServerErrorPage, MaintenancePage } from "./pages/ErrorPages";
 
 const queryClient = new QueryClient();
@@ -44,6 +46,8 @@ const App = () => (
             <Route path="/account/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/help" element={<ProtectedRoute><Help /></ProtectedRoute>} />
             <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/sitemap.xml" element={<Sitemap />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/403" element={<ForbiddenPage />} />
             <Route path="/500" element={<ServerErrorPage />} />

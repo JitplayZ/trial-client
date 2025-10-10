@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet';
 
 const faqs = [
   {
@@ -57,8 +58,28 @@ export default function Help() {
     setSupportMessage('');
   };
 
+  const faqStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": faqs.map(faq => ({
+      "@type": "Question",
+      "name": faq.question,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": faq.answer
+      }
+    }))
+  };
+
   return (
     <div className="min-h-screen bg-background py-12">
+      <Helmet>
+        <title>Help & FAQ - tRIAL - cLIENTS</title>
+        <meta name="description" content="Find answers to common questions about tRIAL - cLIENTS. Learn how to generate briefs, manage projects, and get the most from our platform." />
+        <script type="application/ld+json">
+          {JSON.stringify(faqStructuredData)}
+        </script>
+      </Helmet>
       <div className="container mx-auto px-4 max-w-4xl">
         <div className="flex justify-end mb-4">
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
