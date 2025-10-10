@@ -22,14 +22,14 @@ const Hero = () => {
 
           {/* Main headline */}
           <h1 className="text-5xl sm:text-6xl lg:text-7xl font-display font-bold leading-tight mb-6 animate-slide-up">
-            Build Real Client
+            Generate Realistic Client
             <br />
-            <span className="text-gradient">Projects with AI</span>
+            <span className="text-gradient">Briefs Instantly</span>
           </h1>
 
           {/* Subheading */}
           <p className="text-xl sm:text-2xl text-foreground-secondary max-w-2xl mx-auto mb-12 animate-fade-in delay-200">
-            Transform your ideas into professional projects that impress clients and build your portfolio. Start free — get real results.
+            AI-powered client brief & project generator for designers and developers. Free beginner briefs — upgrade for intermediate & veteran briefs.
           </p>
 
           {/* CTA buttons */}

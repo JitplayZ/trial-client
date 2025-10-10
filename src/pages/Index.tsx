@@ -19,15 +19,13 @@ const Index = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="col-span-1 md:col-span-2">
               <div className="flex items-center space-x-2 mb-4">
-                <div className="bg-gradient-primary p-2 rounded-lg">
-                  <span className="text-primary-foreground font-bold">AI</span>
-                </div>
+                <img src="/favicon.png" alt="tRIAL - cLIENTS logo" className="h-10 w-10" />
                 <span className="font-display font-bold text-xl text-gradient">
-                  AIProjects
+                  tRIAL - cLIENTS
                 </span>
               </div>
               <p className="text-foreground-secondary max-w-md">
-                Build amazing projects with AI. From concept to deployment in minutes, not months.
+                Generate realistic client briefs and practice projects with AI. Free beginner briefs — upgrade for intermediate & veteran briefs.
               </p>
             </div>
             
@@ -54,7 +52,7 @@ const Index = () => {
           
           <div className="border-t border-border mt-12 pt-8 flex flex-col sm:flex-row justify-between items-center">
             <p className="text-sm text-foreground-secondary">
-              © 2025-26 AIProjects. All rights reserved.
+              © 2025-26 tRIAL - cLIENTS. All rights reserved.
             </p>
             <div className="flex space-x-6 mt-4 sm:mt-0">
               <a href="#" className="text-sm text-foreground-secondary hover:text-foreground">Privacy</a>

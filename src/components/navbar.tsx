@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Zap, Bell } from "lucide-react";
+import { ArrowRight, Bell } from "lucide-react";
+import logo from "@/assets/logo.png";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import UserMenu from "@/components/UserMenu";
@@ -36,7 +37,7 @@ const Navbar = () => {
   };
 
   const handleShareWhatsApp = () => {
-    const message = encodeURIComponent(`Check out AIProjects! Build amazing projects with AI. Join using my link: ${referralLink}`);
+    const message = encodeURIComponent(`Check out tRIAL - cLIENTS! Generate realistic client briefs with AI. Join using my link: ${referralLink}`);
     window.open(`https://wa.me/?text=${message}`, '_blank');
   };
 
@@ -55,11 +56,9 @@ const Navbar = () => {
               }, 100);
             }
           }}>
-            <div className="bg-gradient-primary p-2 rounded-lg">
-              <Zap className="h-5 w-5 text-primary-foreground" />
-            </div>
+            <img src={logo} alt="tRIAL - cLIENTS logo" className="h-10 w-10" />
             <span className="font-display font-bold text-xl text-gradient">
-              AIProjects
+              tRIAL - cLIENTS
             </span>
           </div>
 
