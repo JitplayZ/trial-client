@@ -64,25 +64,8 @@ export const useNotifications = () => {
   useEffect(() => {
     if (notifications.length >= 0) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(notifications));
-      // Dispatch storage event for cross-component sync
-      window.dispatchEvent(new Event('storage'));
     }
   }, [notifications]);
-
-  // Listen for storage changes from other components
-  useEffect(() => {
-    const handleStorageChange = () => {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        try {
-          setNotifications(JSON.parse(stored));
-        } catch {}
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
