@@ -41,7 +41,9 @@ const History = () => {
         if (error) throw error;
         setProjects(data || []);
       } catch (error) {
-        console.error('Error fetching projects:', error);
+        if (import.meta.env.DEV) {
+          console.error('Error fetching projects:', error);
+        }
       } finally {
         setLoading(false);
       }
