@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,6 +11,17 @@ import { Camera, Save, ArrowLeft, X, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { z } from 'zod';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 const profileSchema = z.object({
   display_name: z.string()
@@ -21,7 +32,7 @@ const profileSchema = z.object({
 });
 
 export default function Profile() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -32,6 +43,7 @@ export default function Profile() {
   );
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [gamificationEnabled, setGamificationEnabled] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -208,6 +220,38 @@ export default function Profile() {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    if (!user) return;
+    
+    setDeleting(true);
+    try {
+      // Call the delete_user_account function
+      const { error } = await supabase.rpc('delete_user_account');
+      
+      if (error) throw error;
+      
+      toast({
+        title: 'Account Deleted',
+        description: 'Your account and all data have been deleted.',
+      });
+      
+      // Sign out and redirect
+      await signOut();
+      navigate('/');
+    } catch (error: any) {
+      if (import.meta.env.DEV) {
+        console.error('Error deleting account:', error);
+      }
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to delete account',
+        variant: 'destructive',
+      });
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background py-6 sm:py-12">
       <div className="container mx-auto px-4 max-w-4xl">
@@ -348,6 +392,54 @@ export default function Profile() {
               Save Changes
             </Button>
           </div>
+
+          {/* Delete Account Card */}
+          <Card className="glass-card border-destructive/20 bg-card/50 backdrop-blur-xl">
+            <CardHeader className="bg-destructive/5 border-b border-destructive/20">
+              <CardTitle className="text-destructive">Danger Zone</CardTitle>
+              <CardDescription>
+                Permanently delete your account and all associated data
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button 
+                    variant="destructive" 
+                    className="w-full"
+                    disabled={deleting}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    {deleting ? 'Deleting...' : 'Delete Account'}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete your account
+                      and remove all your data including:
+                      <ul className="list-disc list-inside mt-2 space-y-1">
+                        <li>Your profile information</li>
+                        <li>All generated projects and briefs</li>
+                        <li>Your XP and badges</li>
+                        <li>All other associated data</li>
+                      </ul>
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDeleteAccount}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Yes, delete my account
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
