@@ -94,7 +94,9 @@ export const useNotifications = () => {
     );
 
     try {
-      console.info('[notifications] Marked as read:', id);
+      if (import.meta.env.DEV) {
+        console.info('[notifications] Marked as read:', id);
+      }
     } catch (error) {
       setNotifications(prev =>
         prev.map(notif =>
@@ -115,7 +117,9 @@ export const useNotifications = () => {
     setNotifications(prev => prev.map(notif => ({ ...notif, read: true })));
 
     try {
-      console.info('[notifications] Marked all as read:', unreadIds);
+      if (import.meta.env.DEV) {
+        console.info('[notifications] Marked all as read:', unreadIds);
+      }
       toast({
         title: 'All notifications marked as read',
       });
@@ -140,7 +144,9 @@ export const useNotifications = () => {
 
     setTimeout(async () => {
       try {
-        console.info('[notifications] Deleted:', id);
+        if (import.meta.env.DEV) {
+          console.info('[notifications] Deleted:', id);
+        }
       } catch (error) {
         if (notificationToDelete) {
           setNotifications(prev => [...prev, notificationToDelete]);

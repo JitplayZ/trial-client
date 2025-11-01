@@ -52,10 +52,24 @@ export default function Profile() {
 
       if (error) throw error;
       if (data?.avatar_url) {
-        setAvatarUrl(data.avatar_url);
+        // If avatar_url is a path, generate signed URL; if already a full URL, use as-is
+        if (data.avatar_url.startsWith('http')) {
+          setAvatarUrl(data.avatar_url);
+        } else {
+          // Generate signed URL for private storage (1 hour expiry)
+          const { data: signedUrlData } = await supabase.storage
+            .from('avatars')
+            .createSignedUrl(data.avatar_url, 3600);
+          
+          if (signedUrlData?.signedUrl) {
+            setAvatarUrl(signedUrlData.signedUrl);
+          }
+        }
       }
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      if (import.meta.env.DEV) {
+        console.error('Error fetching profile:', error);
+      }
     }
   };
 
@@ -119,27 +133,31 @@ export default function Profile() {
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
-
-      // Update profile
+      // Store the file path in the profile (not public URL)
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ avatar_url: publicUrl })
+        .update({ avatar_url: filePath })
         .eq('user_id', user.id);
 
       if (updateError) throw updateError;
 
-      setAvatarUrl(publicUrl);
+      // Get signed URL for display (1 hour expiry)
+      const { data: signedUrlData } = await supabase.storage
+        .from('avatars')
+        .createSignedUrl(filePath, 3600);
+
+      if (signedUrlData?.signedUrl) {
+        setAvatarUrl(signedUrlData.signedUrl);
+      }
       window.dispatchEvent(new Event('profile-updated'));
       toast({
         title: 'Avatar Updated',
         description: 'Your profile picture has been changed.',
       });
     } catch (error) {
-      console.error('Error uploading avatar:', error);
+      if (import.meta.env.DEV) {
+        console.error('Error uploading avatar:', error);
+      }
       toast({
         title: 'Upload Failed',
         description: 'Failed to upload avatar. Please try again.',

@@ -33,7 +33,9 @@ export const AdminProtectedRoute = ({ children }: AdminProtectedRouteProps) => {
         });
 
         if (error) {
-          console.error('Error checking admin role:', error);
+          if (import.meta.env.DEV) {
+            console.error('Error checking admin role:', error);
+          }
           navigate('/403', { replace: true });
           return;
         }
@@ -45,7 +47,9 @@ export const AdminProtectedRoute = ({ children }: AdminProtectedRouteProps) => {
 
         setIsAdmin(true);
       } catch (error) {
-        console.error('Error checking admin status:', error);
+        if (import.meta.env.DEV) {
+          console.error('Error checking admin status:', error);
+        }
         navigate('/403', { replace: true });
       } finally {
         setChecking(false);

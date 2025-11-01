@@ -34,7 +34,9 @@ const AdminLogin = () => {
             navigate('/dashboard', { replace: true });
           }
         } catch (error) {
-          console.error('Error checking admin status:', error);
+          if (import.meta.env.DEV) {
+            console.error('Error checking admin status:', error);
+          }
         }
       }
     };

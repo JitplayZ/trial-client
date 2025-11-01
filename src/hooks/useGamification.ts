@@ -64,7 +64,9 @@ export function useGamification() {
         setBadges(badgesData);
       }
     } catch (error) {
-      console.error('Error fetching gamification data:', error);
+      if (import.meta.env.DEV) {
+        console.error('Error fetching gamification data:', error);
+      }
     } finally {
       setLoading(false);
     }
@@ -125,7 +127,9 @@ export function useGamification() {
       await checkForBadges(eventType, newTotalXP);
 
     } catch (error) {
-      console.error('Error awarding XP:', error);
+      if (import.meta.env.DEV) {
+        console.error('Error awarding XP:', error);
+      }
     }
   };
 
@@ -158,7 +162,9 @@ export function useGamification() {
         });
       }
     } catch (error) {
-      console.error('Error awarding badge:', error);
+      if (import.meta.env.DEV) {
+        console.error('Error awarding badge:', error);
+      }
     }
   };
 

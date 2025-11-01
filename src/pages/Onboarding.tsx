@@ -37,7 +37,9 @@ const Onboarding = () => {
       setCurrentStep(currentStep + 1);
     } else {
       // Complete onboarding
-      console.log("Completing onboarding...", { formData, selectedSkills });
+      if (import.meta.env.DEV) {
+        console.log("Completing onboarding...", { formData, selectedSkills });
+      }
       window.location.href = "/dashboard";
     }
   };
