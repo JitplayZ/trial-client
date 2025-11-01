@@ -74,6 +74,42 @@ export type Database = {
         }
         Relationships: []
       }
+      subscriptions: {
+        Row: {
+          beginner_left: number
+          created_at: string
+          id: string
+          intermediate_left: number
+          plan: string
+          reset_at: string
+          updated_at: string
+          user_id: string
+          veteran_left: number
+        }
+        Insert: {
+          beginner_left?: number
+          created_at?: string
+          id?: string
+          intermediate_left?: number
+          plan?: string
+          reset_at?: string
+          updated_at?: string
+          user_id: string
+          veteran_left?: number
+        }
+        Update: {
+          beginner_left?: number
+          created_at?: string
+          id?: string
+          intermediate_left?: number
+          plan?: string
+          reset_at?: string
+          updated_at?: string
+          user_id?: string
+          veteran_left?: number
+        }
+        Relationships: []
+      }
       user_badges: {
         Row: {
           badge_type: string

@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 export type PlanType = 'free' | 'pro' | 'proplus';
 export type LevelType = 'beginner' | 'intermediate' | 'veteran';
@@ -40,29 +42,52 @@ const PLAN_LIMITS: Record<PlanType, QuotaLimits> = {
 export const useQuotaManagement = () => {
   const [quotaData, setQuotaData] = useState<QuotaData | null>(null);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
-    // Mock API call - replace with real endpoint
-    const mockMe = localStorage.getItem('MOCK_USER_PLAN') || 'free';
-    
-    // Simulate API delay
-    setTimeout(() => {
-      const resetDate = new Date();
-      resetDate.setMonth(resetDate.getMonth() + 1);
-      resetDate.setDate(1);
-      
-      setQuotaData({
-        plan: mockMe as PlanType,
-        quotas: {
-          beginnerLeft: -1, // -1 represents unlimited
-          intermediateLeft: mockMe === 'free' ? 2 : -1,
-          veteranLeft: mockMe === 'free' ? 0 : mockMe === 'pro' ? 4 : 20,
-          resetAt: resetDate.toISOString()
-        }
-      });
-      setLoading(false);
-    }, 500);
+    fetchSubscription();
   }, []);
+
+  const fetchSubscription = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        setQuotaData({
+          plan: data.plan as PlanType,
+          quotas: {
+            beginnerLeft: data.beginner_left,
+            intermediateLeft: data.intermediate_left,
+            veteranLeft: data.veteran_left,
+            resetAt: data.reset_at
+          }
+        });
+      }
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        console.error('Error fetching subscription:', error);
+      }
+      toast({
+        title: 'Error',
+        description: 'Failed to load subscription data',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getQuotaStatus = (level: LevelType): {
     available: boolean;
@@ -94,20 +119,34 @@ export const useQuotaManagement = () => {
     };
   };
 
-  const consumeQuota = (level: LevelType): boolean => {
+  const consumeQuota = async (level: LevelType): Promise<boolean> => {
     if (!quotaData) return false;
 
     const status = getQuotaStatus(level);
     if (!status.available) return false;
 
-    // Update local state
-    setQuotaData(prev => {
-      if (!prev) return prev;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return false;
+
+      const columnName = `${level}_left`;
+      const currentValue = quotaData.quotas[`${level}Left` as keyof typeof quotaData.quotas];
       
-      const key = `${level}Left` as keyof typeof prev.quotas;
-      const currentValue = prev.quotas[key];
-      
-      if (typeof currentValue === 'number' && currentValue > 0) {
+      if (typeof currentValue !== 'number' || currentValue <= 0) return false;
+
+      const { error } = await supabase
+        .from('subscriptions')
+        .update({ [columnName]: currentValue - 1 })
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setQuotaData(prev => {
+        if (!prev) return prev;
+        
+        const key = `${level}Left` as keyof typeof prev.quotas;
+        
         return {
           ...prev,
           quotas: {
@@ -115,12 +154,20 @@ export const useQuotaManagement = () => {
             [key]: currentValue - 1
           }
         };
-      }
-      
-      return prev;
-    });
+      });
 
-    return true;
+      return true;
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        console.error('Error consuming quota:', error);
+      }
+      toast({
+        title: 'Error',
+        description: 'Failed to update quota',
+        variant: 'destructive'
+      });
+      return false;
+    }
   };
 
   const getResetDate = (): Date | null => {
@@ -128,9 +175,47 @@ export const useQuotaManagement = () => {
     return new Date(quotaData.quotas.resetAt);
   };
 
-  const changePlan = (newPlan: PlanType) => {
-    localStorage.setItem('MOCK_USER_PLAN', newPlan);
-    window.location.reload(); // Simple reload for demo
+  const changePlan = async (newPlan: PlanType): Promise<boolean> => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return false;
+
+      // Set new quotas based on plan
+      const planQuotas = {
+        beginner_left: -1, // Always unlimited
+        intermediate_left: newPlan === 'free' ? 2 : -1,
+        veteran_left: newPlan === 'free' ? 0 : newPlan === 'pro' ? 4 : 20
+      };
+
+      const { error } = await supabase
+        .from('subscriptions')
+        .update({ 
+          plan: newPlan,
+          ...planQuotas
+        })
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      await fetchSubscription();
+      
+      toast({
+        title: 'Success',
+        description: `Plan updated to ${newPlan}`,
+      });
+
+      return true;
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        console.error('Error changing plan:', error);
+      }
+      toast({
+        title: 'Error',
+        description: 'Failed to update plan',
+        variant: 'destructive'
+      });
+      return false;
+    }
   };
 
   return {
@@ -139,6 +224,7 @@ export const useQuotaManagement = () => {
     getQuotaStatus,
     consumeQuota,
     getResetDate,
-    changePlan
+    changePlan,
+    refresh: fetchSubscription
   };
 };
