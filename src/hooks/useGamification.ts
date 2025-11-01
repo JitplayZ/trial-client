@@ -3,6 +3,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
+// Define allowed event types
+const ALLOWED_EVENT_TYPES = ['project_created', 'project_completed', 'referral_success', 'daily_login'] as const;
+export type EventType = typeof ALLOWED_EVENT_TYPES[number];
+
+// Define allowed badge types
+const ALLOWED_BADGE_TYPES = ['first_project', 'level_5', 'level_10', 'xp_5000', 'referral_success', 'daily_streak_7'] as const;
+export type BadgeType = typeof ALLOWED_BADGE_TYPES[number];
+
 interface UserXP {
   total_xp: number;
   level: number;
@@ -72,8 +80,16 @@ export function useGamification() {
     }
   };
 
-  const awardXP = async (eventType: string, xpAmount: number) => {
+  const awardXP = async (eventType: EventType, xpAmount: number) => {
     if (!user) return;
+
+    // Validate event type
+    if (!ALLOWED_EVENT_TYPES.includes(eventType)) {
+      if (import.meta.env.DEV) {
+        console.error('Invalid event type:', eventType);
+      }
+      return;
+    }
 
     try {
       // Add XP event
@@ -133,8 +149,17 @@ export function useGamification() {
     }
   };
 
-  const awardBadge = async (badgeType: string) => {
+  const awardBadge = async (badgeType: BadgeType | string) => {
     if (!user) return;
+
+    // Validate badge type for known badges (allow dynamic level badges)
+    const isDynamicLevelBadge = badgeType.startsWith('level_');
+    if (!isDynamicLevelBadge && !ALLOWED_BADGE_TYPES.includes(badgeType as BadgeType)) {
+      if (import.meta.env.DEV) {
+        console.error('Invalid badge type:', badgeType);
+      }
+      return;
+    }
 
     try {
       // Check if badge already exists

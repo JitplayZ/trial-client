@@ -15,31 +15,42 @@ const AdminLogin = () => {
 
   // Redirect if already logged in and is admin
   useEffect(() => {
-    const checkAdminStatus = async () => {
-      if (user) {
-        // Wait a bit to allow trigger to assign role for new users
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
+    const checkAdminWithRetry = async (userId: string, maxRetries = 5): Promise<boolean> => {
+      for (let i = 0; i < maxRetries; i++) {
         try {
           const { data: isAdmin } = await supabase.rpc('has_role', {
-            _user_id: user.id,
+            _user_id: userId,
             _role: 'admin'
           });
-
-          if (isAdmin) {
-            navigate('/admin', { replace: true });
-          } else {
-            toast({
-              title: 'Access Denied',
-              description: 'You do not have admin privileges.',
-              variant: 'destructive',
-            });
-            navigate('/dashboard', { replace: true });
+          
+          if (isAdmin) return true;
+          
+          // Exponential backoff: 100ms, 200ms, 400ms, 800ms, 1600ms
+          if (i < maxRetries - 1) {
+            await new Promise(resolve => setTimeout(resolve, Math.min(100 * Math.pow(2, i), 2000)));
           }
         } catch (error) {
           if (import.meta.env.DEV) {
             console.error('Error checking admin status:', error);
           }
+        }
+      }
+      return false;
+    };
+
+    const checkAdminStatus = async () => {
+      if (user) {
+        const isAdmin = await checkAdminWithRetry(user.id);
+
+        if (isAdmin) {
+          navigate('/admin', { replace: true });
+        } else {
+          toast({
+            title: 'Access Denied',
+            description: 'You do not have admin privileges.',
+            variant: 'destructive',
+          });
+          navigate('/dashboard', { replace: true });
         }
       }
     };
