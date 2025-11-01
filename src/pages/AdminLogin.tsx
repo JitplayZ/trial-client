@@ -1,82 +1,70 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Shield, AlertTriangle, Zap } from "lucide-react";
-import { Link } from "react-router-dom";
-import { useState } from "react";
+import { ArrowLeft, AlertTriangle, Zap } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const AdminLogin = () => {
-  const [showTwoFA, setShowTwoFA] = useState(false);
+  const { signInWithGoogle, user } = useAuth();
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
-  const handleGoogleLogin = () => {
-    // Mock Google OAuth flow for admin
-    console.log("Initiating Admin Google OAuth...");
-    // Simulate admin allowlist check and 2FA requirement
-    setTimeout(() => {
-      setShowTwoFA(true);
-    }, 1000);
+  // Redirect if already logged in and is admin
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (user) {
+        try {
+          const { data: isAdmin } = await supabase.rpc('has_role', {
+            _user_id: user.id,
+            _role: 'admin'
+          });
+
+          if (isAdmin) {
+            navigate('/admin', { replace: true });
+          } else {
+            toast({
+              title: 'Access Denied',
+              description: 'You do not have admin privileges.',
+              variant: 'destructive',
+            });
+            navigate('/dashboard', { replace: true });
+          }
+        } catch (error) {
+          console.error('Error checking admin status:', error);
+        }
+      }
+    };
+
+    checkAdminStatus();
+  }, [user, navigate, toast]);
+
+  const handleGoogleLogin = async () => {
+    setIsLoading(true);
+    try {
+      const { error } = await signInWithGoogle();
+      
+      if (error) {
+        toast({
+          title: 'Authentication Failed',
+          description: error.message || 'Failed to sign in with Google.',
+          variant: 'destructive',
+        });
+      }
+      // Navigation will be handled by the useEffect hook after successful login
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'An unexpected error occurred.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
-
-  const handleTwoFASubmit = () => {
-    // Mock 2FA verification
-    console.log("Verifying 2FA...");
-    setTimeout(() => {
-      window.location.href = "/admin";
-    }, 1000);
-  };
-
-  if (showTwoFA) {
-    return (
-      <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        
-        <div className="w-full max-w-md relative z-10">
-          <Card className="glass-card border-border/20 animate-slide-up">
-            <CardHeader className="text-center pb-8">
-              <div className="w-16 h-16 bg-gradient-primary rounded-xl flex items-center justify-center mx-auto mb-4">
-                <Shield className="h-8 w-8 text-primary-foreground" />
-              </div>
-              <CardTitle className="text-2xl font-display">Two-Factor Authentication</CardTitle>
-              <CardDescription className="text-base">
-                Enter the 6-digit code from your authenticator app
-              </CardDescription>
-            </CardHeader>
-
-            <CardContent className="space-y-6">
-              <div className="flex justify-center space-x-2">
-                {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <input
-                    key={i}
-                    type="text"
-                    maxLength={1}
-                    className="w-12 h-12 text-center text-xl font-mono border border-border rounded-lg focus:border-primary focus:ring-2 focus:ring-primary/20 bg-surface"
-                  />
-                ))}
-              </div>
-
-              <Button
-                onClick={handleTwoFASubmit}
-                size="lg"
-                className="w-full bg-gradient-primary hover-glow"
-              >
-                Verify & Continue
-              </Button>
-
-              <div className="text-center">
-                <Button variant="ghost" size="sm">
-                  Resend Code
-                </Button>
-              </div>
-
-              <div className="text-xs text-center text-foreground-secondary">
-                Having trouble? Contact your system administrator for assistance.
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
@@ -123,6 +111,7 @@ const AdminLogin = () => {
               onClick={handleGoogleLogin}
               size="lg"
               className="w-full bg-gradient-primary hover-glow text-lg py-6"
+              disabled={isLoading}
             >
               <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
                 <path
@@ -142,12 +131,12 @@ const AdminLogin = () => {
                   d="M12 1c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                 />
               </svg>
-              Sign in with Google (Admin)
+              {isLoading ? 'Signing in...' : 'Sign in with Google (Admin)'}
             </Button>
 
-            <div className="flex items-center justify-center space-x-2 text-sm text-foreground-secondary">
-              <Shield className="h-4 w-4 text-accent" />
-              <span>Secure 2FA authentication required</span>
+            <div className="text-sm text-center text-foreground-secondary">
+              <p>Only authorized administrators can access this area.</p>
+              <p className="mt-1">Contact your system administrator to request admin access.</p>
             </div>
 
             <p className="text-xs text-center text-foreground-secondary">

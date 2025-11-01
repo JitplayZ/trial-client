@@ -10,6 +10,15 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Camera, Save, ArrowLeft, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { z } from 'zod';
+
+const profileSchema = z.object({
+  display_name: z.string()
+    .trim()
+    .min(1, 'Display name is required')
+    .max(50, 'Display name must be less than 50 characters')
+    .regex(/^[a-zA-Z0-9 '\-]*$/, 'Display name can only contain letters, numbers, spaces, hyphens, and apostrophes')
+});
 
 export default function Profile() {
   const { user } = useAuth();
@@ -76,10 +85,11 @@ export default function Profile() {
       if (!file || !user?.id) return;
 
       // Validate file type
-      if (!file.type.startsWith('image/')) {
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
         toast({
-          title: 'Invalid File',
-          description: 'Please upload an image file.',
+          title: 'Invalid File Type',
+          description: 'Please upload a JPG, PNG, or WebP image.',
           variant: 'destructive',
         });
         return;
@@ -97,9 +107,11 @@ export default function Profile() {
 
       setUploading(true);
 
-      // Upload to storage
-      const fileExt = file.name.split('.').pop();
-      const filePath = `${user.id}/avatar.${fileExt}`;
+      // Generate safe filename - use timestamp to ensure uniqueness
+      const timestamp = Date.now();
+      const fileExt = file.type.split('/')[1]; // Extract extension from MIME type
+      const sanitizedFilename = `avatar-${timestamp}.${fileExt}`;
+      const filePath = `${user.id}/${sanitizedFilename}`;
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')
@@ -142,9 +154,22 @@ export default function Profile() {
     try {
       if (!user?.id) return;
 
+      // Validate display name
+      const validation = profileSchema.safeParse({ display_name: displayName });
+      
+      if (!validation.success) {
+        const error = validation.error.issues[0];
+        toast({
+          title: 'Validation Error',
+          description: error.message,
+          variant: 'destructive',
+        });
+        return;
+      }
+
       const { error } = await supabase
         .from('profiles')
-        .update({ display_name: displayName })
+        .update({ display_name: validation.data.display_name })
         .eq('user_id', user.id);
 
       if (error) throw error;
@@ -155,10 +180,11 @@ export default function Profile() {
         description: 'Your settings have been saved.',
       });
       setHasUnsavedChanges(false);
-    } catch (error) {
+    } catch (error: any) {
+      const errorMessage = error?.message || 'Failed to update profile.';
       toast({
         title: 'Error',
-        description: 'Failed to update profile.',
+        description: errorMessage,
         variant: 'destructive',
       });
     }
