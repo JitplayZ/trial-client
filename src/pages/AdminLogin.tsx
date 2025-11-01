@@ -17,6 +17,9 @@ const AdminLogin = () => {
   useEffect(() => {
     const checkAdminStatus = async () => {
       if (user) {
+        // Wait a bit to allow trigger to assign role for new users
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
         try {
           const { data: isAdmin } = await supabase.rpc('has_role', {
             _user_id: user.id,
