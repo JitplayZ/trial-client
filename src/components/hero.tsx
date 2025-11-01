@@ -1,6 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Play, Sparkles, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
+import student1 from "@/assets/student1.jpg";
+import student2 from "@/assets/student2.jpg";
+import student3 from "@/assets/student3.jpg";
+import student4 from "@/assets/student4.jpg";
 
 const Hero = () => {
   return (
@@ -60,11 +64,13 @@ const Hero = () => {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-8 text-sm text-foreground-secondary animate-fade-in delay-600">
             <div className="flex items-center space-x-2">
               <div className="flex -space-x-2">
-                {[1, 2, 3, 4].map((i) => (
+                {[student1, student2, student3, student4].map((img, i) => (
                   <div 
                     key={i}
-                    className="w-8 h-8 bg-gradient-primary rounded-full border-2 border-background"
-                  ></div>
+                    className="w-8 h-8 rounded-full border-2 border-background overflow-hidden"
+                  >
+                    <img src={img} alt={`Student ${i + 1}`} className="w-full h-full object-cover" />
+                  </div>
                 ))}
               </div>
               <span>1000+ developers building</span>

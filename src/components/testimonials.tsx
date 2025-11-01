@@ -1,62 +1,68 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Star, Quote } from "lucide-react";
+import student1 from "@/assets/student1.jpg";
+import student2 from "@/assets/student2.jpg";
+import student3 from "@/assets/student3.jpg";
+import student4 from "@/assets/student4.jpg";
+import student5 from "@/assets/student5.jpg";
+import student6 from "@/assets/student6.jpg";
 
 const Testimonials = () => {
   const testimonials = [
     {
       name: "Arjun Sharma",
-      role: "Freelance Developer",
-      company: "Independent",
-      image: "/api/placeholder/64/64",
+      role: "Computer Science Student",
+      company: "IIT Delhi",
+      image: student1,
       rating: 5,
-      content: "AIProjects transformed my freelance business. I can now deliver complex projects to clients in days instead of months. The code quality is exceptional!",
-      project: "Built 8 client projects in 2 months"
+      content: "tRIAL-cLIENTS helped me practice real-world client scenarios. I can now approach freelance projects with confidence knowing what clients actually need.",
+      project: "Practiced 15+ client briefs"
     },
     {
       name: "Priya Patel", 
-      role: "Startup Founder",
-      company: "TechStart",
-      image: "/api/placeholder/64/64",
+      role: "Design Student",
+      company: "NIFT Mumbai",
+      image: student2,
       rating: 5,
-      content: "We needed an MVP fast for our investors. AIProjects generated a full-stack SaaS platform that impressed everyone. Saved us $50k in development costs.",
-      project: "MVP delivered in 1 week"
+      content: "As a design student, understanding client requirements was my biggest challenge. This platform helped me learn how to interpret briefs and deliver what clients want.",
+      project: "Portfolio ready in 2 weeks"
     },
     {
       name: "Rahul Gupta",
-      role: "Digital Agency Owner", 
-      company: "WebWorks Agency",
-      image: "/api/placeholder/64/64",
+      role: "Web Development Student", 
+      company: "BITS Pilani",
+      image: student3,
       rating: 5,
-      content: "Our agency uses AIProjects for rapid prototyping and client demos. The quality is professional-grade and clients love the quick turnaround.",
-      project: "150+ projects delivered"
+      content: "The realistic client briefs from tRIAL-cLIENTS prepared me for my first internship. I already knew how to handle client communications and project requirements.",
+      project: "Landed dream internship"
     },
     {
       name: "Sarah Chen",
-      role: "Product Manager",
-      company: "GrowthCorp",
-      image: "/api/placeholder/64/64", 
+      role: "UX Design Student",
+      company: "Stanford University",
+      image: student4, 
       rating: 5,
-      content: "Perfect for validating ideas quickly. We generated 5 different landing pages to test our product positioning. A/B testing made easy!",
-      project: "5x faster iteration"
+      content: "Perfect for building a portfolio with realistic projects. The briefs feel authentic and help you understand what real clients need from designers.",
+      project: "Built complete portfolio"
     },
     {
       name: "Vikram Singh",
-      role: "Full-Stack Developer",
-      company: "CodeCraft Solutions",
-      image: "/api/placeholder/64/64",
+      role: "Software Engineering Student",
+      company: "VIT Vellore",
+      image: student5,
       rating: 5,
-      content: "The generated code follows best practices and is actually maintainable. I use it as a starting point and customize from there. Huge time saver.",
-      project: "80% faster development"
+      content: "This platform bridges the gap between academic projects and real-world work. The client briefs helped me understand business requirements better.",
+      project: "Ready for freelancing"
     },
     {
       name: "Ananya Reddy",
-      role: "UX Designer", 
-      company: "DesignLab",
-      image: "/api/placeholder/64/64",
+      role: "Product Design Student", 
+      company: "MIT",
+      image: student6,
       rating: 5,
-      content: "Love how it generates both functional prototypes AND beautiful designs. Clients can see their ideas come to life immediately in our meetings.",
-      project: "Doubled client satisfaction"
+      content: "tRIAL-cLIENTS gave me the confidence to take on real client work. The realistic scenarios prepared me for actual freelance projects.",
+      project: "First paid project secured"
     }
   ];
 
@@ -67,10 +73,10 @@ const Testimonials = () => {
         <div className="text-center max-w-3xl mx-auto mb-16">
           <h2 className="text-4xl sm:text-5xl font-display font-bold mb-6">
             Trusted by
-            <span className="text-gradient"> thousands of developers</span>
+            <span className="text-gradient"> thousands of students</span>
           </h2>
           <p className="text-xl text-foreground-secondary">
-            From freelancers to agencies, developers worldwide are building better projects faster with AIProjects.
+            From design students to developers, students worldwide are preparing for real-world work with tRIAL-cLIENTS.
           </p>
         </div>
 
@@ -109,10 +115,12 @@ const Testimonials = () => {
 
                 {/* Author */}
                 <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-gradient-primary rounded-full flex items-center justify-center">
-                    <span className="text-primary-foreground font-semibold">
-                      {testimonial.name.split(' ').map(n => n[0]).join('')}
-                    </span>
+                  <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
+                    <img 
+                      src={testimonial.image} 
+                      alt={testimonial.name}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                   <div>
                     <p className="font-semibold text-foreground">{testimonial.name}</p>
@@ -132,7 +140,7 @@ const Testimonials = () => {
         {/* CTA */}
         <div className="text-center mt-16">
           <p className="text-foreground-secondary mb-6">
-            Join thousands of developers building with AI
+            Join thousands of students preparing for real-world work
           </p>
           <div className="flex items-center justify-center space-x-8 text-sm text-foreground-secondary">
             <div className="flex items-center space-x-2">
@@ -140,9 +148,9 @@ const Testimonials = () => {
               <span>4.9/5 average rating</span>
             </div>
             <div className="w-1 h-1 bg-muted rounded-full"></div>
-            <span>1000+ active developers</span>
+            <span>1000+ active students</span>
             <div className="w-1 h-1 bg-muted rounded-full"></div>
-            <span>50,000+ projects generated</span>
+            <span>50,000+ briefs generated</span>
           </div>
         </div>
       </div>

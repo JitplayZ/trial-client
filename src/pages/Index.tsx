@@ -29,7 +29,7 @@ const Index = () => {
         "url": "https://yourdomain.com/",
         "logo": "https://yourdomain.com/favicon.png",
         "sameAs": [
-          "https://twitter.com/aiprojects_dev"
+          "https://twitter.com/trial_clients"
         ]
       },
       {

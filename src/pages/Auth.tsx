@@ -95,8 +95,8 @@ const Auth = () => {
             </CardTitle>
             <CardDescription className="text-base">
               {isSignUp 
-                ? 'Join AIProjects and start building amazing projects' 
-                : 'Sign in to continue building with AI'
+                ? 'Join tRIAL-cLIENTS and start generating client briefs' 
+                : 'Sign in to continue generating briefs with AI'
               }
             </CardDescription>
           </CardHeader>

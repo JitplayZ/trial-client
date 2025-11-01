@@ -140,7 +140,7 @@ const Onboarding = () => {
                 <Target className="h-8 w-8 text-primary-foreground" />
               </div>
               <h2 className="text-2xl font-display font-bold mb-2">What's your goal?</h2>
-              <p className="text-foreground-secondary">Tell us what you want to achieve with AIProjects</p>
+              <p className="text-foreground-secondary">Tell us what you want to achieve with tRIAL-cLIENTS</p>
             </div>
 
             <div>
@@ -209,7 +209,7 @@ const Onboarding = () => {
 
         <Card className="glass-card border-border/20 animate-slide-up">
           <CardHeader className="text-center">
-            <CardTitle className="text-3xl font-display">Welcome to AIProjects</CardTitle>
+            <CardTitle className="text-3xl font-display">Welcome to tRIAL-cLIENTS</CardTitle>
             <CardDescription>
               Step {currentStep} of 3 — Let's set up your account
             </CardDescription>

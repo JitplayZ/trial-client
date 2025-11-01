@@ -32,7 +32,7 @@ const QuickActions = () => {
   };
 
   const handleShareWhatsApp = () => {
-    const message = encodeURIComponent(`Check out AIProjects! Build amazing projects with AI. Join using my link: ${referralLink}`);
+    const message = encodeURIComponent(`Check out tRIAL-cLIENTS! Generate realistic client briefs with AI. Join using my link: ${referralLink}`);
     window.open(`https://wa.me/?text=${message}`, '_blank');
   };
 

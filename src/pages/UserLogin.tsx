@@ -1,22 +1,19 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { ArrowLeft, Shield, Zap, User } from "lucide-react";
+import { ArrowLeft, Shield, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
 const UserLogin = () => {
-  const [fullName, setFullName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { signInWithGoogle } = useAuth();
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     
-    // Use the real Google OAuth flow with optional displayName
-    const { error } = await signInWithGoogle(fullName.trim() || undefined);
+    // Use the real Google OAuth flow
+    const { error } = await signInWithGoogle();
     
     if (error) {
       setIsLoading(false);
@@ -50,32 +47,13 @@ const UserLogin = () => {
             <div className="w-16 h-16 bg-gradient-primary rounded-xl flex items-center justify-center mx-auto mb-4">
               <Zap className="h-8 w-8 text-primary-foreground" />
             </div>
-            <CardTitle className="text-2xl font-display">Welcome to AIProjects</CardTitle>
+            <CardTitle className="text-2xl font-display">Welcome to tRIAL-cLIENTS</CardTitle>
             <CardDescription className="text-base">
-              Sign in to start building amazing projects with AI
+              Sign in to start generating realistic client briefs with AI
             </CardDescription>
           </CardHeader>
 
           <CardContent className="space-y-6">
-            {/* Optional Full Name Input */}
-            <div className="space-y-2">
-              <Label htmlFor="fullName" className="flex items-center space-x-2">
-                <User className="h-4 w-4" />
-                <span>Full Name (Optional)</span>
-              </Label>
-              <Input
-                id="fullName"
-                type="text"
-                placeholder="Enter your full name"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className="w-full"
-              />
-              <p className="text-xs text-foreground-secondary">
-                This will be used as your display name in the app
-              </p>
-            </div>
-
             {/* Google Sign In Button */}
             <Button
               onClick={handleGoogleLogin}

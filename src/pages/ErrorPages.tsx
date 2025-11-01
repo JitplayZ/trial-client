@@ -115,7 +115,7 @@ export const MaintenancePage = () => {
           <CardContent className="space-y-6">
             <div className="text-center">
               <p className="text-foreground-secondary mb-4">
-                AIProjects is currently undergoing scheduled maintenance to improve performance and add new features.
+                tRIAL-cLIENTS is currently undergoing scheduled maintenance to improve performance and add new features.
               </p>
               <p className="text-sm text-accent mb-6">
                 Estimated completion: 30 minutes

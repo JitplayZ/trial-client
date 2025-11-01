@@ -8,7 +8,7 @@ const Pricing = () => {
   const plans = [
     {
       name: "Free",
-      description: "Perfect for trying out AIProjects",
+      description: "Perfect for trying out tRIAL-cLIENTS",
       price: "₹0",
       period: "forever",
       icon: Zap,

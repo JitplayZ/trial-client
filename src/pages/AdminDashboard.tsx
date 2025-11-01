@@ -50,21 +50,19 @@ const AdminDashboard = () => {
 
   const recentActions = [
     {
-      user: "admin@aiprojects.com",
+      user: "admin@trial-clients.com",
       action: "Updated generation limits",
       details: "Increased free tier from 5 to 8 projects",
-      timestamp: "2 minutes ago",
-      severity: "medium"
+      timestamp: "10 mins ago"
     },
     {
-      user: "admin@aiprojects.com", 
+      user: "admin@trial-clients.com", 
       action: "Paused user generation",
       details: "Temporarily paused user ID: user_12345",
-      timestamp: "15 minutes ago",
-      severity: "high"
+      timestamp: "1 hour ago"
     },
     {
-      user: "admin@aiprojects.com",
+      user: "admin@trial-clients.com",
       action: "Reviewed flagged content",
       details: "Approved project: 'E-commerce Platform'",
       timestamp: "1 hour ago",
