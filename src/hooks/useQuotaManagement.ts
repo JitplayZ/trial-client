@@ -157,6 +157,9 @@ export const useQuotaManagement = () => {
 
     const status = getQuotaStatus(level);
     if (!status.available) return false;
+    
+    // Don't consume quota if it's unlimited
+    if (status.remaining === 'unlimited') return true;
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -164,6 +167,9 @@ export const useQuotaManagement = () => {
 
       const columnName = `${level}_left`;
       const currentValue = quotaData.quotas[`${level}Left` as keyof typeof quotaData.quotas];
+      
+      // Handle unlimited case (-1 in database)
+      if (currentValue === -1) return true;
       
       if (typeof currentValue !== 'number' || currentValue <= 0) return false;
 
