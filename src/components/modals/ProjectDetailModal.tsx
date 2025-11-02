@@ -44,21 +44,19 @@ export const ProjectDetailModal = ({ isOpen, onClose }: ProjectDetailModalProps)
       if (!data?.success) throw new Error('Generation failed');
       
       toast({
-        title: "Project Brief Generated!",
-        description: `Your ${level} ${projectType} project is ready.`,
+        title: "Generating Your Brief",
+        description: "Please wait while we create your personalized project brief...",
       });
 
-      setTimeout(() => {
-        navigate(`/projects/${data.id || 'mock-' + Date.now()}`);
-        onClose();
-      }, 500);
+      // Navigate immediately to show generating state
+      navigate(`/projects/${data.id}`);
+      onClose();
     } catch (error) {
       toast({
         title: "Generation Failed",
-        description: "Please try again later.",
+        description: error instanceof Error ? error.message : "Please try again later.",
         variant: "destructive",
       });
-    } finally {
       setGeneratingLevel(null);
     }
   };

@@ -52,6 +52,7 @@ export type Database = {
           id: string
           industry: string | null
           level: string | null
+          status: string | null
           title: string
           type: string | null
           updated_at: string
@@ -64,6 +65,7 @@ export type Database = {
           id?: string
           industry?: string | null
           level?: string | null
+          status?: string | null
           title: string
           type?: string | null
           updated_at?: string
@@ -76,6 +78,7 @@ export type Database = {
           id?: string
           industry?: string | null
           level?: string | null
+          status?: string | null
           title?: string
           type?: string | null
           updated_at?: string

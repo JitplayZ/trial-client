@@ -30,8 +30,9 @@ interface ProjectBrief {
   level: string;
   type: string;
   industry: string;
-  brief_data: BriefData;
+  brief_data: BriefData | null;
   created_at: string;
+  status?: string;
 }
 
 export default function ProjectWorkspace() {
@@ -71,6 +72,35 @@ export default function ProjectWorkspace() {
     };
 
     fetchProject();
+
+    // Set up realtime subscription for project updates
+    const channel = supabase
+      .channel('project-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'projects',
+          filter: `id=eq.${id}`
+        },
+        (payload) => {
+          console.log('Project updated via realtime:', payload);
+          setProject(payload.new as any as ProjectBrief);
+          
+          if (payload.new.status === 'completed') {
+            toast({
+              title: 'Brief Ready!',
+              description: 'Your project brief has been generated successfully',
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [id, toast]);
 
   const copySection = (content: string, section: string) => {
@@ -139,12 +169,35 @@ export default function ProjectWorkspace() {
     );
   }
 
-  if (!project.brief_data) {
+  if (project.status === 'generating' || !project.brief_data) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-foreground mb-2">Invalid project data</h1>
-          <Button onClick={() => navigate('/dashboard')}>Back to Dashboard</Button>
+        <div className="text-center max-w-md">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+            className="inline-block mb-6"
+          >
+            <div className="h-16 w-16 border-4 border-primary border-t-transparent rounded-full" />
+          </motion.div>
+          <h1 className="text-2xl font-bold text-foreground mb-2">Generating Your Brief</h1>
+          <p className="text-muted-foreground mb-4">
+            Our AI is crafting a personalized project brief for you. This usually takes 30-60 seconds.
+          </p>
+          <motion.div
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            className="text-sm text-muted-foreground"
+          >
+            Please wait...
+          </motion.div>
+          <Button 
+            variant="outline" 
+            className="mt-6"
+            onClick={() => navigate('/dashboard')}
+          >
+            Back to Dashboard
+          </Button>
         </div>
       </div>
     );

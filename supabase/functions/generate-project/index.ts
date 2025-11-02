@@ -21,54 +21,24 @@ serve(async (req) => {
       throw new Error('User ID is required');
     }
 
-    // Call n8n webhook with GET request
-    const n8nWebhookUrl = new URL('https://n8n-imnxqzfh.us-west-1.clawcloudrun.com/webhook-test/generate-brief');
-    n8nWebhookUrl.searchParams.append('level', level);
-    n8nWebhookUrl.searchParams.append('projectType', projectType);
-    n8nWebhookUrl.searchParams.append('industry', industry);
-    n8nWebhookUrl.searchParams.append('timestamp', new Date().toISOString());
-    
-    console.log('Calling n8n webhook...');
-    const n8nResponse = await fetch(n8nWebhookUrl.toString(), {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!n8nResponse.ok) {
-      console.error('n8n webhook failed:', n8nResponse.status, await n8nResponse.text());
-      throw new Error('Failed to generate project brief from n8n');
-    }
-
-    const briefData = await n8nResponse.json();
-    console.log('n8n response received:', JSON.stringify(briefData));
-
-    // Check if briefData is an array with actual data
-    const actualData = Array.isArray(briefData) ? briefData[0] : null;
-    
-    if (!actualData) {
-      console.error('n8n returned invalid format:', briefData);
-      throw new Error('n8n webhook did not return expected data format. Expected an array with project data.');
-    }
-
     // Initialize Supabase client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Store project in database
+    // Create project with "generating" status immediately
     const { data: project, error: dbError } = await supabaseClient
       .from('projects')
       .insert({
         user_id: userId,
-        title: actualData.company_name || `${projectType} Project`,
-        description: actualData.tagline || `A ${level} level ${projectType} project for ${industry}`,
+        title: `${projectType} Project`,
+        description: `A ${level} level ${projectType} project for ${industry}`,
         type: projectType,
-        brief_data: actualData,
         level: level,
         industry: industry,
+        status: 'generating',
+        brief_data: null,
       })
       .select()
       .single();
@@ -78,13 +48,33 @@ serve(async (req) => {
       throw dbError;
     }
 
-    console.log('Project created successfully:', project.id);
+    console.log('Project created with ID:', project.id);
 
+    // Call n8n webhook asynchronously (don't wait for response)
+    const n8nWebhookUrl = new URL('https://n8n-imnxqzfh.us-west-1.clawcloudrun.com/webhook-test/generate-brief');
+    n8nWebhookUrl.searchParams.append('level', level);
+    n8nWebhookUrl.searchParams.append('projectType', projectType);
+    n8nWebhookUrl.searchParams.append('industry', industry);
+    n8nWebhookUrl.searchParams.append('projectId', project.id);
+    n8nWebhookUrl.searchParams.append('timestamp', new Date().toISOString());
+    
+    console.log('Triggering n8n webhook asynchronously...');
+    
+    // Fire and forget - n8n will call back when ready
+    fetch(n8nWebhookUrl.toString(), {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }).catch(err => console.error('n8n webhook trigger failed:', err));
+
+    // Return immediately with project ID
     return new Response(
       JSON.stringify({ 
         success: true, 
         id: project.id,
-        data: actualData
+        status: 'generating',
+        message: 'Project creation started. Brief is being generated...'
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
