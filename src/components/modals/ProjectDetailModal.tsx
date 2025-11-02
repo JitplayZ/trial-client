@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuotaManagement, LevelType } from '@/hooks/useQuotaManagement';
 import { QuotaLevelCard } from '@/components/QuotaLevelCard';
+import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
@@ -35,15 +36,12 @@ export const ProjectDetailModal = ({ isOpen, onClose }: ProjectDetailModalProps)
     try {
       consumeQuota(level);
 
-      const response = await fetch('/api/generate-project', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ level, projectType, industry, userId: user?.id })
+      const { data, error } = await supabase.functions.invoke('generate-project', {
+        body: { level, projectType, industry, userId: user?.id }
       });
 
-      if (!response.ok) throw new Error('Generation failed');
-
-      const data = await response.json();
+      if (error) throw error;
+      if (!data?.success) throw new Error('Generation failed');
       
       toast({
         title: "Project Brief Generated!",

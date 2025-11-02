@@ -1,28 +1,37 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Copy, Download, Share2, Edit, ArrowLeft } from 'lucide-react';
+import { Copy, Download, Share2, ArrowLeft, Palette } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
+import { supabase } from '@/integrations/supabase/client';
+
+interface BriefData {
+  company_name: string;
+  tagline: string;
+  slogan: string;
+  location: string;
+  primary_color_palette: string[];
+  design_style_keywords: string[];
+  intro: string;
+  objective: string;
+  requirement_design: string;
+  about_page: string;
+  home_page: string;
+  order_page: string;
+  audience: string;
+  tips: string;
+}
 
 interface ProjectBrief {
   id: string;
   level: string;
-  projectType: string;
+  type: string;
   industry: string;
-  brief: {
-    intro: string;
-    objective: string;
-    requirement_design: string;
-    about_page: string;
-    home_page: string;
-    order_page: string;
-    audience: string;
-    tips: string;
-  };
-  generatedAt: string;
+  brief_data: BriefData;
+  created_at: string;
 }
 
 export default function ProjectWorkspace() {
@@ -33,39 +42,30 @@ export default function ProjectWorkspace() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Mock fetch - replace with actual API
     const fetchProject = async () => {
+      if (!id) return;
+      
       setLoading(true);
       try {
-        // Mock data
-        const mockProject: ProjectBrief = {
-          id: id || '',
-          level: 'beginner',
-          projectType: 'Website',
-          industry: 'Fashion',
-          brief: {
-            intro: 'Welcome to your fashion website project. This brief will guide you through creating a modern, elegant online presence for your fashion brand.',
-            objective: 'Create a visually stunning website that showcases your fashion collections, tells your brand story, and drives online sales through an intuitive shopping experience.',
-            requirement_design: 'Modern, clean design with high-quality imagery. Mobile-first responsive layout. Fast loading times. Accessible navigation. Integration with payment gateway.',
-            about_page: 'Tell your brand story. Include founder information, brand values, sustainability practices, and what makes your fashion line unique.',
-            home_page: 'Hero section with latest collection. Featured products carousel. Brand story snippet. Social proof (testimonials). Newsletter signup.',
-            order_page: 'Product gallery with filters. Quick view feature. Size guide. Secure checkout process. Multiple payment options. Order tracking.',
-            audience: 'Fashion-conscious millennials and Gen Z (18-35 years old). Urban professionals. Sustainability-minded consumers. Online shoppers preferring boutique brands.',
-            tips: 'Use high-quality product photography. Implement virtual try-on if possible. Offer easy returns. Build email list for new collections. Partner with fashion influencers.'
-          },
-          generatedAt: new Date().toISOString()
-        };
-        
-        setTimeout(() => {
-          setProject(mockProject);
-          setLoading(false);
-        }, 500);
+        const { data, error } = await supabase
+          .from('projects')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (error) throw error;
+
+        if (data) {
+          setProject(data as ProjectBrief);
+        }
       } catch (error) {
+        console.error('Error loading project:', error);
         toast({
           title: 'Error loading project',
           description: 'Please try again',
           variant: 'destructive'
         });
+      } finally {
         setLoading(false);
       }
     };
@@ -82,17 +82,27 @@ export default function ProjectWorkspace() {
   };
 
   const downloadBrief = () => {
-    if (!project) return;
+    if (!project || !project.brief_data) return;
     
-    const content = Object.entries(project.brief)
-      .map(([key, value]) => `## ${key.replace(/_/g, ' ').toUpperCase()}\n\n${value}\n\n`)
-      .join('');
+    const briefData = project.brief_data;
+    const content = `# ${briefData.company_name}\n\n${briefData.tagline}\n\n${briefData.slogan}\n\n` +
+      `**Location:** ${briefData.location}\n\n` +
+      `**Primary Colors:** ${briefData.primary_color_palette.join(', ')}\n\n` +
+      `**Design Style:** ${briefData.design_style_keywords.join(', ')}\n\n` +
+      `## INTRO\n\n${briefData.intro}\n\n` +
+      `## OBJECTIVE\n\n${briefData.objective}\n\n` +
+      `## REQUIREMENT DESIGN\n\n${briefData.requirement_design}\n\n` +
+      `## ABOUT PAGE\n\n${briefData.about_page}\n\n` +
+      `## HOME PAGE\n\n${briefData.home_page}\n\n` +
+      `## ORDER PAGE\n\n${briefData.order_page}\n\n` +
+      `## AUDIENCE\n\n${briefData.audience}\n\n` +
+      `## TIPS\n\n${briefData.tips}\n\n`;
     
     const blob = new Blob([content], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `project-brief-${project.id}.md`;
+    a.download = `${briefData.company_name.replace(/\s+/g, '-').toLowerCase()}-brief.md`;
     a.click();
     
     toast({
@@ -129,15 +139,28 @@ export default function ProjectWorkspace() {
     );
   }
 
+  if (!project.brief_data) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-foreground mb-2">Invalid project data</h1>
+          <Button onClick={() => navigate('/dashboard')}>Back to Dashboard</Button>
+        </div>
+      </div>
+    );
+  }
+
+  const briefData = project.brief_data;
+
   const sections = [
-    { key: 'intro', title: '1. Intro', content: project.brief.intro },
-    { key: 'objective', title: '2. Objective', content: project.brief.objective },
-    { key: 'requirement_design', title: '3. Requirement Design', content: project.brief.requirement_design },
-    { key: 'about_page', title: '4. About Page', content: project.brief.about_page },
-    { key: 'home_page', title: '5. Home Page', content: project.brief.home_page },
-    { key: 'order_page', title: '6. Order Page', content: project.brief.order_page },
-    { key: 'audience', title: '7. Audience', content: project.brief.audience },
-    { key: 'tips', title: '8. Tips', content: project.brief.tips },
+    { key: 'intro', title: '1. Introduction', content: briefData.intro },
+    { key: 'objective', title: '2. Project Objective', content: briefData.objective },
+    { key: 'requirement_design', title: '3. Design & Technical Requirements', content: briefData.requirement_design },
+    { key: 'about_page', title: '4. About Page Content', content: briefData.about_page },
+    { key: 'home_page', title: '5. Home Page Structure', content: briefData.home_page },
+    { key: 'order_page', title: '6. Order/Product Page', content: briefData.order_page },
+    { key: 'audience', title: '7. Target Audience', content: briefData.audience },
+    { key: 'tips', title: '8. Implementation Tips', content: briefData.tips },
   ];
 
   return (
@@ -153,10 +176,11 @@ export default function ProjectWorkspace() {
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Project Brief</h1>
-              <div className="flex items-center space-x-2 mt-1">
+              <h1 className="text-3xl font-bold text-foreground">{briefData.company_name}</h1>
+              <p className="text-muted-foreground text-lg mt-1">{briefData.tagline}</p>
+              <div className="flex items-center space-x-2 mt-2">
                 <Badge variant="outline">{project.level}</Badge>
-                <Badge variant="outline">{project.projectType}</Badge>
+                <Badge variant="outline">{project.type}</Badge>
                 <Badge variant="outline">{project.industry}</Badge>
               </div>
             </div>
@@ -181,10 +205,18 @@ export default function ProjectWorkspace() {
               <CardHeader>
                 <CardTitle className="text-sm">Project Details</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3 text-sm">
+              <CardContent className="space-y-4 text-sm">
+                <div>
+                  <p className="text-muted-foreground">Slogan</p>
+                  <p className="font-medium text-foreground">{briefData.slogan}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Location</p>
+                  <p className="font-medium text-foreground">{briefData.location}</p>
+                </div>
                 <div>
                   <p className="text-muted-foreground">Type</p>
-                  <p className="font-medium text-foreground">{project.projectType}</p>
+                  <p className="font-medium text-foreground">{project.type}</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">Industry</p>
@@ -195,9 +227,33 @@ export default function ProjectWorkspace() {
                   <p className="font-medium text-foreground capitalize">{project.level}</p>
                 </div>
                 <div>
+                  <p className="text-muted-foreground mb-2">Color Palette</p>
+                  <div className="flex gap-2 flex-wrap">
+                    {briefData.primary_color_palette.map((color, idx) => (
+                      <div key={idx} className="flex flex-col items-center gap-1">
+                        <div 
+                          className="h-8 w-8 rounded-md border border-border shadow-sm"
+                          style={{ backgroundColor: color }}
+                        />
+                        <span className="text-xs text-muted-foreground">{color}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-muted-foreground mb-2">Design Style</p>
+                  <div className="flex flex-wrap gap-1">
+                    {briefData.design_style_keywords.map((keyword, idx) => (
+                      <Badge key={idx} variant="secondary" className="text-xs">
+                        {keyword}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+                <div>
                   <p className="text-muted-foreground">Generated</p>
                   <p className="font-medium text-foreground">
-                    {new Date(project.generatedAt).toLocaleDateString()}
+                    {new Date(project.created_at).toLocaleDateString()}
                   </p>
                 </div>
               </CardContent>
@@ -224,9 +280,6 @@ export default function ProjectWorkspace() {
                           onClick={() => copySection(section.content, section.title)}
                         >
                           <Copy className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>

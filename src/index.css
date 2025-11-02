@@ -158,6 +158,11 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    cursor: none !important;
+  }
+
+  * {
+    cursor: none !important;
   }
 
   html {
