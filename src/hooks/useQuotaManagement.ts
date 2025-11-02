@@ -60,11 +60,37 @@ export const useQuotaManagement = () => {
         .from('subscriptions')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
 
-      if (data) {
+      // If subscription doesn't exist, create one with free plan defaults
+      if (!data) {
+        const { data: newSubscription, error: insertError } = await supabase
+          .from('subscriptions')
+          .insert({
+            user_id: user.id,
+            plan: 'free',
+            beginner_left: -1, // unlimited
+            intermediate_left: 2,
+            veteran_left: 0,
+            reset_at: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toISOString()
+          })
+          .select()
+          .single();
+
+        if (insertError) throw insertError;
+
+        setQuotaData({
+          plan: newSubscription.plan as PlanType,
+          quotas: {
+            beginnerLeft: newSubscription.beginner_left,
+            intermediateLeft: newSubscription.intermediate_left,
+            veteranLeft: newSubscription.veteran_left,
+            resetAt: newSubscription.reset_at
+          }
+        });
+      } else {
         setQuotaData({
           plan: data.plan as PlanType,
           quotas: {
@@ -96,7 +122,8 @@ export const useQuotaManagement = () => {
     isLocked: boolean;
   } => {
     if (!quotaData) {
-      return { available: false, remaining: 0, limit: 0, isLocked: true };
+      // Return loading state instead of locked when quotaData is not available yet
+      return { available: false, remaining: 0, limit: 0, isLocked: false };
     }
 
     const limits = PLAN_LIMITS[quotaData.plan];
@@ -111,6 +138,12 @@ export const useQuotaManagement = () => {
     }
 
     const remaining = quotaData.quotas[`${level}Left` as keyof typeof quotaData.quotas] as number;
+    
+    // Handle unlimited case (when remaining is -1 in database)
+    if (remaining === -1) {
+      return { available: true, remaining: 'unlimited', limit: 'unlimited', isLocked: false };
+    }
+    
     return {
       available: remaining > 0,
       remaining,
