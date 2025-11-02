@@ -42,7 +42,15 @@ serve(async (req) => {
     }
 
     const briefData = await n8nResponse.json();
-    console.log('n8n response received:', briefData);
+    console.log('n8n response received:', JSON.stringify(briefData));
+
+    // Check if briefData is an array with actual data
+    const actualData = Array.isArray(briefData) ? briefData[0] : null;
+    
+    if (!actualData) {
+      console.error('n8n returned invalid format:', briefData);
+      throw new Error('n8n webhook did not return expected data format. Expected an array with project data.');
+    }
 
     // Initialize Supabase client
     const supabaseClient = createClient(
@@ -55,10 +63,10 @@ serve(async (req) => {
       .from('projects')
       .insert({
         user_id: userId,
-        title: briefData[0]?.company_name || `${projectType} Project`,
-        description: briefData[0]?.tagline || `A ${level} level ${projectType} project for ${industry}`,
+        title: actualData.company_name || `${projectType} Project`,
+        description: actualData.tagline || `A ${level} level ${projectType} project for ${industry}`,
         type: projectType,
-        brief_data: briefData[0], // Store the entire n8n response
+        brief_data: actualData,
         level: level,
         industry: industry,
       })
@@ -76,7 +84,7 @@ serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         id: project.id,
-        data: briefData[0]
+        data: actualData
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
