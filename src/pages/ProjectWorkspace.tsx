@@ -56,7 +56,7 @@ export default function ProjectWorkspace() {
         if (error) throw error;
 
         if (data) {
-          setProject(data as ProjectBrief);
+          setProject(data as any as ProjectBrief);
         }
       } catch (error) {
         console.error('Error loading project:', error);
