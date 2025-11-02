@@ -21,21 +21,19 @@ serve(async (req) => {
       throw new Error('User ID is required');
     }
 
-    // Call n8n webhook
-    const n8nWebhookUrl = 'https://n8n-imnxqzfh.us-west-1.clawcloudrun.com/webhook-test/generate-brief';
+    // Call n8n webhook with GET request
+    const n8nWebhookUrl = new URL('https://n8n-imnxqzfh.us-west-1.clawcloudrun.com/webhook-test/generate-brief');
+    n8nWebhookUrl.searchParams.append('level', level);
+    n8nWebhookUrl.searchParams.append('projectType', projectType);
+    n8nWebhookUrl.searchParams.append('industry', industry);
+    n8nWebhookUrl.searchParams.append('timestamp', new Date().toISOString());
     
     console.log('Calling n8n webhook...');
-    const n8nResponse = await fetch(n8nWebhookUrl, {
-      method: 'POST',
+    const n8nResponse = await fetch(n8nWebhookUrl.toString(), {
+      method: 'GET',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        level,
-        projectType,
-        industry,
-        timestamp: new Date().toISOString(),
-      }),
     });
 
     if (!n8nResponse.ok) {
