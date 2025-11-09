@@ -1,10 +1,18 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Input validation schema
+const generateProjectSchema = z.object({
+  level: z.enum(['beginner', 'intermediate', 'veteran']),
+  projectType: z.string().min(1).max(100),
+  industry: z.string().min(1).max(100),
+});
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -13,12 +21,10 @@ serve(async (req) => {
   }
 
   try {
-    const { level, projectType, industry, userId } = await req.json();
-
-    console.log('Generating project:', { level, projectType, industry, userId });
-
-    if (!userId) {
-      throw new Error('User ID is required');
+    // Verify authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('Unauthorized: Missing authorization header');
     }
 
     // Initialize Supabase client
@@ -26,6 +32,23 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
+
+    // Get authenticated user from JWT
+    const jwt = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(jwt);
+    
+    if (authError || !user) {
+      throw new Error('Unauthorized: Invalid token');
+    }
+
+    // Validate and parse input
+    const requestData = await req.json();
+    const validatedData = generateProjectSchema.parse(requestData);
+    
+    const { level, projectType, industry } = validatedData;
+    const userId = user.id; // Use authenticated user ID
+
+    console.log('Generating project:', { level, projectType, industry, userId });
 
     // Create project with "generating" status immediately
     const { data: project, error: dbError } = await supabaseClient
@@ -83,6 +106,32 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error('Error generating project:', error);
+    
+    // Handle validation errors
+    if (error instanceof z.ZodError) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Invalid input',
+          details: error.errors 
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400 
+        }
+      );
+    }
+    
+    // Handle authentication errors
+    if (error instanceof Error && error.message.includes('Unauthorized')) {
+      return new Response(
+        JSON.stringify({ error: error.message }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 401 
+        }
+      );
+    }
+    
     return new Response(
       JSON.stringify({ 
         error: error instanceof Error ? error.message : 'Unknown error occurred' 

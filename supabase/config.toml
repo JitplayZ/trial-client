@@ -1,7 +1,1 @@
 project_id = "avsuyudchzyoyakxotfm"
-
-[functions.generate-project]
-verify_jwt = false
-
-[functions.update-project-brief]
-verify_jwt = false
