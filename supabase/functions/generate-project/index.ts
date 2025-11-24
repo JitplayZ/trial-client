@@ -74,7 +74,12 @@ serve(async (req) => {
     console.log('Project created with ID:', project.id);
 
     // Call n8n webhook asynchronously (don't wait for response)
-    const n8nWebhookUrl = new URL('https://n8n-imnxqzfh.us-west-1.clawcloudrun.com/webhook-test/generate-brief');
+    const n8nWebhookBaseUrl = Deno.env.get('N8N_WEBHOOK_URL');
+    if (!n8nWebhookBaseUrl) {
+      console.error('N8N_WEBHOOK_URL environment variable is not set');
+      throw new Error('Webhook configuration error');
+    }
+    const n8nWebhookUrl = new URL(n8nWebhookBaseUrl);
     n8nWebhookUrl.searchParams.append('level', level);
     n8nWebhookUrl.searchParams.append('projectType', projectType);
     n8nWebhookUrl.searchParams.append('industry', industry);
