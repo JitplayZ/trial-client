@@ -5,13 +5,38 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { FileText, Calendar, Download, Eye, X } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { FileText, Calendar, Download, Eye, X, Loader2 } from 'lucide-react';
+
+// TESTING MODE: Auth bypass enabled - remove this when going to production
+const BYPASS_AUTH = true;
+
+interface BriefData {
+  company_name: string;
+  tagline: string;
+  slogan: string;
+  location: string;
+  primary_color_palette: string[];
+  design_style_keywords: string[];
+  intro: string;
+  objective: string;
+  requirement_design: string;
+  about_page: string;
+  home_page: string;
+  order_page: string;
+  audience: string;
+  tips: string;
+}
 
 interface Project {
   id: string;
   title: string;
   description: string | null;
   type: string | null;
+  industry: string | null;
+  level: string | null;
+  status: string | null;
+  brief_data: BriefData | null;
   created_at: string;
 }
 
@@ -22,24 +47,28 @@ const History = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (!BYPASS_AUTH && !authLoading && !user) {
       navigate('/auth');
     }
   }, [user, authLoading, navigate]);
 
   useEffect(() => {
     const fetchProjects = async () => {
-      if (!user) return;
-
       try {
-        const { data, error } = await supabase
+        let query = supabase
           .from('projects')
           .select('*')
-          .eq('user_id', user.id)
           .order('created_at', { ascending: false });
 
+        // Only filter by user if not bypassing auth and user exists
+        if (!BYPASS_AUTH && user) {
+          query = query.eq('user_id', user.id);
+        }
+
+        const { data, error } = await query;
+
         if (error) throw error;
-        setProjects(data || []);
+        setProjects((data || []) as unknown as Project[]);
       } catch (error) {
         if (import.meta.env.DEV) {
           console.error('Error fetching projects:', error);
@@ -49,12 +78,37 @@ const History = () => {
       }
     };
 
-    if (user) {
+    if (BYPASS_AUTH || user) {
       fetchProjects();
     }
   }, [user]);
 
-  if (authLoading || !user) {
+  const downloadBrief = (project: Project) => {
+    if (!project.brief_data) return;
+    
+    const briefData = project.brief_data;
+    const content = `# ${briefData.company_name}\n\n${briefData.tagline}\n\n${briefData.slogan}\n\n` +
+      `**Location:** ${briefData.location}\n\n` +
+      `**Primary Colors:** ${briefData.primary_color_palette?.join(', ') || 'N/A'}\n\n` +
+      `**Design Style:** ${briefData.design_style_keywords?.join(', ') || 'N/A'}\n\n` +
+      `## INTRO\n\n${briefData.intro}\n\n` +
+      `## OBJECTIVE\n\n${briefData.objective}\n\n` +
+      `## REQUIREMENT DESIGN\n\n${briefData.requirement_design}\n\n` +
+      `## ABOUT PAGE\n\n${briefData.about_page}\n\n` +
+      `## HOME PAGE\n\n${briefData.home_page}\n\n` +
+      `## ORDER PAGE\n\n${briefData.order_page}\n\n` +
+      `## AUDIENCE\n\n${briefData.audience}\n\n` +
+      `## TIPS\n\n${briefData.tips}\n\n`;
+    
+    const blob = new Blob([content], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${briefData.company_name?.replace(/\s+/g, '-').toLowerCase() || 'project'}-brief.md`;
+    a.click();
+  };
+
+  if (!BYPASS_AUTH && (authLoading || !user)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -109,15 +163,60 @@ const History = () => {
             {projects.map((project) => (
               <Card key={project.id} className="glass-card hover-lift">
                 <CardHeader>
-                  <CardTitle className="text-foreground">{project.title}</CardTitle>
-                  <CardDescription className="text-muted-foreground">
-                    {project.type || 'Web Project'}
-                  </CardDescription>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <CardTitle className="text-foreground">
+                        {project.brief_data?.company_name || project.title}
+                      </CardTitle>
+                      <CardDescription className="text-muted-foreground mt-1">
+                        {project.brief_data?.tagline || project.type || 'Web Project'}
+                      </CardDescription>
+                    </div>
+                    {project.status === 'generating' && (
+                      <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {project.level && (
+                      <Badge variant="outline" className="text-xs">{project.level}</Badge>
+                    )}
+                    {project.type && (
+                      <Badge variant="outline" className="text-xs">{project.type}</Badge>
+                    )}
+                    {project.industry && (
+                      <Badge variant="secondary" className="text-xs">{project.industry}</Badge>
+                    )}
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground mb-4 line-clamp-3">
-                    {project.description || 'No description available'}
-                  </p>
+                  {project.status === 'generating' ? (
+                    <p className="text-muted-foreground mb-4 text-sm italic">
+                      Brief is being generated...
+                    </p>
+                  ) : project.brief_data ? (
+                    <div className="space-y-2 mb-4">
+                      <p className="text-muted-foreground text-sm line-clamp-2">
+                        {project.brief_data.intro}
+                      </p>
+                      {project.brief_data.primary_color_palette && (
+                        <div className="flex gap-1">
+                          {project.brief_data.primary_color_palette.slice(0, 4).map((color, idx) => (
+                            <div 
+                              key={idx}
+                              className="h-5 w-5 rounded border border-border"
+                              style={{ backgroundColor: color }}
+                              title={color}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground mb-4 line-clamp-3">
+                      {project.description || 'No description available'}
+                    </p>
+                  )}
+                  
                   <div className="flex items-center text-xs text-muted-foreground mb-4">
                     <Calendar className="h-4 w-4 mr-1" />
                     {new Date(project.created_at).toLocaleDateString()}
@@ -132,7 +231,13 @@ const History = () => {
                       <Eye className="h-4 w-4 mr-1" />
                       View
                     </Button>
-                    <Button variant="outline" size="sm" className="flex-1">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex-1"
+                      disabled={!project.brief_data}
+                      onClick={() => downloadBrief(project)}
+                    >
                       <Download className="h-4 w-4 mr-1" />
                       Download
                     </Button>
