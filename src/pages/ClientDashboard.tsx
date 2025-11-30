@@ -10,17 +10,20 @@ import GamificationBar from '@/components/dashboard/GamificationBar';
 // Feature flag for gamification
 const GAMIFICATION_ENABLED = true; // Set to false to disable
 
+// TESTING MODE: Auth bypass enabled - remove this when going to production
+const BYPASS_AUTH = true;
+
 const ClientDashboard = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (!BYPASS_AUTH && !loading && !user) {
       navigate('/auth');
     }
   }, [user, loading, navigate]);
 
-  if (loading) {
+  if (!BYPASS_AUTH && loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -28,7 +31,7 @@ const ClientDashboard = () => {
     );
   }
 
-  if (!user) {
+  if (!BYPASS_AUTH && !user) {
     return null;
   }
 
