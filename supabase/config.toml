@@ -1,1 +1,4 @@
 project_id = "avsuyudchzyoyakxotfm"
+
+[functions.update-project-brief]
+verify_jwt = false
