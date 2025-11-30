@@ -7,8 +7,8 @@ interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
-// TESTING MODE: Auth bypass enabled - remove this when going to production
-const BYPASS_AUTH = true;
+// Set to false for production
+const BYPASS_AUTH = false;
 
 export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { user, loading } = useAuth();
