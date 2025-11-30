@@ -8,12 +8,20 @@ interface AdminProtectedRouteProps {
   children: React.ReactNode;
 }
 
+// TESTING MODE: Auth bypass enabled - remove this when going to production
+const BYPASS_AUTH = true;
+
 export const AdminProtectedRoute = ({ children }: AdminProtectedRouteProps) => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [checking, setChecking] = useState(true);
+
+  // Bypass authentication for testing
+  if (BYPASS_AUTH) {
+    return <>{children}</>;
+  }
 
   useEffect(() => {
     const checkAdminRole = async () => {
