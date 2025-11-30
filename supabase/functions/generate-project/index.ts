@@ -46,7 +46,7 @@ serve(async (req) => {
     const validatedData = generateProjectSchema.parse(requestData);
     
     const { level, projectType, industry } = validatedData;
-    const userId = user.id; // Use authenticated user ID
+    const userId = user.id;
 
     console.log('Generating project:', { level, projectType, industry, userId });
 
@@ -73,12 +73,13 @@ serve(async (req) => {
 
     console.log('Project created with ID:', project.id);
 
-    // Call n8n webhook asynchronously (don't wait for response)
+    // Call n8n webhook synchronously and wait for response
     const n8nWebhookBaseUrl = Deno.env.get('N8N_WEBHOOK_URL');
     if (!n8nWebhookBaseUrl) {
       console.error('N8N_WEBHOOK_URL environment variable is not set');
       throw new Error('Webhook configuration error');
     }
+
     const n8nWebhookUrl = new URL(n8nWebhookBaseUrl);
     n8nWebhookUrl.searchParams.append('level', level);
     n8nWebhookUrl.searchParams.append('projectType', projectType);
@@ -86,23 +87,54 @@ serve(async (req) => {
     n8nWebhookUrl.searchParams.append('projectId', project.id);
     n8nWebhookUrl.searchParams.append('timestamp', new Date().toISOString());
     
-    console.log('Triggering n8n webhook asynchronously...');
+    console.log('Calling n8n webhook synchronously...');
     
-    // Fire and forget - n8n will call back when ready
-    fetch(n8nWebhookUrl.toString(), {
+    const n8nResponse = await fetch(n8nWebhookUrl.toString(), {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
       },
-    }).catch(err => console.error('n8n webhook trigger failed:', err));
+    });
 
-    // Return immediately with project ID
+    if (!n8nResponse.ok) {
+      console.error('n8n webhook failed:', n8nResponse.status, await n8nResponse.text());
+      
+      // Update project status to failed
+      await supabaseClient
+        .from('projects')
+        .update({ status: 'failed' })
+        .eq('id', project.id);
+      
+      throw new Error('Failed to generate brief from n8n');
+    }
+
+    // Parse n8n response - expect brief data directly
+    const briefData = await n8nResponse.json();
+    console.log('Received brief data from n8n:', JSON.stringify(briefData).substring(0, 200));
+
+    // Update project with brief data and completed status
+    const { error: updateError } = await supabaseClient
+      .from('projects')
+      .update({
+        brief_data: briefData,
+        status: 'completed',
+      })
+      .eq('id', project.id);
+
+    if (updateError) {
+      console.error('Failed to update project with brief:', updateError);
+      throw updateError;
+    }
+
+    console.log('Project updated with brief data successfully');
+
+    // Return success with project ID
     return new Response(
       JSON.stringify({ 
         success: true, 
         id: project.id,
-        status: 'generating',
-        message: 'Project creation started. Brief is being generated...'
+        status: 'completed',
+        message: 'Project created and brief generated successfully'
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
