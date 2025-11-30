@@ -4,18 +4,30 @@ import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-callback-secret',
 };
 
-// Input validation schema
+// Input validation schema - flexible to accept various n8n output formats
 const briefDataSchema = z.object({
   projectId: z.string().uuid().optional(),
   project_id: z.string().uuid().optional(),
-  company_name: z.string().min(1).max(200).optional(),
-  title: z.string().min(1).max(200).optional(),
-  tagline: z.string().min(1).max(500).optional(),
-  description: z.string().max(5000).optional(),
-}).passthrough(); // Allow additional fields
+  company_name: z.string().optional(),
+  title: z.string().optional(),
+  tagline: z.string().optional(),
+  slogan: z.string().optional(),
+  location: z.string().optional(),
+  primary_color_palette: z.array(z.string()).optional(),
+  design_style_keywords: z.array(z.string()).optional(),
+  intro: z.string().optional(),
+  objective: z.string().optional(),
+  requirement_design: z.string().optional(),
+  about_page: z.string().optional(),
+  home_page: z.string().optional(),
+  order_page: z.string().optional(),
+  audience: z.string().optional(),
+  tips: z.string().optional(),
+  description: z.string().optional(),
+}).passthrough();
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -24,62 +36,100 @@ serve(async (req) => {
   }
 
   try {
-    // Verify authentication
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('Unauthorized: Missing authorization header');
+    // Check for callback secret (n8n authentication)
+    const callbackSecret = req.headers.get('x-callback-secret');
+    const expectedSecret = Deno.env.get('N8N_CALLBACK_SECRET');
+    
+    if (!callbackSecret || callbackSecret !== expectedSecret) {
+      console.error('Invalid or missing callback secret');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: Invalid callback secret' }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 401 
+        }
+      );
     }
 
-    // Initialize Supabase client
+    console.log('Callback secret verified successfully');
+
+    // Initialize Supabase client with service role key
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get authenticated user from JWT
-    const jwt = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(jwt);
+    // Parse request data (support both GET query params and POST body)
+    let requestData: Record<string, unknown>;
     
-    if (authError || !user) {
-      throw new Error('Unauthorized: Invalid token');
+    if (req.method === 'GET') {
+      const url = new URL(req.url);
+      requestData = Object.fromEntries(url.searchParams.entries());
+      
+      // Parse arrays from query params if they exist
+      if (requestData.primary_color_palette && typeof requestData.primary_color_palette === 'string') {
+        try {
+          requestData.primary_color_palette = JSON.parse(requestData.primary_color_palette as string);
+        } catch {
+          requestData.primary_color_palette = (requestData.primary_color_palette as string).split(',');
+        }
+      }
+      if (requestData.design_style_keywords && typeof requestData.design_style_keywords === 'string') {
+        try {
+          requestData.design_style_keywords = JSON.parse(requestData.design_style_keywords as string);
+        } catch {
+          requestData.design_style_keywords = (requestData.design_style_keywords as string).split(',');
+        }
+      }
+    } else {
+      requestData = await req.json();
     }
 
-    // Validate and parse input
-    const requestData = await req.json();
+    console.log('Received brief data from n8n:', JSON.stringify(requestData));
+
     const validatedData = briefDataSchema.parse(requestData);
-    
-    console.log('Received brief data from n8n:', JSON.stringify(validatedData));
 
     // Extract projectId from the data
     const projectId = validatedData.projectId || validatedData.project_id;
     
     if (!projectId) {
       console.error('No projectId provided in the request');
-      throw new Error('Project ID is required');
+      return new Response(
+        JSON.stringify({ error: 'Project ID is required' }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400 
+        }
+      );
     }
 
-    // Verify project ownership
-    const { data: project, error: ownershipError } = await supabaseClient
-      .from('projects')
-      .select('user_id')
-      .eq('id', projectId)
-      .single();
+    console.log('Updating project:', projectId);
 
-    if (ownershipError || !project) {
-      throw new Error('Project not found');
-    }
+    // Build the brief_data object
+    const briefData = {
+      company_name: validatedData.company_name || validatedData.title || 'Untitled Project',
+      tagline: validatedData.tagline || '',
+      slogan: validatedData.slogan || '',
+      location: validatedData.location || '',
+      primary_color_palette: validatedData.primary_color_palette || [],
+      design_style_keywords: validatedData.design_style_keywords || [],
+      intro: validatedData.intro || '',
+      objective: validatedData.objective || '',
+      requirement_design: validatedData.requirement_design || '',
+      about_page: validatedData.about_page || '',
+      home_page: validatedData.home_page || '',
+      order_page: validatedData.order_page || '',
+      audience: validatedData.audience || '',
+      tips: validatedData.tips || '',
+    };
 
-    if (project.user_id !== user.id) {
-      throw new Error('Unauthorized: You do not own this project');
-    }
-
-    // Update the project with the brief data
+    // Update the project with the brief data using service role (bypasses RLS)
     const { data: updatedProject, error: updateError } = await supabaseClient
       .from('projects')
       .update({
-        title: validatedData.company_name || validatedData.title,
-        description: validatedData.tagline || validatedData.description,
-        brief_data: validatedData,
+        title: briefData.company_name,
+        description: briefData.tagline || validatedData.description,
+        brief_data: briefData,
         status: 'completed',
       })
       .eq('id', projectId)
@@ -88,7 +138,13 @@ serve(async (req) => {
 
     if (updateError) {
       console.error('Database update error:', updateError);
-      throw updateError;
+      return new Response(
+        JSON.stringify({ error: 'Failed to update project', details: updateError.message }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500 
+        }
+      );
     }
 
     console.log('Project updated successfully:', updatedProject.id);
@@ -117,17 +173,6 @@ serve(async (req) => {
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 400 
-        }
-      );
-    }
-    
-    // Handle authentication errors
-    if (error instanceof Error && error.message.includes('Unauthorized')) {
-      return new Response(
-        JSON.stringify({ error: error.message }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 401 
         }
       );
     }
