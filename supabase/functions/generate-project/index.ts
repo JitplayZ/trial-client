@@ -112,11 +112,14 @@ serve(async (req) => {
     const briefData = await n8nResponse.json();
     console.log('Received brief data from n8n:', JSON.stringify(briefData).substring(0, 200));
 
+    // Extract first element if briefData is an array
+    const briefDataObject = Array.isArray(briefData) ? briefData[0] : briefData;
+
     // Update project with brief data and completed status
     const { error: updateError } = await supabaseClient
       .from('projects')
       .update({
-        brief_data: briefData,
+        brief_data: briefDataObject,
         status: 'completed',
       })
       .eq('id', project.id);

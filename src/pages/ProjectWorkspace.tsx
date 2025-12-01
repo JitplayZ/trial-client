@@ -203,7 +203,23 @@ export default function ProjectWorkspace() {
     );
   }
 
-  const briefData = project.brief_data;
+  // Handle both array and object format from n8n
+  const briefData = Array.isArray(project.brief_data) 
+    ? project.brief_data[0] 
+    : project.brief_data;
+
+  // Safety check - ensure we have valid brief data
+  if (!briefData || typeof briefData !== 'object') {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-foreground mb-2">Invalid project data</h1>
+          <p className="text-muted-foreground mb-4">The project brief data is corrupted or incomplete.</p>
+          <Button onClick={() => navigate('/dashboard')}>Back to Dashboard</Button>
+        </div>
+      </div>
+    );
+  }
 
   const sections = [
     { key: 'intro', title: '1. Introduction', content: briefData.intro },
