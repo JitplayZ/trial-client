@@ -163,7 +163,7 @@ const RecentProjectsList = () => {
                   size="sm" 
                   variant="outline" 
                   className="hover-lift"
-                  onClick={() => navigate(`/project/${project.id}`)}
+                  onClick={() => navigate(`/projects/${project.id}`)}
                 >
                   <ExternalLink className="h-4 w-4" />
                 </Button>
