@@ -214,48 +214,8 @@ export const useQuotaManagement = () => {
     return new Date(quotaData.quotas.resetAt);
   };
 
-  const changePlan = async (newPlan: PlanType): Promise<boolean> => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return false;
-
-      // Set new quotas based on plan
-      const planQuotas = {
-        beginner_left: -1, // Always unlimited
-        intermediate_left: newPlan === 'free' ? 2 : -1,
-        veteran_left: newPlan === 'free' ? 0 : newPlan === 'pro' ? 4 : 20
-      };
-
-      const { error } = await supabase
-        .from('subscriptions')
-        .update({ 
-          plan: newPlan,
-          ...planQuotas
-        })
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      await fetchSubscription();
-      
-      toast({
-        title: 'Success',
-        description: `Plan updated to ${newPlan}`,
-      });
-
-      return true;
-    } catch (error) {
-      if (import.meta.env.DEV) {
-        console.error('Error changing plan:', error);
-      }
-      toast({
-        title: 'Error',
-        description: 'Failed to update plan',
-        variant: 'destructive'
-      });
-      return false;
-    }
-  };
+  // Note: Plan changes are now handled server-side only via payment integration
+  // The changePlan function has been removed to prevent privilege escalation
 
   return {
     quotaData,
@@ -263,7 +223,6 @@ export const useQuotaManagement = () => {
     getQuotaStatus,
     consumeQuota,
     getResetDate,
-    changePlan,
     refresh: fetchSubscription
   };
 };
