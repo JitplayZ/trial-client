@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Copy, Download, Share2, ArrowLeft, Palette } from 'lucide-react';
+import { Copy, Download, Share2, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
+import jsPDF from 'jspdf';
 
 interface BriefData {
   company_name: string;
@@ -111,33 +112,100 @@ export default function ProjectWorkspace() {
     });
   };
 
-  const downloadBrief = () => {
+  const downloadBriefAsPDF = () => {
     if (!project || !project.brief_data) return;
     
-    const briefData = project.brief_data;
-    const content = `# ${briefData.company_name}\n\n${briefData.tagline}\n\n${briefData.slogan}\n\n` +
-      `**Location:** ${briefData.location}\n\n` +
-      `**Primary Colors:** ${briefData.primary_color_palette.join(', ')}\n\n` +
-      `**Design Style:** ${briefData.design_style_keywords.join(', ')}\n\n` +
-      `## INTRO\n\n${briefData.intro}\n\n` +
-      `## OBJECTIVE\n\n${briefData.objective}\n\n` +
-      `## REQUIREMENT DESIGN\n\n${briefData.requirement_design}\n\n` +
-      `## ABOUT PAGE\n\n${briefData.about_page}\n\n` +
-      `## HOME PAGE\n\n${briefData.home_page}\n\n` +
-      `## ORDER PAGE\n\n${briefData.order_page}\n\n` +
-      `## AUDIENCE\n\n${briefData.audience}\n\n` +
-      `## TIPS\n\n${briefData.tips}\n\n`;
+    const data = Array.isArray(project.brief_data) 
+      ? project.brief_data[0] 
+      : project.brief_data;
     
-    const blob = new Blob([content], { type: 'text/markdown' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${briefData.company_name.replace(/\s+/g, '-').toLowerCase()}-brief.md`;
-    a.click();
+    if (!data || typeof data !== 'object') return;
+
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 20;
+    const maxWidth = pageWidth - margin * 2;
+    let yPosition = 20;
+
+    const addText = (text: string, fontSize: number, isBold: boolean = false) => {
+      doc.setFontSize(fontSize);
+      doc.setFont('helvetica', isBold ? 'bold' : 'normal');
+      const lines = doc.splitTextToSize(text || '', maxWidth);
+      
+      for (const line of lines) {
+        if (yPosition > 270) {
+          doc.addPage();
+          yPosition = 20;
+        }
+        doc.text(line, margin, yPosition);
+        yPosition += fontSize * 0.5;
+      }
+      yPosition += 5;
+    };
+
+    // Title
+    addText(data.company_name || 'Project Brief', 20, true);
+    addText(data.tagline || '', 12);
+    addText(data.slogan || '', 10);
+    yPosition += 5;
+    
+    addText(`Location: ${data.location || 'N/A'}`, 10);
+    addText(`Colors: ${(data.primary_color_palette || []).join(', ')}`, 10);
+    addText(`Design Style: ${(data.design_style_keywords || []).join(', ')}`, 10);
+    yPosition += 10;
+
+    const sections = [
+      { title: '1. Introduction', content: data.intro },
+      { title: '2. Project Objective', content: data.objective },
+      { title: '3. Design Requirements', content: data.requirement_design },
+      { title: '4. About Page', content: data.about_page },
+      { title: '5. Home Page', content: data.home_page },
+      { title: '6. Order Page', content: data.order_page },
+      { title: '7. Target Audience', content: data.audience },
+      { title: '8. Implementation Tips', content: data.tips },
+    ];
+
+    sections.forEach(section => {
+      addText(section.title, 14, true);
+      addText(section.content || 'N/A', 10);
+      yPosition += 5;
+    });
+
+    const fileName = `${(data.company_name || 'project').replace(/\s+/g, '-').toLowerCase()}-brief.pdf`;
+    doc.save(fileName);
     
     toast({
       title: 'Downloaded!',
-      description: 'Project brief saved as markdown',
+      description: 'Project brief saved as PDF',
+    });
+  };
+
+  const shareBrief = async () => {
+    const shareUrl = window.location.href;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: project?.brief_data ? 
+            (Array.isArray(project.brief_data) ? project.brief_data[0]?.company_name : project.brief_data.company_name) 
+            : 'Project Brief',
+          text: 'Check out this project brief!',
+          url: shareUrl,
+        });
+      } catch (err) {
+        // User cancelled or share failed, fallback to copy
+        copyToClipboard(shareUrl);
+      }
+    } else {
+      copyToClipboard(shareUrl);
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: 'Link Copied!',
+      description: 'Project link copied to clipboard',
     });
   };
 
@@ -256,11 +324,11 @@ export default function ProjectWorkspace() {
           </div>
 
           <div className="flex space-x-2">
-            <Button variant="outline" size="sm" onClick={downloadBrief}>
+            <Button variant="outline" size="sm" onClick={downloadBriefAsPDF}>
               <Download className="h-4 w-4 mr-2" />
-              Download
+              Download PDF
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={shareBrief}>
               <Share2 className="h-4 w-4 mr-2" />
               Share
             </Button>
