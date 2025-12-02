@@ -51,11 +51,24 @@ export function useGamification() {
 
     try {
       // Fetch user XP
-      const { data: xpData } = await supabase
+      let { data: xpData } = await supabase
         .from('user_xp')
         .select('total_xp, level')
         .eq('user_id', user.id)
         .maybeSingle();
+
+      // If no XP record exists, create one
+      if (!xpData) {
+        const { data: newXpData, error: insertError } = await supabase
+          .from('user_xp')
+          .insert({ user_id: user.id, total_xp: 0, level: 1 })
+          .select('total_xp, level')
+          .single();
+
+        if (!insertError && newXpData) {
+          xpData = newXpData;
+        }
+      }
 
       if (xpData) {
         setUserXP(xpData);
