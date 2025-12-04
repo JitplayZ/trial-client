@@ -7,6 +7,7 @@ export type LevelType = 'beginner' | 'intermediate' | 'veteran';
 
 interface QuotaData {
   plan: PlanType;
+  credits: number;
   quotas: {
     beginnerLeft: number;
     intermediateLeft: number;
@@ -15,28 +16,18 @@ interface QuotaData {
   };
 }
 
-interface QuotaLimits {
-  beginner: number | 'unlimited';
-  intermediate: number | 'unlimited';
-  veteran: number | 'locked';
-}
+// Credit costs per level
+export const CREDIT_COSTS: Record<LevelType, number> = {
+  beginner: 1,
+  intermediate: 2,
+  veteran: 4
+};
 
-const PLAN_LIMITS: Record<PlanType, QuotaLimits> = {
-  free: {
-    beginner: 'unlimited',
-    intermediate: 2,
-    veteran: 'locked'
-  },
-  pro: {
-    beginner: 'unlimited',
-    intermediate: 'unlimited',
-    veteran: 4
-  },
-  proplus: {
-    beginner: 'unlimited',
-    intermediate: 'unlimited',
-    veteran: 20
-  }
+// Free monthly quotas per plan
+const PLAN_FREE_QUOTAS: Record<PlanType, { beginner: number; intermediate: number; veteran: number }> = {
+  free: { beginner: 5, intermediate: 2, veteran: 0 },
+  pro: { beginner: 10, intermediate: 5, veteran: 2 },
+  proplus: { beginner: 20, intermediate: 10, veteran: 5 }
 };
 
 export const useQuotaManagement = () => {
@@ -71,9 +62,10 @@ export const useQuotaManagement = () => {
           .insert({
             user_id: user.id,
             plan: 'free',
-            beginner_left: -1, // unlimited
+            beginner_left: 5,
             intermediate_left: 2,
             veteran_left: 0,
+            credits: 0,
             reset_at: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toISOString()
           })
           .select()
@@ -83,6 +75,7 @@ export const useQuotaManagement = () => {
 
         setQuotaData({
           plan: newSubscription.plan as PlanType,
+          credits: newSubscription.credits ?? 0,
           quotas: {
             beginnerLeft: newSubscription.beginner_left,
             intermediateLeft: newSubscription.intermediate_left,
@@ -93,6 +86,7 @@ export const useQuotaManagement = () => {
       } else {
         setQuotaData({
           plan: data.plan as PlanType,
+          credits: data.credits ?? 0,
           quotas: {
             beginnerLeft: data.beginner_left,
             intermediateLeft: data.intermediate_left,
@@ -117,38 +111,45 @@ export const useQuotaManagement = () => {
 
   const getQuotaStatus = (level: LevelType): {
     available: boolean;
-    remaining: number | 'unlimited' | 'locked';
-    limit: number | 'unlimited' | 'locked';
+    remaining: number | 'locked';
+    limit: number | 'locked';
     isLocked: boolean;
+    creditCost: number;
+    canUseCredits: boolean;
   } => {
     if (!quotaData) {
-      // Return loading state instead of locked when quotaData is not available yet
-      return { available: false, remaining: 0, limit: 0, isLocked: false };
+      return { available: false, remaining: 0, limit: 0, isLocked: false, creditCost: 0, canUseCredits: false };
     }
 
-    const limits = PLAN_LIMITS[quotaData.plan];
-    const limit = limits[level];
-
-    if (limit === 'locked') {
-      return { available: false, remaining: 'locked', limit: 'locked', isLocked: true };
-    }
-
-    if (limit === 'unlimited') {
-      return { available: true, remaining: 'unlimited', limit: 'unlimited', isLocked: false };
+    const freeQuotas = PLAN_FREE_QUOTAS[quotaData.plan];
+    const limit = freeQuotas[level];
+    const creditCost = CREDIT_COSTS[level];
+    
+    // Veteran level is locked for free plan users
+    if (level === 'veteran' && quotaData.plan === 'free') {
+      return { 
+        available: false, 
+        remaining: 'locked', 
+        limit: 'locked', 
+        isLocked: true,
+        creditCost,
+        canUseCredits: false
+      };
     }
 
     const remaining = quotaData.quotas[`${level}Left` as keyof typeof quotaData.quotas] as number;
+    const canUseCredits = quotaData.credits >= creditCost;
     
-    // Handle unlimited case (when remaining is -1 in database)
-    if (remaining === -1) {
-      return { available: true, remaining: 'unlimited', limit: 'unlimited', isLocked: false };
-    }
+    // Available if has free quota OR has enough credits
+    const available = remaining > 0 || canUseCredits;
     
     return {
-      available: remaining > 0,
+      available,
       remaining,
       limit,
-      isLocked: false
+      isLocked: false,
+      creditCost,
+      canUseCredits
     };
   };
 
@@ -158,8 +159,8 @@ export const useQuotaManagement = () => {
     const status = getQuotaStatus(level);
     if (!status.available) return false;
     
-    // Don't consume quota if it's unlimited
-    if (status.remaining === 'unlimited') return true;
+    // If locked, can't consume
+    if (status.remaining === 'locked') return false;
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -168,10 +169,10 @@ export const useQuotaManagement = () => {
       const columnName = `${level}_left`;
       const currentValue = quotaData.quotas[`${level}Left` as keyof typeof quotaData.quotas];
       
-      // Handle unlimited case (-1 in database)
-      if (currentValue === -1) return true;
-      
-      if (typeof currentValue !== 'number' || currentValue <= 0) return false;
+      if (typeof currentValue !== 'number' || currentValue <= 0) {
+        // No free quota left - would need to use credits (handled by edge function)
+        return true;
+      }
 
       const { error } = await supabase
         .from('subscriptions')

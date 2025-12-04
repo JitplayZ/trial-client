@@ -29,9 +29,9 @@ const Dashboard = () => {
       color: "text-primary"
     },
     {
-      title: "Free Credits",
-      value: "8",
-      change: "Resets in 23 days",
+      title: "Credits Available",
+      value: quotaData?.credits?.toString() ?? "0",
+      change: "Purchase more anytime",
       icon: Zap,
       color: "text-accent"
     },
@@ -89,7 +89,7 @@ const Dashboard = () => {
               <h1 className="text-xl sm:text-2xl font-display font-bold">Dashboard</h1>
               <div className="flex items-center gap-3 flex-wrap">
                 <p className="text-sm sm:text-base text-foreground-secondary">Welcome back! Ready to build something amazing?</p>
-                {quotaData && veteranStatus.remaining !== 'unlimited' && veteranStatus.remaining !== 'locked' && (
+                {quotaData && veteranStatus.remaining !== 'locked' && typeof veteranStatus.remaining === 'number' && (
                   <Badge variant="outline" className="text-xs">
                     Veteran: {veteranStatus.remaining}/{veteranStatus.limit} left · Reset: {resetDate?.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   </Badge>

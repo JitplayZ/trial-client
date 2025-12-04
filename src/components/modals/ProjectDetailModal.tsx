@@ -111,6 +111,9 @@ export const ProjectDetailModal = ({ isOpen, onClose }: ProjectDetailModalProps)
                   isLocked={beginnerStatus.isLocked}
                   remaining={beginnerStatus.remaining}
                   limit={beginnerStatus.limit}
+                  creditCost={beginnerStatus.creditCost}
+                  availableCredits={quotaData?.credits ?? 0}
+                  canUseCredits={beginnerStatus.canUseCredits}
                   onGenerate={(type, industry) => handleGenerate('beginner', type, industry)}
                   generating={generatingLevel === 'beginner'}
                 />
@@ -121,6 +124,9 @@ export const ProjectDetailModal = ({ isOpen, onClose }: ProjectDetailModalProps)
                   isLocked={intermediateStatus.isLocked}
                   remaining={intermediateStatus.remaining}
                   limit={intermediateStatus.limit}
+                  creditCost={intermediateStatus.creditCost}
+                  availableCredits={quotaData?.credits ?? 0}
+                  canUseCredits={intermediateStatus.canUseCredits}
                   onGenerate={(type, industry) => handleGenerate('intermediate', type, industry)}
                   generating={generatingLevel === 'intermediate'}
                 />
@@ -131,6 +137,9 @@ export const ProjectDetailModal = ({ isOpen, onClose }: ProjectDetailModalProps)
                   isLocked={veteranStatus.isLocked}
                   remaining={veteranStatus.remaining}
                   limit={veteranStatus.limit}
+                  creditCost={veteranStatus.creditCost}
+                  availableCredits={quotaData?.credits ?? 0}
+                  canUseCredits={veteranStatus.canUseCredits}
                   onGenerate={(type, industry) => handleGenerate('veteran', type, industry)}
                   generating={generatingLevel === 'veteran'}
                 />
