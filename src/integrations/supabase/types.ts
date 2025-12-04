@@ -90,6 +90,7 @@ export type Database = {
         Row: {
           beginner_left: number
           created_at: string
+          credits: number
           id: string
           intermediate_left: number
           plan: string
@@ -101,6 +102,7 @@ export type Database = {
         Insert: {
           beginner_left?: number
           created_at?: string
+          credits?: number
           id?: string
           intermediate_left?: number
           plan?: string
@@ -112,6 +114,7 @@ export type Database = {
         Update: {
           beginner_left?: number
           created_at?: string
+          credits?: number
           id?: string
           intermediate_left?: number
           plan?: string
@@ -220,6 +223,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_and_consume_quota: {
+        Args: { _level: string; _user_id: string }
+        Returns: Json
+      }
       delete_user_account: { Args: never; Returns: undefined }
       has_role: {
         Args: {
