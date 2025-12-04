@@ -41,7 +41,7 @@ export const ProjectDetailModal = ({ isOpen, onClose }: ProjectDetailModalProps)
       });
 
       if (error) throw error;
-      if (!data?.success) throw new Error('Generation failed');
+      if (!data?.ok) throw new Error(data?.message || 'Generation failed');
       
       toast({
         title: "Generating Your Brief",
