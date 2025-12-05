@@ -7,10 +7,11 @@ import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Camera, Save, ArrowLeft, X, Trash2 } from 'lucide-react';
+import { Camera, Save, ArrowLeft, X, Trash2, CreditCard, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { z } from 'zod';
+import { useQuotaManagement } from '@/hooks/useQuotaManagement';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,6 +37,7 @@ export default function Profile() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { quotaData, loading: quotaLoading, refresh: refreshQuota } = useQuotaManagement();
   const [displayName, setDisplayName] = useState(
     user?.user_metadata?.display_name || 
     user?.user_metadata?.full_name || 
@@ -53,6 +55,31 @@ export default function Profile() {
       fetchProfile();
     }
   }, [user?.id]);
+
+  // Real-time subscription for credits
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel('profile-credits-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'subscriptions',
+          filter: `user_id=eq.${user.id}`
+        },
+        () => {
+          refreshQuota();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, refreshQuota]);
 
   const fetchProfile = async () => {
     try {
@@ -383,6 +410,74 @@ export default function Profile() {
                   }}
                 />
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Credits & Quota */}
+          <Card className="glass-card bg-card/50 backdrop-blur-xl border-border/50">
+            <CardHeader className="bg-surface/20 border-b border-border/50">
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5" />
+                Credits & Quota
+              </CardTitle>
+              <CardDescription>
+                Your current plan usage and remaining credits
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6">
+              {quotaLoading ? (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : quotaData ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 bg-primary/10 rounded-lg">
+                    <span className="font-medium">Current Plan</span>
+                    <span className="font-bold text-primary uppercase">{quotaData.plan}</span>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-3 bg-background/40 rounded-lg">
+                      <p className="text-sm text-muted-foreground">Beginner Projects</p>
+                      <p className="text-xl font-bold">{quotaData.quotas.beginnerLeft}</p>
+                    </div>
+                    <div className="p-3 bg-background/40 rounded-lg">
+                      <p className="text-sm text-muted-foreground">Intermediate Projects</p>
+                      <p className="text-xl font-bold">{quotaData.quotas.intermediateLeft}</p>
+                    </div>
+                    <div className="p-3 bg-background/40 rounded-lg">
+                      <p className="text-sm text-muted-foreground">Veteran Projects</p>
+                      <p className="text-xl font-bold">
+                        {quotaData.plan === 'free' ? (
+                          <span className="text-muted-foreground text-sm">Locked</span>
+                        ) : (
+                          quotaData.quotas.veteranLeft
+                        )}
+                      </p>
+                    </div>
+                    <div className="p-3 bg-background/40 rounded-lg">
+                      <p className="text-sm text-muted-foreground">Purchased Credits</p>
+                      <p className="text-xl font-bold text-accent">{quotaData.credits}</p>
+                    </div>
+                  </div>
+
+                  <div className="text-xs text-muted-foreground text-center pt-2">
+                    Quotas reset on {new Date(quotaData.quotas.resetAt).toLocaleDateString()}
+                  </div>
+
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => navigate('/pricing')}
+                  >
+                    Upgrade Plan
+                  </Button>
+                </div>
+              ) : (
+                <p className="text-muted-foreground text-center py-4">
+                  Unable to load quota information
+                </p>
+              )}
             </CardContent>
           </Card>
 
