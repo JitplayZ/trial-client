@@ -21,9 +21,14 @@ interface Badge {
   earned_at: string;
 }
 
-interface XPEvent {
-  event_type: string;
-  xp_gained: number;
+interface AwardXPResponse {
+  ok: boolean;
+  xp_gained?: number;
+  total_xp?: number;
+  level?: number;
+  leveled_up?: boolean;
+  badges_awarded?: string[];
+  message?: string;
 }
 
 export function useGamification() {
@@ -51,24 +56,11 @@ export function useGamification() {
 
     try {
       // Fetch user XP
-      let { data: xpData } = await supabase
+      const { data: xpData } = await supabase
         .from('user_xp')
         .select('total_xp, level')
         .eq('user_id', user.id)
         .maybeSingle();
-
-      // If no XP record exists, create one
-      if (!xpData) {
-        const { data: newXpData, error: insertError } = await supabase
-          .from('user_xp')
-          .insert({ user_id: user.id, total_xp: 0, level: 1 })
-          .select('total_xp, level')
-          .single();
-
-        if (!insertError && newXpData) {
-          xpData = newXpData;
-        }
-      }
 
       if (xpData) {
         setUserXP(xpData);
@@ -93,10 +85,10 @@ export function useGamification() {
     }
   };
 
-  const awardXP = async (eventType: EventType, xpAmount: number) => {
+  const awardXP = async (eventType: EventType) => {
     if (!user) return;
 
-    // Validate event type
+    // Validate event type client-side (server also validates)
     if (!ALLOWED_EVENT_TYPES.includes(eventType)) {
       if (import.meta.env.DEV) {
         console.error('Invalid event type:', eventType);
@@ -105,116 +97,63 @@ export function useGamification() {
     }
 
     try {
-      // Add XP event
-      await supabase.from('xp_events').insert({
-        user_id: user.id,
-        event_type: eventType,
-        xp_gained: xpAmount
+      // Call server-side edge function to award XP securely
+      const { data, error } = await supabase.functions.invoke<AwardXPResponse>('award-xp', {
+        body: { event_type: eventType }
       });
 
-      // Update user XP
-      const newTotalXP = userXP.total_xp + xpAmount;
-      const newLevel = Math.floor(newTotalXP / 1000) + 1;
-      const leveledUp = newLevel > userXP.level;
+      if (error) {
+        console.error('Error awarding XP:', error);
+        return;
+      }
 
-      await supabase
-        .from('user_xp')
-        .update({
-          total_xp: newTotalXP,
-          level: newLevel
-        })
-        .eq('user_id', user.id);
+      if (!data?.ok) {
+        console.error('XP award failed:', data?.message);
+        return;
+      }
 
-      // Update local state
-      setUserXP({ total_xp: newTotalXP, level: newLevel });
+      // Update local state with server response
+      if (data.total_xp !== undefined && data.level !== undefined) {
+        setUserXP({ total_xp: data.total_xp, level: data.level });
+      }
 
-      // Show XP gained toast with subtle animation
+      // Show XP gained toast
       toast({
-        title: `+${xpAmount} XP`,
+        title: `+${data.xp_gained} XP`,
         description: getEventMessage(eventType),
         duration: 3000,
         className: 'animate-fade-in',
       });
 
       // Show level up toast if leveled up
-      if (leveledUp) {
-        // Check for reduced motion preference
+      if (data.leveled_up) {
         const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         
         toast({
           title: `🎉 Level Up!`,
-          description: `You reached Level ${newLevel}!`,
+          description: `You reached Level ${data.level}!`,
           duration: 5000,
           className: prefersReducedMotion ? '' : 'animate-scale-in',
         });
-        
-        // Award level up badge
-        await awardBadge(`level_${newLevel}`);
       }
 
-      // Check for achievement badges
-      await checkForBadges(eventType, newTotalXP);
+      // Show badge toasts
+      if (data.badges_awarded && data.badges_awarded.length > 0) {
+        for (const badgeType of data.badges_awarded) {
+          toast({
+            title: "🏆 Badge Earned!",
+            description: getBadgeDisplayName(badgeType),
+            duration: 5000,
+          });
+        }
+        // Refresh badges list
+        await fetchGamificationData();
+      }
 
     } catch (error) {
       if (import.meta.env.DEV) {
         console.error('Error awarding XP:', error);
       }
-    }
-  };
-
-  const awardBadge = async (badgeType: BadgeType | string) => {
-    if (!user) return;
-
-    // Validate badge type for known badges (allow dynamic level badges)
-    const isDynamicLevelBadge = badgeType.startsWith('level_');
-    if (!isDynamicLevelBadge && !ALLOWED_BADGE_TYPES.includes(badgeType as BadgeType)) {
-      if (import.meta.env.DEV) {
-        console.error('Invalid badge type:', badgeType);
-      }
-      return;
-    }
-
-    try {
-      // Check if badge already exists
-      const { data: existingBadge } = await supabase
-        .from('user_badges')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('badge_type', badgeType)
-        .maybeSingle();
-
-      if (!existingBadge) {
-        await supabase.from('user_badges').insert({
-          user_id: user.id,
-          badge_type: badgeType
-        });
-
-        // Refresh badges
-        await fetchGamificationData();
-
-        // Show badge earned toast
-        toast({
-          title: "🏆 Badge Earned!",
-          description: getBadgeDisplayName(badgeType),
-          duration: 5000,
-        });
-      }
-    } catch (error) {
-      if (import.meta.env.DEV) {
-        console.error('Error awarding badge:', error);
-      }
-    }
-  };
-
-  const checkForBadges = async (eventType: string, totalXP: number) => {
-    // First Project badge
-    if (eventType === 'project_created') {
-      await awardBadge('first_project');
-    }
-
-    // High XP badges
-    if (totalXP >= 5000 && !badges.find(b => b.badge_type === 'xp_5000')) {
-      await awardBadge('xp_5000');
     }
   };
 
@@ -229,7 +168,7 @@ export function useGamification() {
   };
 
   const getBadgeDisplayName = (badgeType: string): string => {
-    const names = {
+    const names: Record<string, string> = {
       first_project: 'First Project',
       level_5: 'Level 5 Achiever',
       level_10: 'Level 10 Master',
@@ -237,11 +176,11 @@ export function useGamification() {
       referral_success: 'Referral Champion',
       daily_streak_7: '7 Day Streak',
     };
-    return names[badgeType as keyof typeof names] || badgeType;
+    return names[badgeType] || badgeType;
   };
 
   const getBadgeIcon = (badgeType: string): string => {
-    const icons = {
+    const icons: Record<string, string> = {
       first_project: '🎯',
       level_5: '⭐',
       level_10: '🌟',
@@ -249,7 +188,7 @@ export function useGamification() {
       referral_success: '🤝',
       daily_streak_7: '🔥',
     };
-    return icons[badgeType as keyof typeof icons] || '🏆';
+    return icons[badgeType] || '🏆';
   };
 
   return {
@@ -259,7 +198,6 @@ export function useGamification() {
     progressXP,
     neededXP,
     awardXP,
-    awardBadge,
     getBadgeDisplayName,
     getBadgeIcon,
     refresh: fetchGamificationData
