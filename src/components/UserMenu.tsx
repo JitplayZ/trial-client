@@ -39,7 +39,7 @@ const UserMenu = ({ onReferClick }: UserMenuProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
-  const [credits, setCredits] = useState<number>(100);
+  const [totalCredits, setTotalCredits] = useState<number>(0);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string>('');
 
@@ -53,9 +53,10 @@ const UserMenu = ({ onReferClick }: UserMenuProps) => {
       setTheme(isDark ? 'dark' : 'light');
     }
 
-    // Fetch profile
+    // Fetch profile and credits
     if (user?.id) {
       fetchProfile();
+      fetchCredits();
     }
   }, [user?.id]);
 
@@ -69,6 +70,53 @@ const UserMenu = ({ onReferClick }: UserMenuProps) => {
     window.addEventListener('profile-updated', handleProfileUpdate);
     return () => window.removeEventListener('profile-updated', handleProfileUpdate);
   }, [user?.id]);
+
+  // Real-time subscription for credits
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel('user-menu-credits')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'subscriptions',
+          filter: `user_id=eq.${user.id}`
+        },
+        () => {
+          fetchCredits();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id]);
+
+  const fetchCredits = async () => {
+    if (!user?.id) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('subscriptions')
+        .select('beginner_left, intermediate_left, veteran_left, credits')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+        // Total = free quotas + purchased credits
+        const freeQuotas = data.beginner_left + data.intermediate_left + data.veteran_left;
+        setTotalCredits(freeQuotas + (data.credits || 0));
+      }
+    } catch (error) {
+      console.error('Error fetching credits:', error);
+    }
+  };
 
   const fetchProfile = async () => {
     try {
@@ -102,8 +150,6 @@ const UserMenu = ({ onReferClick }: UserMenuProps) => {
       description: `Switched to ${newTheme} mode`,
       duration: 2000,
     });
-
-    // In production: PUT /api/user/settings { appearance: newTheme }
   };
 
   const handleHistory = () => {
@@ -220,7 +266,7 @@ const UserMenu = ({ onReferClick }: UserMenuProps) => {
         <DropdownMenuItem className="cursor-default focus:bg-transparent">
           <CreditCard className="mr-2 h-4 w-4" />
           <span className="flex-1">Credits</span>
-          <span className="font-semibold text-primary">{credits}</span>
+          <span className="font-semibold text-primary">{totalCredits}</span>
         </DropdownMenuItem>
 
         <DropdownMenuItem onClick={handleUpgrade} className="cursor-pointer text-accent">
