@@ -7,47 +7,12 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// ============================================
-// SECURITY: Input Validation Schema
-// ============================================
+// Input validation schema
 const generateProjectSchema = z.object({
   level: z.enum(['beginner', 'intermediate', 'veteran']),
-  projectType: z.string()
-    .min(1, 'Project type is required')
-    .max(100, 'Project type must be less than 100 characters')
-    .regex(/^[a-zA-Z0-9\s\-_]+$/, 'Project type contains invalid characters'),
-  industry: z.string()
-    .min(1, 'Industry is required')
-    .max(100, 'Industry must be less than 100 characters')
-    .regex(/^[a-zA-Z0-9\s\-_&]+$/, 'Industry contains invalid characters'),
+  projectType: z.string().min(1).max(100),
+  industry: z.string().min(1).max(100),
 });
-
-// ============================================
-// SECURITY: Sanitize input to prevent injection
-// ============================================
-function sanitizeInput(input: string): string {
-  return input
-    .replace(/<[^>]*>/g, '') // Remove HTML tags
-    .replace(/[<>'"]/g, '')   // Remove potentially dangerous chars
-    .trim();
-}
-
-// ============================================
-// SECURITY: Create safe error response
-// ============================================
-function errorResponse(status: number, message: string): Response {
-  return new Response(
-    JSON.stringify({ 
-      ok: false, 
-      status, 
-      message 
-    }),
-    { 
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status 
-    }
-  );
-}
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -56,87 +21,36 @@ serve(async (req) => {
   }
 
   try {
-    // ============================================
-    // SECURITY: Token-based authentication
-    // ============================================
+    // Verify authentication
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      console.error('Security: Missing authorization header');
-      return errorResponse(401, 'Unauthorized: Missing authorization header');
+      throw new Error('Unauthorized: Missing authorization header');
     }
 
-    // Initialize Supabase client with service role for admin operations
+    // Initialize Supabase client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // ============================================
-    // SECURITY: Verify JWT token and get user
-    // ============================================
+    // Get authenticated user from JWT
     const jwt = authHeader.replace('Bearer ', '');
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser(jwt);
     
     if (authError || !user) {
-      console.error('Security: Invalid token', authError?.message);
-      return errorResponse(401, 'Unauthorized: Invalid token');
+      throw new Error('Unauthorized: Invalid token');
     }
 
-    const userId = user.id;
-    console.log('Authenticated user:', userId);
-
-    // ============================================
-    // SECURITY: Parse and validate input
-    // ============================================
-    let requestData;
-    try {
-      requestData = await req.json();
-    } catch {
-      return errorResponse(400, 'Invalid JSON payload');
-    }
-
-    // Sanitize inputs before validation
-    if (requestData.projectType) {
-      requestData.projectType = sanitizeInput(requestData.projectType);
-    }
-    if (requestData.industry) {
-      requestData.industry = sanitizeInput(requestData.industry);
-    }
-
-    // Validate with Zod schema
-    const validationResult = generateProjectSchema.safeParse(requestData);
-    if (!validationResult.success) {
-      console.error('Security: Validation failed', validationResult.error.errors);
-      return errorResponse(400, `Invalid input: ${validationResult.error.errors.map(e => e.message).join(', ')}`);
-    }
+    // Validate and parse input
+    const requestData = await req.json();
+    const validatedData = generateProjectSchema.parse(requestData);
     
-    const { level, projectType, industry } = validationResult.data;
-    console.log('Validated input:', { level, projectType, industry, userId });
+    const { level, projectType, industry } = validatedData;
+    const userId = user.id;
 
-    // ============================================
-    // SECURITY: Check and consume quota/credits
-    // ============================================
-    const { data: quotaResult, error: quotaError } = await supabaseClient
-      .rpc('check_and_consume_quota', {
-        _user_id: userId,
-        _level: level
-      });
+    console.log('Generating project:', { level, projectType, industry, userId });
 
-    if (quotaError) {
-      console.error('Quota check error:', quotaError);
-      return errorResponse(500, 'Failed to check quota');
-    }
-
-    if (!quotaResult.ok) {
-      console.log('Quota denied:', quotaResult.message);
-      return errorResponse(quotaResult.status, quotaResult.message);
-    }
-
-    console.log('Quota check passed:', quotaResult.message);
-
-    // ============================================
-    // Create project with "generating" status
-    // ============================================
+    // Create project with "generating" status immediately
     const { data: project, error: dbError } = await supabaseClient
       .from('projects')
       .insert({
@@ -154,25 +68,16 @@ serve(async (req) => {
 
     if (dbError) {
       console.error('Database error:', dbError);
-      return errorResponse(500, 'Failed to create project');
+      throw dbError;
     }
 
     console.log('Project created with ID:', project.id);
 
-    // ============================================
-    // Call n8n webhook (secure URL from env)
-    // ============================================
+    // Call n8n webhook synchronously and wait for response
     const n8nWebhookBaseUrl = Deno.env.get('N8N_WEBHOOK_URL');
     if (!n8nWebhookBaseUrl) {
       console.error('N8N_WEBHOOK_URL environment variable is not set');
-      
-      // Update project status to failed
-      await supabaseClient
-        .from('projects')
-        .update({ status: 'failed' })
-        .eq('id', project.id);
-      
-      return errorResponse(500, 'Webhook configuration error');
+      throw new Error('Webhook configuration error');
     }
 
     const n8nWebhookUrl = new URL(n8nWebhookBaseUrl);
@@ -182,7 +87,7 @@ serve(async (req) => {
     n8nWebhookUrl.searchParams.append('projectId', project.id);
     n8nWebhookUrl.searchParams.append('timestamp', new Date().toISOString());
     
-    console.log('Calling n8n webhook...');
+    console.log('Calling n8n webhook synchronously...');
     
     const n8nResponse = await fetch(n8nWebhookUrl.toString(), {
       method: 'GET',
@@ -192,8 +97,7 @@ serve(async (req) => {
     });
 
     if (!n8nResponse.ok) {
-      const errorText = await n8nResponse.text();
-      console.error('n8n webhook failed:', n8nResponse.status, errorText);
+      console.error('n8n webhook failed:', n8nResponse.status, await n8nResponse.text());
       
       // Update project status to failed
       await supabaseClient
@@ -201,12 +105,12 @@ serve(async (req) => {
         .update({ status: 'failed' })
         .eq('id', project.id);
       
-      return errorResponse(500, 'Failed to generate brief');
+      throw new Error('Failed to generate brief from n8n');
     }
 
-    // Parse n8n response
+    // Parse n8n response - expect brief data directly
     const briefData = await n8nResponse.json();
-    console.log('Received brief data from n8n');
+    console.log('Received brief data from n8n:', JSON.stringify(briefData).substring(0, 200));
 
     // Extract first element if briefData is an array
     const briefDataObject = Array.isArray(briefData) ? briefData[0] : briefData;
@@ -222,21 +126,18 @@ serve(async (req) => {
 
     if (updateError) {
       console.error('Failed to update project with brief:', updateError);
-      return errorResponse(500, 'Failed to save brief data');
+      throw updateError;
     }
 
     console.log('Project updated with brief data successfully');
 
-    // ============================================
-    // Return success response
-    // ============================================
+    // Return success with project ID
     return new Response(
       JSON.stringify({ 
-        ok: true,
-        status: 200,
+        success: true, 
         id: project.id,
-        message: 'Project created and brief generated successfully',
-        credits_used: quotaResult.credits_used || 0
+        status: 'completed',
+        message: 'Project created and brief generated successfully'
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -244,10 +145,41 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    // ============================================
-    // SECURITY: Safe error handling - no stack traces
-    // ============================================
-    console.error('Unexpected error:', error);
-    return errorResponse(500, 'An unexpected error occurred');
+    console.error('Error generating project:', error);
+    
+    // Handle validation errors
+    if (error instanceof z.ZodError) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Invalid input',
+          details: error.errors 
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400 
+        }
+      );
+    }
+    
+    // Handle authentication errors
+    if (error instanceof Error && error.message.includes('Unauthorized')) {
+      return new Response(
+        JSON.stringify({ error: error.message }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 401 
+        }
+      );
+    }
+    
+    return new Response(
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : 'Unknown error occurred' 
+      }),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500 
+      }
+    );
   }
 });

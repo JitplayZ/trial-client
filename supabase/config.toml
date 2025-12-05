@@ -2,6 +2,3 @@ project_id = "avsuyudchzyoyakxotfm"
 
 [functions.generate-project]
 verify_jwt = true
-
-[functions.award-xp]
-verify_jwt = true

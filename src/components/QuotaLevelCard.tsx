@@ -14,11 +14,8 @@ interface QuotaLevelCardProps {
   title: string;
   description: string;
   isLocked: boolean;
-  remaining: number | 'locked';
-  limit: number | 'locked';
-  creditCost: number;
-  availableCredits: number;
-  canUseCredits: boolean;
+  remaining: number | 'unlimited' | 'locked';
+  limit: number | 'unlimited' | 'locked';
   onGenerate: (projectType: string, industry: string) => void;
   generating: boolean;
 }
@@ -42,9 +39,6 @@ export const QuotaLevelCard = ({
   isLocked,
   remaining,
   limit,
-  creditCost,
-  availableCredits,
-  canUseCredits,
   onGenerate,
   generating
 }: QuotaLevelCardProps) => {
@@ -58,21 +52,15 @@ export const QuotaLevelCard = ({
 
   const getBadgeContent = () => {
     if (isLocked || remaining === 'locked') {
-      return <Badge variant="destructive">Locked - Requires Paid Plan</Badge>;
+      return <Badge variant="destructive">Locked</Badge>;
     }
-    if (typeof remaining === 'number' && remaining > 0) {
-      return <Badge variant="secondary">{remaining} free left this month</Badge>;
+    if (remaining === 'unlimited') {
+      return <Badge variant="default" className="bg-green-500">Unlimited</Badge>;
     }
-    if (canUseCredits) {
-      return <Badge variant="outline">{creditCost} credits per project</Badge>;
-    }
-    return <Badge variant="destructive">No quota or credits</Badge>;
+    return <Badge variant="secondary">{remaining} left this month</Badge>;
   };
 
-  const hasAccess = !isLocked && remaining !== 'locked' && (
-    (typeof remaining === 'number' && remaining > 0) || canUseCredits
-  );
-  const canGenerate = hasAccess && projectType && industry && !generating;
+  const canGenerate = !isLocked && remaining !== 'locked' && (remaining === 'unlimited' || (typeof remaining === 'number' && remaining > 0)) && projectType && industry && !generating;
 
   const Icon = levelIcons[level];
   const badge = levelBadges[level];
