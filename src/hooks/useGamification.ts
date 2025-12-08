@@ -48,6 +48,45 @@ export function useGamification() {
   useEffect(() => {
     if (user) {
       fetchGamificationData();
+      
+      // Set up real-time subscription for XP updates
+      const xpChannel = supabase
+        .channel('gamification-xp-realtime')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'user_xp',
+            filter: `user_id=eq.${user.id}`
+          },
+          () => {
+            fetchGamificationData();
+          }
+        )
+        .subscribe();
+      
+      // Set up real-time subscription for badge updates
+      const badgeChannel = supabase
+        .channel('gamification-badges-realtime')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'user_badges',
+            filter: `user_id=eq.${user.id}`
+          },
+          () => {
+            fetchGamificationData();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(xpChannel);
+        supabase.removeChannel(badgeChannel);
+      };
     }
   }, [user]);
 

@@ -1,15 +1,27 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Trophy, Star, Flame } from 'lucide-react';
+import { Trophy, Star, Flame, Sparkles } from 'lucide-react';
 import { useGamification } from '@/hooks/useGamification';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const GamificationBar = () => {
   const [showBadgesModal, setShowBadgesModal] = useState(false);
+  const [showXPGain, setShowXPGain] = useState(false);
+  const [prevXP, setPrevXP] = useState(0);
   const { userXP, badges, progressXP, neededXP, getBadgeDisplayName, getBadgeIcon, loading } = useGamification();
+
+  // Animate XP gain
+  useEffect(() => {
+    if (userXP.total_xp > prevXP && prevXP > 0) {
+      setShowXPGain(true);
+      setTimeout(() => setShowXPGain(false), 2000);
+    }
+    setPrevXP(userXP.total_xp);
+  }, [userXP.total_xp, prevXP]);
 
   if (loading) {
     return (
@@ -29,14 +41,35 @@ const GamificationBar = () => {
 
   return (
     <>
-      <Card className="glass-card mb-6 bg-card/50 backdrop-blur-xl border-border/50">
+      <Card className="glass-card mb-6 bg-card/50 backdrop-blur-xl border-border/50 relative overflow-hidden">
+        {/* XP Gain Animation */}
+        <AnimatePresence>
+          {showXPGain && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="absolute top-1 right-4 flex items-center gap-1 text-accent font-bold"
+            >
+              <Sparkles className="h-4 w-4" />
+              <span>+XP!</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        
         <CardContent className="p-4">
           <div className="flex items-center space-x-4">
             {/* Level indicator */}
-            <div className="flex items-center space-x-2 text-primary font-semibold">
+            <motion.div 
+              className="flex items-center space-x-2 text-primary font-semibold"
+              key={userXP.level}
+              initial={{ scale: 1 }}
+              animate={{ scale: [1, 1.2, 1] }}
+              transition={{ duration: 0.3 }}
+            >
               <Star className="h-5 w-5" />
               <span>Level {userXP.level}</span>
-            </div>
+            </motion.div>
 
             {/* XP Progress bar */}
             <div className="flex-1">
@@ -44,7 +77,13 @@ const GamificationBar = () => {
                 <span>XP: {progressXP} / {neededXP}</span>
                 <span>{userXP.total_xp} total</span>
               </div>
-              <Progress value={progressPercentage} className="h-2" variant="gradient" />
+              <motion.div
+                key={progressPercentage}
+                initial={{ opacity: 0.8 }}
+                animate={{ opacity: 1 }}
+              >
+                <Progress value={progressPercentage} className="h-2" variant="gradient" />
+              </motion.div>
             </div>
 
             {/* Badges */}
@@ -58,10 +97,10 @@ const GamificationBar = () => {
               <span>{badges.length}</span>
             </Button>
 
-            {/* Streak (mock for now) */}
+            {/* Streak placeholder */}
             <div className="flex items-center space-x-1 text-accent">
               <Flame className="h-4 w-4" />
-              <span className="text-sm font-medium">3</span>
+              <span className="text-sm font-medium">-</span>
             </div>
           </div>
         </CardContent>

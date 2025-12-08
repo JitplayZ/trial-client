@@ -26,7 +26,14 @@ export const ProjectDetailModal = ({ isOpen, onClose }: ProjectDetailModalProps)
 
   const handleGenerate = async (level: LevelType, projectType: string, industry: string) => {
     const status = getQuotaStatus(level);
+    
+    // Check if user has sufficient credits
     if (!status.available) {
+      toast({
+        title: "Insufficient Credit Balance",
+        description: `You don't have enough credits for this level. You need ${status.creditCost} credit${status.creditCost > 1 ? 's' : ''} or free quota remaining.`,
+        variant: "destructive",
+      });
       setQuotaExceededLevel(level);
       return;
     }
@@ -156,16 +163,25 @@ export const ProjectDetailModal = ({ isOpen, onClose }: ProjectDetailModalProps)
       <Dialog open={quotaExceededLevel !== null} onOpenChange={() => setQuotaExceededLevel(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Quota Limit Reached</DialogTitle>
+            <DialogTitle>Insufficient Credit Balance</DialogTitle>
             <DialogDescription>
-              You've reached your monthly limit for <span className="font-semibold capitalize">{quotaExceededLevel}</span> level briefs.
-              {resetDate && ` Resets on ${resetDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}.`}
+              You have insufficient credit balance for <span className="font-semibold capitalize">{quotaExceededLevel}</span> level briefs.
+              {quotaExceededLevel && (
+                <span className="block mt-2">
+                  Required: {quotaExceededLevel === 'beginner' ? 1 : quotaExceededLevel === 'intermediate' ? 2 : 5} credits
+                </span>
+              )}
+              {resetDate && (
+                <span className="block mt-1 text-xs">
+                  Free quotas reset on {resetDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}.
+                </span>
+              )}
             </DialogDescription>
           </DialogHeader>
           <div className="flex gap-2 mt-4">
             <Button variant="outline" onClick={() => setQuotaExceededLevel(null)} className="flex-1">Close</Button>
             <Button className="flex-1 bg-gradient-primary" asChild>
-              <Link to="/pricing">Upgrade Now</Link>
+              <Link to="/pricing">Get More Credits</Link>
             </Button>
           </div>
         </DialogContent>
