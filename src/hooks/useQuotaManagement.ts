@@ -16,11 +16,11 @@ interface QuotaData {
   };
 }
 
-// Credit costs per level
+// Credit costs per level (updated: veteran = 5)
 export const CREDIT_COSTS: Record<LevelType, number> = {
   beginner: 1,
   intermediate: 2,
-  veteran: 4
+  veteran: 5
 };
 
 // Free monthly quotas per plan

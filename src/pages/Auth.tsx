@@ -1,28 +1,68 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Zap, Shield } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { ArrowLeft, Zap, Shield, Gift } from 'lucide-react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [searchParams] = useSearchParams();
+  const referralCode = searchParams.get('ref');
   const { signInWithGoogle, user } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (user) {
+      // Process referral if code exists and user just signed up
+      if (referralCode) {
+        processReferral(referralCode, user.id);
+      }
       navigate('/dashboard');
     }
-  }, [user, navigate]);
+  }, [user, navigate, referralCode]);
+
+  const processReferral = async (code: string, userId: string) => {
+    try {
+      const { data, error } = await supabase.rpc('process_referral', {
+        _referral_code: code,
+        _referred_user_id: userId
+      });
+
+      if (error) {
+        console.error('Referral error:', error);
+        return;
+      }
+
+      // Type assertion for the response
+      const result = data as { ok?: boolean; referred_credits?: number } | null;
+      
+      if (result?.ok) {
+        toast({
+          title: '🎉 Welcome Bonus!',
+          description: `You received ${result.referred_credits ?? 2} credits for signing up with a referral!`,
+        });
+      }
+    } catch (error) {
+      console.error('Error processing referral:', error);
+    }
+  };
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);
+    // Store referral code in sessionStorage for processing after OAuth callback
+    if (referralCode) {
+      sessionStorage.setItem('referralCode', referralCode);
+    }
     const { error } = await signInWithGoogle();
     if (error) {
       setIsLoading(false);
     }
   };
+
 
   return (
     <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
@@ -54,6 +94,16 @@ const Auth = () => {
             <CardDescription className="text-base">
               Sign in to start generating realistic client briefs with AI
             </CardDescription>
+            
+            {/* Referral Banner */}
+            {referralCode && (
+              <div className="mt-4 p-3 bg-accent/10 border border-accent/30 rounded-lg flex items-center gap-2">
+                <Gift className="h-5 w-5 text-accent" />
+                <span className="text-sm text-accent font-medium">
+                  You'll receive 2 bonus credits after signing up!
+                </span>
+              </div>
+            )}
           </CardHeader>
 
           <CardContent className="space-y-6">

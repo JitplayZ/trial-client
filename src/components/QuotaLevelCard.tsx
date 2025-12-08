@@ -111,7 +111,14 @@ export const QuotaLevelCard = ({
             {description}
           </CardDescription>
           
-          <div className="mt-6">
+          {/* Credit Cost Display */}
+          <div className="mt-4 p-3 bg-primary/10 rounded-lg">
+            <p className="text-sm font-medium text-primary">
+              Cost: {creditCost} credit{creditCost > 1 ? 's' : ''} per project
+            </p>
+          </div>
+          
+          <div className="mt-4">
             {getBadgeContent()}
           </div>
         </CardHeader>

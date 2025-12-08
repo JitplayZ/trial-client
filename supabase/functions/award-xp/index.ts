@@ -151,6 +151,20 @@ serve(async (req) => {
       }
     }
 
+    // Referral success badge
+    if (event_type === 'referral_success') {
+      const { data: existingBadge } = await supabaseAdmin
+        .from('user_badges')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('badge_type', 'referral_success')
+        .maybeSingle();
+      
+      if (!existingBadge) {
+        badgesToAward.push('referral_success');
+      }
+    }
+
     // Level badges
     if (leveledUp && (newLevel === 5 || newLevel === 10)) {
       const badgeType = `level_${newLevel}`;
