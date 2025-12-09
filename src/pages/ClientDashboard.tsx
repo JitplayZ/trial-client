@@ -10,8 +10,8 @@ import GamificationBar from '@/components/dashboard/GamificationBar';
 // Feature flag for gamification
 const GAMIFICATION_ENABLED = true; // Set to false to disable
 
-// TESTING MODE: Auth bypass enabled - remove this when going to production
-const BYPASS_AUTH = true;
+// Authentication is enforced - do not bypass in production
+const BYPASS_AUTH = false;
 
 const ClientDashboard = () => {
   const { user, loading } = useAuth();
