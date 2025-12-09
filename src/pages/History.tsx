@@ -8,8 +8,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { FileText, Calendar, Download, Eye, X, Loader2 } from 'lucide-react';
 
-// TESTING MODE: Auth bypass enabled - remove this when going to production
-const BYPASS_AUTH = true;
+// Authentication is enforced - do not bypass in production
+const BYPASS_AUTH = false;
 
 interface BriefData {
   company_name: string;
