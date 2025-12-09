@@ -305,10 +305,12 @@ export type Database = {
         }
         Returns: boolean
       }
-      process_referral: {
-        Args: { _referral_code: string; _referred_user_id: string }
-        Returns: Json
-      }
+      process_referral:
+        | { Args: { _referral_code: string }; Returns: Json }
+        | {
+            Args: { _referral_code: string; _referred_user_id: string }
+            Returns: Json
+          }
       reset_monthly_quotas: { Args: never; Returns: undefined }
     }
     Enums: {

@@ -15,11 +15,45 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Session storage key for referral codes
+const REFERRAL_CODE_KEY = 'referralCode';
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+
+  // Process referral code from sessionStorage after OAuth callback
+  const processStoredReferralCode = async (userId: string) => {
+    const storedCode = sessionStorage.getItem(REFERRAL_CODE_KEY);
+    if (!storedCode) return;
+
+    // Clear immediately to prevent duplicate processing
+    sessionStorage.removeItem(REFERRAL_CODE_KEY);
+
+    try {
+      const { data, error } = await supabase.rpc('process_referral', {
+        _referral_code: storedCode
+      });
+
+      if (error) {
+        console.error('Referral processing error:', error);
+        return;
+      }
+
+      const result = data as { ok?: boolean; referred_credits?: number; message?: string } | null;
+      
+      if (result?.ok) {
+        toast({
+          title: '🎉 Welcome Bonus!',
+          description: `You received ${result.referred_credits ?? 2} credits for signing up with a referral!`,
+        });
+      }
+    } catch (error) {
+      console.error('Error processing stored referral:', error);
+    }
+  };
 
   useEffect(() => {
     // Set up auth state listener
@@ -28,6 +62,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+
+        // Process stored referral code after successful sign-up via OAuth
+        if (event === 'SIGNED_IN' && session?.user) {
+          // Use setTimeout to avoid Supabase auth deadlock
+          setTimeout(() => {
+            processStoredReferralCode(session.user.id);
+          }, 0);
+        }
       }
     );
 
@@ -114,8 +156,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     return { error };
   };
-
-  // Removed the updateDisplayName useEffect since Google provides the name automatically
 
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
