@@ -7,6 +7,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+// Session storage key for referral codes (must match AuthContext)
+const REFERRAL_CODE_KEY = 'referralCode';
+
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [searchParams] = useSearchParams();
@@ -17,19 +20,19 @@ const Auth = () => {
 
   useEffect(() => {
     if (user) {
-      // Process referral if code exists and user just signed up
+      // Process referral if code exists in URL (for non-OAuth flows)
       if (referralCode) {
-        processReferral(referralCode, user.id);
+        processReferral(referralCode);
       }
       navigate('/dashboard');
     }
   }, [user, navigate, referralCode]);
 
-  const processReferral = async (code: string, userId: string) => {
+  const processReferral = async (code: string) => {
     try {
+      // Updated: No longer passing user_id, RPC uses auth.uid() internally
       const { data, error } = await supabase.rpc('process_referral', {
-        _referral_code: code,
-        _referred_user_id: userId
+        _referral_code: code
       });
 
       if (error) {
@@ -55,7 +58,7 @@ const Auth = () => {
     setIsLoading(true);
     // Store referral code in sessionStorage for processing after OAuth callback
     if (referralCode) {
-      sessionStorage.setItem('referralCode', referralCode);
+      sessionStorage.setItem(REFERRAL_CODE_KEY, referralCode);
     }
     const { error } = await signInWithGoogle();
     if (error) {
