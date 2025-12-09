@@ -5,41 +5,19 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import UserMenu from "@/components/UserMenu";
 import { useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Share2, Copy, MessageCircle } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import { NotificationsPanel } from "@/components/NotificationsPanel";
 import { Badge } from "@/components/ui/badge";
 import { useNotifications } from "@/hooks/useNotifications";
+import { ReferralModal } from "@/components/modals/ReferralModal";
 
 const Navbar = () => {
   const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const isDashboard = location.pathname === '/dashboard';
   const [referralModalOpen, setReferralModalOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const { unreadCount } = useNotifications();
-
-  // Mock referral code
-  const referralCode = 'AIProj2024';
-  const referralLink = `${window.location.origin}/signup?ref=${referralCode}`;
-
-  const handleCopyReferralLink = () => {
-    navigator.clipboard.writeText(referralLink);
-    toast({
-      title: "Link Copied!",
-      description: "Referral link copied to clipboard.",
-    });
-  };
-
-  const handleShareWhatsApp = () => {
-    const message = encodeURIComponent(`Check out tRIAL - cLIENTS! Generate realistic client briefs with AI. Join using my link: ${referralLink}`);
-    window.open(`https://wa.me/?text=${message}`, '_blank');
-  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/20">
@@ -164,59 +142,10 @@ const Navbar = () => {
       </div>
 
       {/* Referral Modal */}
-      <Dialog open={referralModalOpen} onOpenChange={setReferralModalOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center space-x-2">
-              <Share2 className="h-5 w-5" />
-              <span>Refer People & Earn</span>
-            </DialogTitle>
-            <DialogDescription>
-              Share this link and get extra free projects when your friends join!
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="referral-link">Your Referral Link</Label>
-              <div className="flex space-x-2">
-                <Input
-                  id="referral-link"
-                  value={referralLink}
-                  readOnly
-                  className="flex-1"
-                />
-                <Button onClick={handleCopyReferralLink} size="sm">
-                  <Copy className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-
-            <div className="flex space-x-2">
-              <Button 
-                onClick={handleCopyReferralLink} 
-                variant="outline" 
-                className="flex-1"
-              >
-                <Copy className="h-4 w-4 mr-2" />
-                Copy Link
-              </Button>
-              <Button 
-                onClick={handleShareWhatsApp} 
-                variant="outline" 
-                className="flex-1"
-              >
-                <MessageCircle className="h-4 w-4 mr-2" />
-                WhatsApp
-              </Button>
-            </div>
-
-            <div className="text-center text-sm text-muted-foreground">
-              <p>🎉 You referred <strong>0</strong> people</p>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ReferralModal 
+        isOpen={referralModalOpen} 
+        onClose={() => setReferralModalOpen(false)} 
+      />
 
       {/* Notifications Panel */}
       <NotificationsPanel 

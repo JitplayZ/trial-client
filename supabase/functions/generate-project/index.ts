@@ -228,6 +228,77 @@ serve(async (req) => {
     console.log('Project updated with brief data successfully');
 
     // ============================================
+    // Award XP for project creation
+    // ============================================
+    try {
+      // Update user XP directly in database
+      const { data: xpData, error: xpFetchError } = await supabaseClient
+        .from('user_xp')
+        .select('total_xp, level')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (xpFetchError) {
+        console.error('Error fetching user XP:', xpFetchError);
+      } else {
+        const XP_VALUES: Record<string, number> = {
+          beginner: 50,
+          intermediate: 100,
+          veteran: 200
+        };
+        const xpGain = XP_VALUES[level] || 50;
+        
+        const currentXP = xpData?.total_xp || 0;
+        const currentLevel = xpData?.level || 1;
+        const newTotalXP = currentXP + xpGain;
+        
+        // Calculate new level (1000 XP per level)
+        const newLevel = Math.floor(newTotalXP / 1000) + 1;
+        const leveledUp = newLevel > currentLevel;
+        
+        if (xpData) {
+          // Update existing XP
+          await supabaseClient
+            .from('user_xp')
+            .update({ total_xp: newTotalXP, level: newLevel })
+            .eq('user_id', userId);
+        } else {
+          // Create new XP record
+          await supabaseClient
+            .from('user_xp')
+            .insert({ user_id: userId, total_xp: xpGain, level: newLevel });
+        }
+        
+        // Log XP event
+        await supabaseClient
+          .from('xp_events')
+          .insert({ user_id: userId, event_type: 'project_created', xp_gained: xpGain });
+        
+        // Check for first_project badge
+        const { count: projectCount } = await supabaseClient
+          .from('projects')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', userId);
+        
+        if (projectCount === 1) {
+          // Award first_project badge
+          const { error: badgeError } = await supabaseClient
+            .from('user_badges')
+            .insert({ user_id: userId, badge_type: 'first_project' });
+          
+          if (!badgeError) {
+            console.log('First project badge awarded');
+          }
+        }
+        
+        console.log(`XP awarded: ${xpGain}, New total: ${newTotalXP}, Level: ${newLevel}, Leveled up: ${leveledUp}`);
+      }
+    } catch (xpError) {
+      console.error('Error awarding XP:', xpError);
+      // Don't fail the request if XP award fails
+    }
+
+    // ============================================
     // Return success response
     // ============================================
     return new Response(

@@ -1,39 +1,16 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Zap, Share2, Copy, MessageCircle } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { useGamification } from '@/hooks/useGamification';
+import { Zap, Share2 } from 'lucide-react';
 import { ProjectDetailModal } from '@/components/modals/ProjectDetailModal';
+import { ReferralModal } from '@/components/modals/ReferralModal';
 
 const QuickActions = () => {
   const [referralModalOpen, setReferralModalOpen] = useState(false);
   const [projectModalOpen, setProjectModalOpen] = useState(false);
-  const { toast } = useToast();
-  const { awardXP } = useGamification();
-
-  // Mock referral code - in real app this would come from user profile
-  const referralCode = 'AIProj2024';
-  const referralLink = `${window.location.origin}/signup?ref=${referralCode}`;
 
   const handleGenerateProject = () => {
     setProjectModalOpen(true);
-  };
-
-  const handleCopyReferralLink = () => {
-    navigator.clipboard.writeText(referralLink);
-    toast({
-      title: "Link Copied!",
-      description: "Referral link copied to clipboard.",
-    });
-  };
-
-  const handleShareWhatsApp = () => {
-    const message = encodeURIComponent(`Check out tRIAL-cLIENTS! Generate realistic client briefs with AI. Join using my link: ${referralLink}`);
-    window.open(`https://wa.me/?text=${message}`, '_blank');
   };
 
   const actions = [
@@ -86,66 +63,17 @@ const QuickActions = () => {
       </Card>
 
       {/* Referral Modal */}
-      <Dialog open={referralModalOpen} onOpenChange={setReferralModalOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center space-x-2">
-              <Share2 className="h-5 w-5" />
-              <span>Refer People & Earn</span>
-            </DialogTitle>
-            <DialogDescription>
-              Share this link and get extra free projects when your friends join!
-          </DialogDescription>
-        </DialogHeader>
-        
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="referral-link">Your Referral Link</Label>
-            <div className="flex space-x-2">
-              <Input
-                id="referral-link"
-                value={referralLink}
-                readOnly
-                className="flex-1"
-              />
-              <Button onClick={handleCopyReferralLink} size="sm">
-                <Copy className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
+      <ReferralModal 
+        isOpen={referralModalOpen} 
+        onClose={() => setReferralModalOpen(false)} 
+      />
 
-          <div className="flex space-x-2">
-            <Button 
-              onClick={handleCopyReferralLink} 
-              variant="outline" 
-              className="flex-1"
-            >
-              <Copy className="h-4 w-4 mr-2" />
-              Copy Link
-            </Button>
-            <Button 
-              onClick={handleShareWhatsApp} 
-              variant="outline" 
-              className="flex-1"
-            >
-              <MessageCircle className="h-4 w-4 mr-2" />
-              WhatsApp
-            </Button>
-          </div>
-
-          <div className="text-center text-sm text-muted-foreground">
-            <p>🎉 You referred <strong>0</strong> people</p>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-
-    {/* Project Detail Modal */}
-    <ProjectDetailModal 
-      isOpen={projectModalOpen} 
-      onClose={() => setProjectModalOpen(false)} 
-    />
-  </>
+      {/* Project Detail Modal */}
+      <ProjectDetailModal 
+        isOpen={projectModalOpen} 
+        onClose={() => setProjectModalOpen(false)} 
+      />
+    </>
   );
 };
 
