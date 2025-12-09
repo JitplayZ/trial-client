@@ -6,7 +6,6 @@ import DashboardCards from '@/components/dashboard/DashboardCards';
 import RecentProjectsList from '@/components/dashboard/RecentProjectsList';
 import QuickActions from '@/components/dashboard/QuickActions';
 import GamificationBar from '@/components/dashboard/GamificationBar';
-import ReferralCard from '@/components/dashboard/ReferralCard';
 
 // Feature flag for gamification
 const GAMIFICATION_ENABLED = true; // Set to false to disable
@@ -80,7 +79,6 @@ const ClientDashboard = () => {
             <div className="lg:col-span-1 space-y-6">
               <DashboardCards />
               <QuickActions />
-              <ReferralCard />
             </div>
 
             {/* Right Column - Recent Projects */}
