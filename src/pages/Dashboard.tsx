@@ -119,7 +119,7 @@ const Dashboard = () => {
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-foreground-secondary">
                   <div className="flex items-center space-x-1">
                     <Zap className="h-4 w-4 text-accent flex-shrink-0" />
-                    <span>8 credits remaining</span>
+                    <span>{quotaData?.credits ?? 0} credits remaining</span>
                   </div>
                   <div className="flex items-center space-x-1">
                     <Clock className="h-4 w-4 text-warning flex-shrink-0" />

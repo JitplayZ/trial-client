@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Calendar, Download, Eye, X, Loader2 } from 'lucide-react';
+import { FileText, Calendar, Download, Eye, X, Loader2, ArrowLeft } from 'lucide-react';
 
 // Authentication is enforced - do not bypass in production
 const BYPASS_AUTH = false;
@@ -117,31 +117,44 @@ const History = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background py-12">
+    <div className="min-h-screen bg-background py-4 sm:py-8 lg:py-12">
       <div className="container mx-auto px-4">
-        <div className="flex justify-between items-start mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">Project History</h1>
-            <p className="text-muted-foreground">View all your generated projects</p>
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
+          <div className="flex items-center gap-3">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => navigate('/dashboard')}
+              className="gap-1.5 text-xs sm:text-sm -ml-2"
+            >
+              <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Back</span>
+            </Button>
+            <div>
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">Project History</h1>
+              <p className="text-xs sm:text-sm text-muted-foreground">View all your generated projects</p>
+            </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="absolute right-4 top-4 sm:static">
             <X className="h-5 w-5" />
           </Button>
         </div>
 
+        {/* Content */}
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <Card key={i} className="glass-card">
                 <CardHeader>
-                  <Skeleton className="h-6 w-3/4 mb-2" />
-                  <Skeleton className="h-4 w-1/2" />
+                  <Skeleton className="h-5 sm:h-6 w-3/4 mb-2" />
+                  <Skeleton className="h-3 sm:h-4 w-1/2" />
                 </CardHeader>
                 <CardContent>
-                  <Skeleton className="h-20 w-full mb-4" />
+                  <Skeleton className="h-16 sm:h-20 w-full mb-4" />
                   <div className="flex space-x-2">
-                    <Skeleton className="h-9 flex-1" />
-                    <Skeleton className="h-9 flex-1" />
+                    <Skeleton className="h-8 sm:h-9 flex-1" />
+                    <Skeleton className="h-8 sm:h-9 flex-1" />
                   </div>
                 </CardContent>
               </Card>
@@ -149,53 +162,53 @@ const History = () => {
           </div>
         ) : projects.length === 0 ? (
           <Card className="glass-card">
-            <CardContent className="py-12 text-center">
-              <FileText className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
-              <h3 className="text-xl font-semibold text-foreground mb-2">No projects yet</h3>
-              <p className="text-muted-foreground mb-6">Generate your first project to get started</p>
+            <CardContent className="py-10 sm:py-12 text-center">
+              <FileText className="mx-auto h-12 w-12 sm:h-16 sm:w-16 text-muted-foreground/50 mb-4" />
+              <h3 className="text-lg sm:text-xl font-semibold text-foreground mb-2">No projects yet</h3>
+              <p className="text-sm text-muted-foreground mb-6">Generate your first project to get started</p>
               <Button onClick={() => navigate('/dashboard')} className="bg-gradient-primary">
                 Generate Project
               </Button>
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {projects.map((project) => (
-              <Card key={project.id} className="glass-card hover-lift">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-foreground">
+              <Card key={project.id} className="glass-card hover-lift flex flex-col">
+                <CardHeader className="pb-2 sm:pb-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <CardTitle className="text-foreground text-base sm:text-lg line-clamp-1">
                         {project.brief_data?.company_name || project.title}
                       </CardTitle>
-                      <CardDescription className="text-muted-foreground mt-1">
+                      <CardDescription className="text-muted-foreground mt-0.5 text-xs sm:text-sm line-clamp-1">
                         {project.brief_data?.tagline || project.type || 'Web Project'}
                       </CardDescription>
                     </div>
                     {project.status === 'generating' && (
-                      <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                      <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin text-primary flex-shrink-0" />
                     )}
                   </div>
                   <div className="flex flex-wrap gap-1 mt-2">
                     {project.level && (
-                      <Badge variant="outline" className="text-xs">{project.level}</Badge>
+                      <Badge variant="outline" className="text-[10px] sm:text-xs px-1.5 py-0">{project.level}</Badge>
                     )}
                     {project.type && (
-                      <Badge variant="outline" className="text-xs">{project.type}</Badge>
+                      <Badge variant="outline" className="text-[10px] sm:text-xs px-1.5 py-0">{project.type}</Badge>
                     )}
                     {project.industry && (
-                      <Badge variant="secondary" className="text-xs">{project.industry}</Badge>
+                      <Badge variant="secondary" className="text-[10px] sm:text-xs px-1.5 py-0">{project.industry}</Badge>
                     )}
                   </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="flex-1 flex flex-col">
                   {project.status === 'generating' ? (
-                    <p className="text-muted-foreground mb-4 text-sm italic">
+                    <p className="text-muted-foreground mb-3 sm:mb-4 text-xs sm:text-sm italic">
                       Brief is being generated...
                     </p>
                   ) : project.brief_data ? (
-                    <div className="space-y-2 mb-4">
-                      <p className="text-muted-foreground text-sm line-clamp-2">
+                    <div className="space-y-2 mb-3 sm:mb-4 flex-1">
+                      <p className="text-muted-foreground text-xs sm:text-sm line-clamp-2">
                         {project.brief_data.intro}
                       </p>
                       {project.brief_data.primary_color_palette && (
@@ -203,7 +216,7 @@ const History = () => {
                           {project.brief_data.primary_color_palette.slice(0, 4).map((color, idx) => (
                             <div 
                               key={idx}
-                              className="h-5 w-5 rounded border border-border"
+                              className="h-4 w-4 sm:h-5 sm:w-5 rounded border border-border"
                               style={{ backgroundColor: color }}
                               title={color}
                             />
@@ -212,33 +225,33 @@ const History = () => {
                       )}
                     </div>
                   ) : (
-                    <p className="text-muted-foreground mb-4 line-clamp-3">
+                    <p className="text-muted-foreground mb-3 sm:mb-4 text-xs sm:text-sm line-clamp-3 flex-1">
                       {project.description || 'No description available'}
                     </p>
                   )}
                   
-                  <div className="flex items-center text-xs text-muted-foreground mb-4">
-                    <Calendar className="h-4 w-4 mr-1" />
+                  <div className="flex items-center text-[10px] sm:text-xs text-muted-foreground mb-3 sm:mb-4">
+                    <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                     {new Date(project.created_at).toLocaleDateString()}
                   </div>
                   <div className="flex space-x-2">
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      className="flex-1"
+                      className="flex-1 text-xs sm:text-sm h-8 sm:h-9"
                       onClick={() => navigate(`/projects/${project.id}`)}
                     >
-                      <Eye className="h-4 w-4 mr-1" />
+                      <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                       View
                     </Button>
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      className="flex-1"
+                      className="flex-1 text-xs sm:text-sm h-8 sm:h-9"
                       disabled={!project.brief_data}
                       onClick={() => downloadBrief(project)}
                     >
-                      <Download className="h-4 w-4 mr-1" />
+                      <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                       Download
                     </Button>
                   </div>

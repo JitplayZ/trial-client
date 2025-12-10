@@ -23,9 +23,9 @@ export const CREDIT_COSTS: Record<LevelType, number> = {
   veteran: 5
 };
 
-// Free monthly quotas per plan
+// Free monthly quotas per plan (updated: beginner = 3 for free plan)
 const PLAN_FREE_QUOTAS: Record<PlanType, { beginner: number; intermediate: number; veteran: number }> = {
-  free: { beginner: 5, intermediate: 2, veteran: 0 },
+  free: { beginner: 3, intermediate: 2, veteran: 0 },
   pro: { beginner: 10, intermediate: 5, veteran: 2 },
   proplus: { beginner: 20, intermediate: 10, veteran: 5 }
 };
@@ -62,10 +62,10 @@ export const useQuotaManagement = () => {
           .insert({
             user_id: user.id,
             plan: 'free',
-            beginner_left: 5,
+            beginner_left: 3,  // Updated: 3 free beginner projects
             intermediate_left: 2,
             veteran_left: 0,
-            credits: 0,
+            credits: 5,  // Updated: 5 starting credits (not 10)
             reset_at: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toISOString()
           })
           .select()

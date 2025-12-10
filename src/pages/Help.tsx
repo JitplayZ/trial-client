@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Book, MessageCircle, Mail, X } from 'lucide-react';
+import { Search, Book, MessageCircle, Mail, X, ArrowLeft } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -72,7 +72,7 @@ export default function Help() {
   };
 
   return (
-    <div className="min-h-screen bg-background py-12">
+    <div className="min-h-screen bg-background py-4 sm:py-8 lg:py-12">
       <Helmet>
         <title>Help & FAQ - tRIAL - cLIENTS</title>
         <meta name="description" content="Find answers to common questions about tRIAL - cLIENTS. Learn how to generate briefs, manage projects, and get the most from our platform." />
@@ -80,8 +80,19 @@ export default function Help() {
           {JSON.stringify(faqStructuredData)}
         </script>
       </Helmet>
+      
       <div className="container mx-auto px-4 max-w-4xl">
-        <div className="flex justify-end mb-4">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6 sm:mb-8">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => navigate(-1)}
+            className="gap-1.5 text-xs sm:text-sm -ml-2"
+          >
+            <ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Back</span>
+          </Button>
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <X className="h-5 w-5" />
           </Button>
@@ -90,50 +101,51 @@ export default function Help() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
+          className="text-center mb-8 sm:mb-12"
         >
-          <h1 className="text-4xl font-bold text-foreground mb-4">How can we help?</h1>
-          <p className="text-xl text-muted-foreground mb-8">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground mb-3 sm:mb-4">How can we help?</h1>
+          <p className="text-base sm:text-lg lg:text-xl text-muted-foreground mb-6 sm:mb-8">
             Find answers to common questions or get in touch
           </p>
 
           <div className="max-w-2xl mx-auto relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
             <Input
               placeholder="Search for help..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 glass-card"
+              className="pl-9 sm:pl-10 glass-card text-sm sm:text-base h-10 sm:h-11"
             />
           </div>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        {/* Quick Links */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 mb-8 sm:mb-12">
           <Card className="glass-card hover-lift cursor-pointer">
-            <CardContent className="pt-6 text-center">
-              <Book className="h-12 w-12 mx-auto mb-4 text-primary" />
-              <h3 className="font-semibold text-foreground mb-2">Documentation</h3>
-              <p className="text-sm text-muted-foreground">
+            <CardContent className="pt-4 sm:pt-6 text-center">
+              <Book className="h-8 w-8 sm:h-10 sm:w-10 lg:h-12 lg:w-12 mx-auto mb-3 sm:mb-4 text-primary" />
+              <h3 className="font-semibold text-foreground text-sm sm:text-base mb-1 sm:mb-2">Documentation</h3>
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 Complete guides and tutorials
               </p>
             </CardContent>
           </Card>
 
           <Card className="glass-card hover-lift cursor-pointer">
-            <CardContent className="pt-6 text-center">
-              <MessageCircle className="h-12 w-12 mx-auto mb-4 text-primary" />
-              <h3 className="font-semibold text-foreground mb-2">Community</h3>
-              <p className="text-sm text-muted-foreground">
+            <CardContent className="pt-4 sm:pt-6 text-center">
+              <MessageCircle className="h-8 w-8 sm:h-10 sm:w-10 lg:h-12 lg:w-12 mx-auto mb-3 sm:mb-4 text-primary" />
+              <h3 className="font-semibold text-foreground text-sm sm:text-base mb-1 sm:mb-2">Community</h3>
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 Connect with other users
               </p>
             </CardContent>
           </Card>
 
           <Card className="glass-card hover-lift cursor-pointer">
-            <CardContent className="pt-6 text-center">
-              <Mail className="h-12 w-12 mx-auto mb-4 text-primary" />
-              <h3 className="font-semibold text-foreground mb-2">Support</h3>
-              <p className="text-sm text-muted-foreground">
+            <CardContent className="pt-4 sm:pt-6 text-center">
+              <Mail className="h-8 w-8 sm:h-10 sm:w-10 lg:h-12 lg:w-12 mx-auto mb-3 sm:mb-4 text-primary" />
+              <h3 className="font-semibold text-foreground text-sm sm:text-base mb-1 sm:mb-2">Support</h3>
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 Get help from our team
               </p>
             </CardContent>
@@ -141,18 +153,18 @@ export default function Help() {
         </div>
 
         {/* FAQ Section */}
-        <Card className="glass-card mb-8">
-          <CardHeader>
-            <CardTitle>Frequently Asked Questions</CardTitle>
+        <Card className="glass-card mb-6 sm:mb-8">
+          <CardHeader className="pb-2 sm:pb-4">
+            <CardTitle className="text-lg sm:text-xl">Frequently Asked Questions</CardTitle>
           </CardHeader>
           <CardContent>
             <Accordion type="single" collapsible className="w-full">
               {filteredFaqs.map((faq, index) => (
                 <AccordionItem key={index} value={`item-${index}`}>
-                  <AccordionTrigger className="text-left text-foreground">
+                  <AccordionTrigger className="text-left text-foreground text-sm sm:text-base py-3 sm:py-4">
                     {faq.question}
                   </AccordionTrigger>
-                  <AccordionContent className="text-muted-foreground">
+                  <AccordionContent className="text-muted-foreground text-xs sm:text-sm pb-3 sm:pb-4">
                     {faq.answer}
                   </AccordionContent>
                 </AccordionItem>
@@ -160,7 +172,7 @@ export default function Help() {
             </Accordion>
 
             {filteredFaqs.length === 0 && (
-              <p className="text-center text-muted-foreground py-8">
+              <p className="text-center text-muted-foreground py-6 sm:py-8 text-sm">
                 No results found. Try a different search term.
               </p>
             )}
@@ -169,23 +181,23 @@ export default function Help() {
 
         {/* Contact Form */}
         <Card className="glass-card">
-          <CardHeader>
-            <CardTitle>Still need help?</CardTitle>
+          <CardHeader className="pb-2 sm:pb-4">
+            <CardTitle className="text-lg sm:text-xl">Still need help?</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleContactSubmit} className="space-y-4">
               <div>
-                <Label htmlFor="message">Message</Label>
+                <Label htmlFor="message" className="text-sm">Message</Label>
                 <Textarea
                   id="message"
                   placeholder="Describe your issue..."
                   value={supportMessage}
                   onChange={(e) => setSupportMessage(e.target.value)}
-                  className="mt-2 min-h-[150px]"
+                  className="mt-2 min-h-[120px] sm:min-h-[150px] text-sm"
                   required
                 />
               </div>
-              <Button type="submit" className="bg-gradient-primary">
+              <Button type="submit" className="bg-gradient-primary w-full sm:w-auto">
                 <Mail className="h-4 w-4 mr-2" />
                 Send Message
               </Button>

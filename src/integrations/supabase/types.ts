@@ -296,6 +296,14 @@ export type Database = {
         Args: { _level: string; _user_id: string }
         Returns: Json
       }
+      check_quota_availability: {
+        Args: { _level: string; _user_id: string }
+        Returns: Json
+      }
+      consume_quota_after_success: {
+        Args: { _level: string; _user_id: string }
+        Returns: Json
+      }
       delete_user_account: { Args: never; Returns: undefined }
       generate_referral_code: { Args: never; Returns: string }
       has_role: {

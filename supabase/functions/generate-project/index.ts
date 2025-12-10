@@ -114,25 +114,26 @@ serve(async (req) => {
     console.log('Validated input:', { level, projectType, industry, userId });
 
     // ============================================
-    // SECURITY: Check and consume quota/credits
+    // SAFE CREDIT SYSTEM: Check availability ONLY (no deduction yet)
+    // Credits are ONLY deducted after successful brief generation
     // ============================================
-    const { data: quotaResult, error: quotaError } = await supabaseClient
-      .rpc('check_and_consume_quota', {
+    const { data: quotaCheckResult, error: quotaCheckError } = await supabaseClient
+      .rpc('check_quota_availability', {
         _user_id: userId,
         _level: level
       });
 
-    if (quotaError) {
-      console.error('Quota check error:', quotaError);
+    if (quotaCheckError) {
+      console.error('Quota check error:', quotaCheckError);
       return errorResponse(500, 'Failed to check quota');
     }
 
-    if (!quotaResult.ok) {
-      console.log('Quota denied:', quotaResult.message);
-      return errorResponse(quotaResult.status, quotaResult.message);
+    if (!quotaCheckResult.ok) {
+      console.log('Quota denied:', quotaCheckResult.message);
+      return errorResponse(quotaCheckResult.status, quotaCheckResult.message);
     }
 
-    console.log('Quota check passed:', quotaResult.message);
+    console.log('Quota check passed (not consumed yet):', quotaCheckResult.message);
 
     // ============================================
     // Create project with "generating" status
@@ -166,7 +167,7 @@ serve(async (req) => {
     if (!n8nWebhookBaseUrl) {
       console.error('N8N_WEBHOOK_URL environment variable is not set');
       
-      // Update project status to failed
+      // Update project status to failed - NO credits lost
       await supabaseClient
         .from('projects')
         .update({ status: 'failed' })
@@ -184,18 +185,31 @@ serve(async (req) => {
     
     console.log('Calling n8n webhook...');
     
-    const n8nResponse = await fetch(n8nWebhookUrl.toString(), {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    let n8nResponse;
+    try {
+      n8nResponse = await fetch(n8nWebhookUrl.toString(), {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+    } catch (fetchError) {
+      console.error('n8n webhook fetch failed:', fetchError);
+      
+      // Update project status to failed - NO credits lost
+      await supabaseClient
+        .from('projects')
+        .update({ status: 'failed' })
+        .eq('id', project.id);
+      
+      return errorResponse(500, 'Failed to connect to brief generation service');
+    }
 
     if (!n8nResponse.ok) {
       const errorText = await n8nResponse.text();
       console.error('n8n webhook failed:', n8nResponse.status, errorText);
       
-      // Update project status to failed
+      // Update project status to failed - NO credits lost
       await supabaseClient
         .from('projects')
         .update({ status: 'failed' })
@@ -205,11 +219,38 @@ serve(async (req) => {
     }
 
     // Parse n8n response
-    const briefData = await n8nResponse.json();
+    let briefData;
+    try {
+      briefData = await n8nResponse.json();
+    } catch (parseError) {
+      console.error('Failed to parse n8n response:', parseError);
+      
+      // Update project status to failed - NO credits lost
+      await supabaseClient
+        .from('projects')
+        .update({ status: 'failed' })
+        .eq('id', project.id);
+      
+      return errorResponse(500, 'Invalid response from brief generation service');
+    }
+
     console.log('Received brief data from n8n');
 
     // Extract first element if briefData is an array
     const briefDataObject = Array.isArray(briefData) ? briefData[0] : briefData;
+
+    // Validate that we have actual brief content
+    if (!briefDataObject || Object.keys(briefDataObject).length === 0) {
+      console.error('Empty brief data received');
+      
+      // Update project status to failed - NO credits lost
+      await supabaseClient
+        .from('projects')
+        .update({ status: 'failed' })
+        .eq('id', project.id);
+      
+      return errorResponse(500, 'Empty brief received from generation service');
+    }
 
     // Update project with brief data and completed status
     const { error: updateError } = await supabaseClient
@@ -222,10 +263,37 @@ serve(async (req) => {
 
     if (updateError) {
       console.error('Failed to update project with brief:', updateError);
+      
+      // Mark as failed - NO credits lost
+      await supabaseClient
+        .from('projects')
+        .update({ status: 'failed' })
+        .eq('id', project.id);
+      
       return errorResponse(500, 'Failed to save brief data');
     }
 
     console.log('Project updated with brief data successfully');
+
+    // ============================================
+    // SAFE CREDIT SYSTEM: Only NOW consume quota/credits
+    // This ensures credits are only deducted after successful generation
+    // ============================================
+    const { data: consumeResult, error: consumeError } = await supabaseClient
+      .rpc('consume_quota_after_success', {
+        _user_id: userId,
+        _level: level
+      });
+
+    if (consumeError) {
+      console.error('Error consuming quota (brief already saved):', consumeError);
+      // Don't fail the request - the brief was successfully generated
+      // Log this for manual review if needed
+    } else {
+      console.log('Quota/credits consumed after successful generation:', consumeResult);
+    }
+
+    const creditsUsed = consumeResult?.credits_used || 0;
 
     // ============================================
     // Award XP for project creation
@@ -307,7 +375,7 @@ serve(async (req) => {
         status: 200,
         id: project.id,
         message: 'Project created and brief generated successfully',
-        credits_used: quotaResult.credits_used || 0
+        credits_used: creditsUsed
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
