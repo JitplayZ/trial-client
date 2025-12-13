@@ -66,24 +66,24 @@ const Index = () => {
       <Pricing />
       
       {/* Footer */}
-      <footer className="bg-surface border-t border-border py-16">
+      <footer className="bg-surface border-t border-border py-10 sm:py-16">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div className="col-span-1 md:col-span-2">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8">
+            <div className="col-span-2">
               <div className="flex items-center space-x-2 mb-4">
-                <img src="/favicon.png" alt="tRIAL - cLIENTS logo" className="h-10 w-10" />
-                <span className="font-display font-bold text-xl text-gradient">
+                <img src="/favicon.png" alt="tRIAL - cLIENTS logo" className="h-8 w-8 sm:h-10 sm:w-10" />
+                <span className="font-display font-bold text-lg sm:text-xl text-gradient">
                   tRIAL - cLIENTS
                 </span>
               </div>
-              <p className="text-foreground-secondary max-w-md">
+              <p className="text-sm sm:text-base text-foreground-secondary max-w-md">
                 Generate realistic client briefs and practice projects with AI. Free beginner briefs — upgrade for intermediate & veteran briefs.
               </p>
             </div>
             
             <div>
-              <h3 className="font-semibold mb-4">Product</h3>
-              <ul className="space-y-2 text-sm text-foreground-secondary">
+              <h3 className="font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Product</h3>
+              <ul className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-foreground-secondary">
                 <li><a href="#features" className="hover:text-foreground">Features</a></li>
                 <li><a href="#pricing" className="hover:text-foreground">Pricing</a></li>
                 <li><a href="#" className="hover:text-foreground">Templates</a></li>
@@ -92,8 +92,8 @@ const Index = () => {
             </div>
             
             <div>
-              <h3 className="font-semibold mb-4">Company</h3>
-              <ul className="space-y-2 text-sm text-foreground-secondary">
+              <h3 className="font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Company</h3>
+              <ul className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-foreground-secondary">
                 <li><a href="#" className="hover:text-foreground">About</a></li>
                 <li><a href="#" className="hover:text-foreground">Blog</a></li>
                 <li><a href="#" className="hover:text-foreground">Support</a></li>
@@ -102,14 +102,14 @@ const Index = () => {
             </div>
           </div>
           
-          <div className="border-t border-border mt-12 pt-8 flex flex-col sm:flex-row justify-between items-center">
-            <p className="text-sm text-foreground-secondary">
+          <div className="border-t border-border mt-8 sm:mt-12 pt-6 sm:pt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <p className="text-xs sm:text-sm text-foreground-secondary text-center sm:text-left">
               © 2025-26 tRIAL - cLIENTS. All rights reserved.
             </p>
-            <div className="flex space-x-6 mt-4 sm:mt-0">
-              <a href="#" className="text-sm text-foreground-secondary hover:text-foreground">Privacy</a>
-              <a href="#" className="text-sm text-foreground-secondary hover:text-foreground">Terms</a>
-              <a href="#" className="text-sm text-foreground-secondary hover:text-foreground">Security</a>
+            <div className="flex space-x-4 sm:space-x-6">
+              <a href="#" className="text-xs sm:text-sm text-foreground-secondary hover:text-foreground">Privacy</a>
+              <a href="#" className="text-xs sm:text-sm text-foreground-secondary hover:text-foreground">Terms</a>
+              <a href="#" className="text-xs sm:text-sm text-foreground-secondary hover:text-foreground">Security</a>
             </div>
           </div>
         </div>

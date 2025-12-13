@@ -48,12 +48,12 @@ const Navbar = () => {
             </span>
           </div>
 
-          {/* Navigation Links - Hidden on dashboard */}
+          {/* Navigation Links - Hidden on mobile and dashboard */}
           {!isDashboard && (
-            <div className="hidden md:flex items-center space-x-8">
+            <div className="hidden lg:flex items-center space-x-8">
               <a 
                 href="#features" 
-                className="text-foreground-secondary hover:text-foreground transition-colors cursor-pointer"
+                className="text-foreground-secondary hover:text-foreground transition-colors cursor-pointer text-sm"
                 onClick={(e) => {
                   e.preventDefault();
                   document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
@@ -63,7 +63,7 @@ const Navbar = () => {
               </a>
               <a 
                 href="#pricing" 
-                className="text-foreground-secondary hover:text-foreground transition-colors cursor-pointer"
+                className="text-foreground-secondary hover:text-foreground transition-colors cursor-pointer text-sm"
                 onClick={(e) => {
                   e.preventDefault();
                   document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
@@ -73,7 +73,7 @@ const Navbar = () => {
               </a>
               <a 
                 href="#testimonials" 
-                className="text-foreground-secondary hover:text-foreground transition-colors cursor-pointer"
+                className="text-foreground-secondary hover:text-foreground transition-colors cursor-pointer text-sm"
                 onClick={(e) => {
                   e.preventDefault();
                   document.getElementById('testimonials')?.scrollIntoView({ behavior: 'smooth' });
@@ -85,26 +85,28 @@ const Navbar = () => {
           )}
 
           {/* CTA Buttons */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2 sm:space-x-3">
             {user && isDashboard ? (
               // Show notifications bell and user menu when authenticated and on dashboard
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="relative"
-                  onClick={() => setNotificationsOpen(!notificationsOpen)}
-                >
-                  <Bell className="h-5 w-5" />
-                  {unreadCount > 0 && (
-                    <Badge
-                      variant="destructive"
-                      className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
-                    >
-                      {unreadCount}
-                    </Badge>
-                  )}
-                </Button>
+              <div className="flex items-center gap-1 sm:gap-2">
+                <div className="relative">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="relative h-9 w-9"
+                    onClick={() => setNotificationsOpen(!notificationsOpen)}
+                  >
+                    <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
+                    {unreadCount > 0 && (
+                      <Badge
+                        variant="destructive"
+                        className="absolute -top-1 -right-1 h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center p-0 text-[10px] sm:text-xs"
+                      >
+                        {unreadCount}
+                      </Badge>
+                    )}
+                  </Button>
+                </div>
                 <UserMenu onReferClick={() => setReferralModalOpen(true)} />
               </div>
             ) : (
@@ -113,6 +115,7 @@ const Navbar = () => {
                 <Button
                   variant="ghost"
                   size="sm"
+                  className="hidden sm:inline-flex text-xs sm:text-sm"
                   asChild
                 >
                   <Link to="/auth">Sign In</Link>
@@ -120,17 +123,19 @@ const Navbar = () => {
                 <Button
                   variant="default"
                   size="sm"
-                  className="bg-gradient-primary hover-glow"
+                  className="bg-gradient-primary hover-glow text-xs sm:text-sm px-3 sm:px-4"
                   asChild
                 >
-                  <Link to="/login/user" className="flex items-center space-x-2">
-                    <span>Get Started</span>
-                    <ArrowRight className="h-4 w-4" />
+                  <Link to="/login/user" className="flex items-center space-x-1 sm:space-x-2">
+                    <span className="hidden sm:inline">Get Started</span>
+                    <span className="sm:hidden">Start</span>
+                    <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4" />
                   </Link>
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
+                  className="text-xs sm:text-sm px-2 sm:px-3"
                   asChild
                 >
                   <Link to="/login/admin">Admin</Link>

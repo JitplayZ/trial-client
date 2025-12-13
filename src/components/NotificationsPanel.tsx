@@ -42,13 +42,13 @@ export const NotificationsPanel = ({ isOpen, onClose }: NotificationsPanelProps)
             onClick={onClose}
           />
 
-          {/* Panel - Matching profile menu style */}
+          {/* Panel - Positioned under notification bell */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: -10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -10 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
-            className="fixed right-4 top-16 z-50 w-80 sm:w-96 bg-popover border border-border rounded-lg shadow-lg overflow-hidden"
+            className="fixed right-16 sm:right-20 top-14 z-50 w-80 sm:w-96 bg-popover border border-border rounded-lg shadow-lg overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}

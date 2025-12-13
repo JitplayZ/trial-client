@@ -8,66 +8,66 @@ import student4 from "@/assets/student4.jpg";
 
 const Hero = () => {
   return (
-    <section id="hero" className="relative min-h-screen flex items-center justify-center bg-gradient-hero overflow-hidden">
+    <section id="hero" className="relative min-h-screen flex items-center justify-center bg-gradient-hero overflow-hidden pt-20 md:pt-0">
       {/* Background decorations */}
       <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
-      <div className="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-pulse"></div>
-      <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+      <div className="absolute top-20 left-4 md:left-10 w-48 md:w-72 h-48 md:h-72 bg-primary/10 rounded-full blur-3xl animate-pulse"></div>
+      <div className="absolute bottom-20 right-4 md:right-10 w-64 md:w-96 h-64 md:h-96 bg-accent/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
       
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="text-center max-w-4xl mx-auto">
           {/* Badge */}
-          <div className="inline-flex items-center space-x-2 bg-surface/80 backdrop-blur-sm rounded-full px-4 py-2 mb-8 border border-border/20 animate-fade-in">
-            <Sparkles className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium text-foreground-secondary">
+          <div className="inline-flex items-center space-x-2 bg-surface/80 backdrop-blur-sm rounded-full px-3 sm:px-4 py-2 mb-6 sm:mb-8 border border-border/20 animate-fade-in">
+            <Sparkles className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
+            <span className="text-xs sm:text-sm font-medium text-foreground-secondary">
               AI-Powered Project Generation
             </span>
           </div>
 
           {/* Main headline */}
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-display font-bold leading-tight mb-6 animate-slide-up">
+          <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-display font-bold leading-tight mb-4 sm:mb-6 animate-slide-up px-2">
             Generate Realistic Client
             <br />
             <span className="text-gradient">Briefs Instantly</span>
           </h1>
 
           {/* Subheading */}
-          <p className="text-xl sm:text-2xl text-foreground-secondary max-w-2xl mx-auto mb-12 animate-fade-in delay-200">
+          <p className="text-base sm:text-xl md:text-2xl text-foreground-secondary max-w-2xl mx-auto mb-8 sm:mb-12 animate-fade-in delay-200 px-4">
             AI-powered client brief & project generator for designers and developers. Free beginner briefs — upgrade for intermediate & veteran briefs.
           </p>
 
           {/* CTA buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16 animate-bounce-in delay-400">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-10 sm:mb-16 animate-bounce-in delay-400 px-4">
             <Button
               size="lg"
-              className="bg-gradient-primary hover-glow text-lg px-8 py-4 h-auto"
+              className="bg-gradient-primary hover-glow text-sm sm:text-lg px-6 sm:px-8 py-3 sm:py-4 h-auto w-full sm:w-auto"
               asChild
             >
-              <Link to="/login/user" className="flex items-center space-x-3">
-                <Zap className="h-5 w-5" />
+              <Link to="/login/user" className="flex items-center justify-center space-x-2 sm:space-x-3">
+                <Zap className="h-4 w-4 sm:h-5 sm:w-5" />
                 <span>Start Free — Build Projects</span>
-                <ArrowRight className="h-5 w-5" />
+                <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />
               </Link>
             </Button>
 
             <Button
               variant="ghost"
               size="lg"
-              className="text-lg px-8 py-4 h-auto hover-lift"
+              className="text-sm sm:text-lg px-6 sm:px-8 py-3 sm:py-4 h-auto hover-lift w-full sm:w-auto"
             >
-              <Play className="h-5 w-5 mr-2" />
+              <Play className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
               Watch Demo
             </Button>
           </div>
 
           {/* Social proof */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-8 text-sm text-foreground-secondary animate-fade-in delay-600">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 text-xs sm:text-sm text-foreground-secondary animate-fade-in delay-600 px-4">
             <div className="flex items-center space-x-2">
               <div className="flex -space-x-2">
                 {[student1, student2, student3, student4].map((img, i) => (
                   <div 
                     key={i}
-                    className="w-8 h-8 rounded-full border-2 border-background overflow-hidden"
+                    className="w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 border-background overflow-hidden"
                   >
                     <img src={img} alt={`Student ${i + 1}`} className="w-full h-full object-cover" />
                   </div>

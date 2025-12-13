@@ -127,36 +127,107 @@ export const QuotaLevelCard = ({
           {/* Form */}
           <div className="space-y-4">
             <div>
-              <Label htmlFor={`${level}-type`}>Project Type</Label>
-              <Select value={projectType} onValueChange={setProjectType} disabled={isLocked || generating}>
-                <SelectTrigger id={`${level}-type`}>
-                  <SelectValue placeholder="Select type" />
+              <Label htmlFor={`${level}-industry`}>Industry</Label>
+              <Select value={industry} onValueChange={(val) => { setIndustry(val); setProjectType(''); }} disabled={isLocked || generating}>
+                <SelectTrigger id={`${level}-industry`}>
+                  <SelectValue placeholder="Select industry" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="website">Website</SelectItem>
-                  <SelectItem value="mobile-app">Mobile App</SelectItem>
-                  <SelectItem value="web-app">Web Application</SelectItem>
-                  <SelectItem value="dashboard">Dashboard</SelectItem>
-                  <SelectItem value="landing-page">Landing Page</SelectItem>
+                  {level === 'beginner' && (
+                    <>
+                      <SelectItem value="personal-branding">Personal Branding</SelectItem>
+                      <SelectItem value="local-business">Local Business</SelectItem>
+                      <SelectItem value="blogging-content">Blogging & Content</SelectItem>
+                      <SelectItem value="portfolio-creative">Portfolio & Creative Arts</SelectItem>
+                      <SelectItem value="education-tutors">Education (Students / Tutors)</SelectItem>
+                      <SelectItem value="restaurant-cafe">Restaurant / Café</SelectItem>
+                      <SelectItem value="fitness-wellness">Fitness & Wellness</SelectItem>
+                      <SelectItem value="photography">Photography</SelectItem>
+                      <SelectItem value="travel-diaries">Travel Diaries</SelectItem>
+                      <SelectItem value="event-celebrations">Event & Celebrations</SelectItem>
+                    </>
+                  )}
+                  {level === 'intermediate' && (
+                    <>
+                      <SelectItem value="ecommerce-retail">E-commerce & Retail</SelectItem>
+                      <SelectItem value="healthcare-fitness">Healthcare / Fitness</SelectItem>
+                      <SelectItem value="real-estate">Real Estate</SelectItem>
+                      <SelectItem value="travel-hospitality">Travel & Hospitality</SelectItem>
+                      <SelectItem value="saas-productivity">SAAS / Productivity Tools</SelectItem>
+                      <SelectItem value="food-delivery">Food Delivery & Services</SelectItem>
+                      <SelectItem value="media-news">Media & News</SelectItem>
+                      <SelectItem value="hr-job-platforms">HR & Job Platforms</SelectItem>
+                      <SelectItem value="online-course">Online Course / Learning</SelectItem>
+                      <SelectItem value="entertainment-streaming">Entertainment & Streaming</SelectItem>
+                    </>
+                  )}
+                  {level === 'veteran' && (
+                    <>
+                      <SelectItem value="ai-ml">AI & Machine Learning</SelectItem>
+                      <SelectItem value="fintech-investment">FinTech & Investment</SelectItem>
+                      <SelectItem value="edtech-large">EdTech (Large Scale)</SelectItem>
+                      <SelectItem value="cybersecurity">Cybersecurity</SelectItem>
+                      <SelectItem value="b2b-saas">B2B SaaS</SelectItem>
+                      <SelectItem value="automation-workflow">Automation & Workflow Tools</SelectItem>
+                      <SelectItem value="social-platforms">Social Platforms</SelectItem>
+                      <SelectItem value="healthcare-tech">Healthcare Technology</SelectItem>
+                      <SelectItem value="marketplace-ecosystems">Marketplace Ecosystems</SelectItem>
+                      <SelectItem value="data-analytics">Data & Analytics Companies</SelectItem>
+                    </>
+                  )}
                 </SelectContent>
               </Select>
             </div>
 
             <div>
-              <Label htmlFor={`${level}-industry`}>Industry</Label>
-              <Select value={industry} onValueChange={setIndustry} disabled={isLocked || generating}>
-                <SelectTrigger id={`${level}-industry`}>
-                  <SelectValue placeholder="Select industry" />
+              <Label htmlFor={`${level}-type`}>Project Type</Label>
+              <Select value={projectType} onValueChange={setProjectType} disabled={isLocked || generating || !industry}>
+                <SelectTrigger id={`${level}-type`}>
+                  <SelectValue placeholder={industry ? "Select type" : "Select industry first"} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="restaurant">Restaurant & Food</SelectItem>
-                  <SelectItem value="fitness">Fitness & Gym</SelectItem>
-                  <SelectItem value="ecommerce">E-commerce</SelectItem>
-                  <SelectItem value="gaming">Gaming</SelectItem>
-                  <SelectItem value="education">Education</SelectItem>
-                  <SelectItem value="healthcare">Healthcare</SelectItem>
-                  <SelectItem value="fintech">Fintech</SelectItem>
-                  <SelectItem value="real-estate">Real Estate</SelectItem>
+                  {level === 'beginner' && (
+                    <>
+                      <SelectItem value="portfolio-website">Portfolio Website</SelectItem>
+                      <SelectItem value="landing-page">Landing Page</SelectItem>
+                      <SelectItem value="simple-blog">Simple Blog Website</SelectItem>
+                      <SelectItem value="product-showcase">Product / Service Showcase Page</SelectItem>
+                      <SelectItem value="restaurant-menu">Restaurant Menu Website</SelectItem>
+                      <SelectItem value="gallery-showcase">Gallery / Media Showcase</SelectItem>
+                      <SelectItem value="contact-form">Contact Form Website</SelectItem>
+                      <SelectItem value="personal-bio">Single-page Personal Bio Site</SelectItem>
+                      <SelectItem value="event-invitation">Event Invitation / Info Website</SelectItem>
+                      <SelectItem value="basic-info">Basic Info Website (Static)</SelectItem>
+                    </>
+                  )}
+                  {level === 'intermediate' && (
+                    <>
+                      <SelectItem value="ecommerce-shop">E-commerce Website / Shop System</SelectItem>
+                      <SelectItem value="booking-system">Booking or Appointment System</SelectItem>
+                      <SelectItem value="dashboard-analytics">Dashboard / Analytics Panel</SelectItem>
+                      <SelectItem value="blogging-cms">Blogging Platform with CMS</SelectItem>
+                      <SelectItem value="food-delivery-app">Food Delivery Web App</SelectItem>
+                      <SelectItem value="job-portal">Job Portal / Recruitment System</SelectItem>
+                      <SelectItem value="course-platform">Course Platform (Mini LMS)</SelectItem>
+                      <SelectItem value="membership-website">Membership Website</SelectItem>
+                      <SelectItem value="real-estate-listing">Real Estate Listing Website</SelectItem>
+                      <SelectItem value="chat-messaging">Chat / Messaging Web App</SelectItem>
+                    </>
+                  )}
+                  {level === 'veteran' && (
+                    <>
+                      <SelectItem value="ai-saas-platform">AI SaaS Platform (credit-based)</SelectItem>
+                      <SelectItem value="fintech-dashboard">FinTech Dashboard / Portfolio Tracker</SelectItem>
+                      <SelectItem value="full-lms">Full LMS (Advanced Learning System)</SelectItem>
+                      <SelectItem value="automation-builder">Automation Workflow Builder</SelectItem>
+                      <SelectItem value="marketplace-platform">Marketplace Platform (Multi-vendor)</SelectItem>
+                      <SelectItem value="social-media-clone">Social Media Platform Clone</SelectItem>
+                      <SelectItem value="ai-chatbot">AI Chatbot System</SelectItem>
+                      <SelectItem value="enterprise-dashboard">Enterprise Admin Dashboard</SelectItem>
+                      <SelectItem value="data-visualization">Data Visualization System</SelectItem>
+                      <SelectItem value="project-management">Project Management / Collaboration Tool</SelectItem>
+                    </>
+                  )}
                 </SelectContent>
               </Select>
             </div>

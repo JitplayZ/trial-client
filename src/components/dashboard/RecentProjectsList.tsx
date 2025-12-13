@@ -33,6 +33,7 @@ const RecentProjectsList = () => {
         .from('projects')
         .select('id, title, description, type, created_at, status')
         .eq('user_id', user.id)
+        .eq('status', 'completed')
         .order('created_at', { ascending: false })
         .limit(3);
 
