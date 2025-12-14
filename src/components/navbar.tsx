@@ -4,7 +4,7 @@ import logo from "@/assets/logo.png";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import UserMenu from "@/components/UserMenu";
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { NotificationsPanel } from "@/components/NotificationsPanel";
 import { Badge } from "@/components/ui/badge";
 import { useNotifications } from "@/hooks/useNotifications";
@@ -22,9 +22,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const isDashboard = location.pathname === '/dashboard';
   const [referralModalOpen, setReferralModalOpen] = useState(false);
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const { unreadCount } = useNotifications();
-  const notificationButtonRef = useRef<HTMLButtonElement>(null);
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/20">
@@ -96,13 +94,11 @@ const Navbar = () => {
             {user && isDashboard ? (
               // Show notifications bell and user menu when authenticated and on dashboard
               <div className="flex items-center gap-1 sm:gap-2">
-                <div className="relative">
+                <NotificationsPanel>
                   <Button
-                    ref={notificationButtonRef}
                     variant="ghost"
                     size="icon"
                     className="relative h-9 w-9"
-                    onClick={() => setNotificationsOpen(!notificationsOpen)}
                   >
                     <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
                     {unreadCount > 0 && (
@@ -114,12 +110,7 @@ const Navbar = () => {
                       </Badge>
                     )}
                   </Button>
-                  {/* Notifications Panel anchored to the button */}
-                  <NotificationsPanel 
-                    isOpen={notificationsOpen} 
-                    onClose={() => setNotificationsOpen(false)} 
-                  />
-                </div>
+                </NotificationsPanel>
                 <UserMenu onReferClick={() => setReferralModalOpen(true)} />
               </div>
             ) : (
