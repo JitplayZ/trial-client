@@ -49,8 +49,7 @@ export const NotificationsPanel = ({ isOpen, onClose }: NotificationsPanelProps)
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -5 }}
             transition={{ duration: 0.12, ease: 'easeOut' }}
-            className="absolute right-0 sm:right-0 top-full mt-1 z-50 w-[calc(100vw-1rem)] sm:w-96 max-w-96 bg-popover border border-border rounded-lg shadow-lg overflow-hidden -translate-x-0 sm:translate-x-0"
-            style={{ right: 'max(0.5rem, calc(100% - 100vw + 1rem))' }}
+            className="fixed sm:absolute left-2 right-2 sm:left-auto sm:right-0 top-14 sm:top-full sm:mt-1 z-50 sm:w-96 bg-popover border border-border rounded-lg shadow-lg overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
