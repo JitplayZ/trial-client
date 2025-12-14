@@ -38,12 +38,12 @@ export const NotificationsPanel = ({ children }: NotificationsPanelProps) => {
         {children}
       </DropdownMenuTrigger>
       <DropdownMenuContent 
-        align="end" 
-        sideOffset={8}
-        className="w-80 sm:w-96 p-0 bg-popover border border-border"
+        align="center" 
+        sideOffset={12}
+        className="w-[calc(100vw-2rem)] sm:w-96 max-w-md p-0 bg-popover/95 backdrop-blur-xl border border-border/50 shadow-2xl rounded-xl mx-auto"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 bg-muted/50">
+        <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-primary/5 to-primary/10 rounded-t-xl">
           <div className="flex items-center gap-2">
             <Bell className="h-4 w-4 text-primary" />
             <span className="font-semibold text-sm text-foreground">Notifications</span>
