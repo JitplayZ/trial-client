@@ -33,22 +33,23 @@ export const NotificationsPanel = ({ isOpen, onClose }: NotificationsPanelProps)
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop */}
+          {/* Backdrop - lighter for less lag */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 bg-background/20 backdrop-blur-sm"
+            transition={{ duration: 0.1 }}
+            className="fixed inset-0 z-40"
             onClick={onClose}
           />
 
-          {/* Panel - Positioned under notification bell */}
+          {/* Panel - Positioned directly under the notification button */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: -10 }}
+            initial={{ opacity: 0, scale: 0.95, y: -5 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: -10 }}
-            transition={{ duration: 0.15, ease: 'easeOut' }}
-            className="fixed right-16 sm:right-20 top-14 z-50 w-80 sm:w-96 bg-popover border border-border rounded-lg shadow-lg overflow-hidden"
+            exit={{ opacity: 0, scale: 0.95, y: -5 }}
+            transition={{ duration: 0.12, ease: 'easeOut' }}
+            className="absolute right-0 top-full mt-1 z-50 w-80 sm:w-96 bg-popover border border-border rounded-lg shadow-lg overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -99,11 +100,8 @@ export const NotificationsPanel = ({ isOpen, onClose }: NotificationsPanelProps)
                   {notifications.map((notification, index) => {
                     const styles = getTypeStyles(notification.type);
                     return (
-                      <motion.div
+                      <div
                         key={notification.id}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.03 }}
                         className={`px-3 py-2.5 mx-1 my-0.5 rounded-md transition-colors cursor-pointer group ${
                           !notification.read 
                             ? 'bg-primary/5 hover:bg-primary/10' 
@@ -163,7 +161,7 @@ export const NotificationsPanel = ({ isOpen, onClose }: NotificationsPanelProps)
                             </Button>
                           </div>
                         </div>
-                      </motion.div>
+                      </div>
                     );
                   })}
                 </div>

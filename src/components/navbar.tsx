@@ -4,11 +4,17 @@ import logo from "@/assets/logo.png";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import UserMenu from "@/components/UserMenu";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { NotificationsPanel } from "@/components/NotificationsPanel";
 import { Badge } from "@/components/ui/badge";
 import { useNotifications } from "@/hooks/useNotifications";
 import { ReferralModal } from "@/components/modals/ReferralModal";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Navbar = () => {
   const { user } = useAuth();
@@ -18,6 +24,7 @@ const Navbar = () => {
   const [referralModalOpen, setReferralModalOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const { unreadCount } = useNotifications();
+  const notificationButtonRef = useRef<HTMLButtonElement>(null);
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/20">
@@ -91,6 +98,7 @@ const Navbar = () => {
               <div className="flex items-center gap-1 sm:gap-2">
                 <div className="relative">
                   <Button
+                    ref={notificationButtonRef}
                     variant="ghost"
                     size="icon"
                     className="relative h-9 w-9"
@@ -106,6 +114,11 @@ const Navbar = () => {
                       </Badge>
                     )}
                   </Button>
+                  {/* Notifications Panel anchored to the button */}
+                  <NotificationsPanel 
+                    isOpen={notificationsOpen} 
+                    onClose={() => setNotificationsOpen(false)} 
+                  />
                 </div>
                 <UserMenu onReferClick={() => setReferralModalOpen(true)} />
               </div>
@@ -123,15 +136,41 @@ const Navbar = () => {
                 <Button
                   variant="default"
                   size="sm"
-                  className="bg-gradient-primary hover-glow text-xs sm:text-sm px-3 sm:px-4"
+                  className="hidden sm:inline-flex bg-gradient-primary hover-glow text-xs sm:text-sm px-3 sm:px-4"
                   asChild
                 >
                   <Link to="/login/user" className="flex items-center space-x-1 sm:space-x-2">
-                    <span className="hidden sm:inline">Get Started</span>
-                    <span className="sm:hidden">Start</span>
+                    <span>Get Started</span>
                     <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4" />
                   </Link>
                 </Button>
+                
+                {/* Mobile: Show dropdown menu with Sign In/Sign Up options */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="sm:hidden bg-gradient-primary hover-glow text-xs px-3"
+                    >
+                      <span>Start</span>
+                      <ArrowRight className="h-3 w-3 ml-1" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-40">
+                    <DropdownMenuItem asChild>
+                      <Link to="/auth" className="w-full cursor-pointer">
+                        Sign In
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/login/user" className="w-full cursor-pointer">
+                        Sign Up
+                      </Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                
                 <Button
                   variant="outline"
                   size="sm"
@@ -150,12 +189,6 @@ const Navbar = () => {
       <ReferralModal 
         isOpen={referralModalOpen} 
         onClose={() => setReferralModalOpen(false)} 
-      />
-
-      {/* Notifications Panel */}
-      <NotificationsPanel 
-        isOpen={notificationsOpen} 
-        onClose={() => setNotificationsOpen(false)} 
       />
     </nav>
   );
