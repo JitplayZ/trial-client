@@ -153,76 +153,18 @@ export const useQuotaManagement = () => {
     };
   };
 
-  const consumeQuota = async (level: LevelType): Promise<boolean> => {
-    if (!quotaData) return false;
-
-    const status = getQuotaStatus(level);
-    if (!status.available) return false;
-    
-    // If locked, can't consume
-    if (status.remaining === 'locked') return false;
-
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return false;
-
-      const columnName = `${level}_left`;
-      const currentValue = quotaData.quotas[`${level}Left` as keyof typeof quotaData.quotas];
-      
-      if (typeof currentValue !== 'number' || currentValue <= 0) {
-        // No free quota left - would need to use credits (handled by edge function)
-        return true;
-      }
-
-      const { error } = await supabase
-        .from('subscriptions')
-        .update({ [columnName]: currentValue - 1 })
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      // Update local state
-      setQuotaData(prev => {
-        if (!prev) return prev;
-        
-        const key = `${level}Left` as keyof typeof prev.quotas;
-        
-        return {
-          ...prev,
-          quotas: {
-            ...prev.quotas,
-            [key]: currentValue - 1
-          }
-        };
-      });
-
-      return true;
-    } catch (error) {
-      if (import.meta.env.DEV) {
-        console.error('Error consuming quota:', error);
-      }
-      toast({
-        title: 'Error',
-        description: 'Failed to update quota',
-        variant: 'destructive'
-      });
-      return false;
-    }
-  };
-
   const getResetDate = (): Date | null => {
     if (!quotaData) return null;
     return new Date(quotaData.quotas.resetAt);
   };
 
-  // Note: Plan changes are now handled server-side only via payment integration
-  // The changePlan function has been removed to prevent privilege escalation
+  // Note: Quota consumption is handled server-side only via Edge Functions
+  // This prevents privilege escalation and ensures secure credit management
 
   return {
     quotaData,
     loading,
     getQuotaStatus,
-    consumeQuota,
     getResetDate,
     refresh: fetchSubscription
   };
