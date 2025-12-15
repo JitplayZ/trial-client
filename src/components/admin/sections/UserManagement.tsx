@@ -116,6 +116,30 @@ export const UserManagement = () => {
 
   useEffect(() => {
     fetchUsers();
+
+    // Real-time subscription for user data updates
+    const profilesChannel = supabase
+      .channel('admin-profiles-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'profiles' },
+        () => fetchUsers()
+      )
+      .subscribe();
+
+    const subsChannel = supabase
+      .channel('admin-subscriptions-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'subscriptions' },
+        () => fetchUsers()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(profilesChannel);
+      supabase.removeChannel(subsChannel);
+    };
   }, []);
 
   const handleUpdateCredits = async () => {

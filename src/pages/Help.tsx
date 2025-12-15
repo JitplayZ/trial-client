@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Book, MessageCircle, Mail, X, ArrowLeft } from 'lucide-react';
+import { Search, Book, MessageCircle, Mail, X, ArrowLeft, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +10,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 const faqs = [
   {
@@ -40,8 +42,10 @@ const faqs = [
 
 export default function Help() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [supportMessage, setSupportMessage] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
 
   const filteredFaqs = faqs.filter(faq =>
@@ -49,13 +53,53 @@ export default function Help() {
     faq.answer.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleContactSubmit = (e: React.FormEvent) => {
+  const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: 'Message Sent',
-      description: 'We\'ll get back to you within 24 hours.',
-    });
-    setSupportMessage('');
+    
+    if (!user) {
+      toast({
+        title: 'Please log in',
+        description: 'You need to be logged in to send a support message.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!supportMessage.trim()) {
+      toast({
+        title: 'Message required',
+        description: 'Please enter a message.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const { error } = await supabase
+        .from('support_messages')
+        .insert({
+          user_id: user.id,
+          message: supportMessage.trim()
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Message Sent',
+        description: 'We\'ll get back to you within 24 hours.',
+      });
+      setSupportMessage('');
+    } catch (error) {
+      console.error('Error sending support message:', error);
+      toast({
+        title: 'Failed to send message',
+        description: 'Please try again later.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const faqStructuredData = {
@@ -197,9 +241,18 @@ export default function Help() {
                   required
                 />
               </div>
-              <Button type="submit" className="bg-gradient-primary w-full sm:w-auto">
-                <Mail className="h-4 w-4 mr-2" />
-                Send Message
+              <Button type="submit" className="bg-gradient-primary w-full sm:w-auto" disabled={submitting}>
+                {submitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Mail className="h-4 w-4 mr-2" />
+                    Send Message
+                  </>
+                )}
               </Button>
             </form>
           </CardContent>

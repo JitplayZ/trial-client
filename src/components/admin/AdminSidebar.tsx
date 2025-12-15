@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Users, 
@@ -8,8 +8,11 @@ import {
   Settings,
   Shield,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  LogOut
 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
@@ -51,6 +54,17 @@ const navItems = [
 export const AdminSidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast.success('Logged out successfully');
+      navigate('/admin/login');
+    } catch (error) {
+      toast.error('Failed to logout');
+    }
+  };
 
   return (
     <aside 
@@ -115,14 +129,25 @@ export const AdminSidebar = () => {
         })}
       </nav>
 
-      {/* Footer */}
-      {!collapsed && (
-        <div className="p-4 border-t border-border">
+      {/* Footer with Logout */}
+      <div className="p-4 border-t border-border space-y-3">
+        <Button
+          variant="ghost"
+          onClick={handleLogout}
+          className={cn(
+            "w-full justify-start gap-3 text-destructive hover:text-destructive hover:bg-destructive/10",
+            collapsed && "justify-center px-2"
+          )}
+        >
+          <LogOut className="h-5 w-5" />
+          {!collapsed && <span>Logout</span>}
+        </Button>
+        {!collapsed && (
           <div className="text-xs text-muted-foreground text-center">
             Admin Panel v1.0
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </aside>
   );
 };

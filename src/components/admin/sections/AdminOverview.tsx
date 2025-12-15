@@ -113,6 +113,40 @@ export const AdminOverview = () => {
 
   useEffect(() => {
     fetchStats();
+
+    // Real-time subscription for admin data updates
+    const projectsChannel = supabase
+      .channel('admin-projects-overview')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'projects' },
+        () => fetchStats()
+      )
+      .subscribe();
+
+    const usersChannel = supabase
+      .channel('admin-users-overview')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'profiles' },
+        () => fetchStats()
+      )
+      .subscribe();
+
+    const auditChannel = supabase
+      .channel('admin-audit-overview')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'admin_audit_logs' },
+        () => fetchStats()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(projectsChannel);
+      supabase.removeChannel(usersChannel);
+      supabase.removeChannel(auditChannel);
+    };
   }, []);
 
   const kpis = [

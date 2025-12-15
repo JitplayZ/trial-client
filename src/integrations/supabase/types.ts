@@ -41,6 +41,65 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_notifications: {
+        Row: {
+          admin_user_id: string
+          created_at: string
+          id: string
+          message: string
+          target_user_id: string | null
+          title: string
+        }
+        Insert: {
+          admin_user_id: string
+          created_at?: string
+          id?: string
+          message: string
+          target_user_id?: string | null
+          title: string
+        }
+        Update: {
+          admin_user_id?: string
+          created_at?: string
+          id?: string
+          message?: string
+          target_user_id?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
+      admin_replies: {
+        Row: {
+          admin_user_id: string
+          created_at: string
+          id: string
+          reply: string
+          support_message_id: string | null
+        }
+        Insert: {
+          admin_user_id: string
+          created_at?: string
+          id?: string
+          reply: string
+          support_message_id?: string | null
+        }
+        Update: {
+          admin_user_id?: string
+          created_at?: string
+          id?: string
+          reply?: string
+          support_message_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_replies_support_message_id_fkey"
+            columns: ["support_message_id"]
+            isOneToOne: false
+            referencedRelation: "support_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -227,6 +286,27 @@ export type Database = {
         }
         Relationships: []
       }
+      support_messages: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_badges: {
         Row: {
           badge_type: string
@@ -247,6 +327,35 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_notification_reads: {
+        Row: {
+          id: string
+          notification_id: string
+          read_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          notification_id: string
+          read_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          notification_id?: string
+          read_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_notification_reads_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "admin_notifications"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
