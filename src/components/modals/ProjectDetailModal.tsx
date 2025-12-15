@@ -20,7 +20,7 @@ export const ProjectDetailModal = ({ isOpen, onClose }: ProjectDetailModalProps)
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { quotaData, getQuotaStatus, consumeQuota, getResetDate } = useQuotaManagement();
+  const { quotaData, getQuotaStatus, getResetDate } = useQuotaManagement();
   const [generatingLevel, setGeneratingLevel] = useState<LevelType | null>(null);
   const [quotaExceededLevel, setQuotaExceededLevel] = useState<LevelType | null>(null);
 
@@ -41,8 +41,7 @@ export const ProjectDetailModal = ({ isOpen, onClose }: ProjectDetailModalProps)
     setGeneratingLevel(level);
     
     try {
-      consumeQuota(level);
-
+      // Quota consumption is handled server-side by the Edge Function
       const { data, error } = await supabase.functions.invoke('generate-project', {
         body: { level, projectType, industry, userId: user?.id }
       });
