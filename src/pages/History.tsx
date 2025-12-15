@@ -8,9 +8,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { FileText, Calendar, Download, Eye, X, Loader2, ArrowLeft } from 'lucide-react';
 
-// Authentication is enforced - do not bypass in production
-const BYPASS_AUTH = false;
-
 interface BriefData {
   company_name: string;
   tagline: string;
@@ -47,25 +44,21 @@ const History = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!BYPASS_AUTH && !authLoading && !user) {
+    if (!authLoading && !user) {
       navigate('/auth');
     }
   }, [user, authLoading, navigate]);
 
   useEffect(() => {
     const fetchProjects = async () => {
+      if (!user) return;
+      
       try {
-        let query = supabase
+        const { data, error } = await supabase
           .from('projects')
           .select('*')
+          .eq('user_id', user.id)
           .order('created_at', { ascending: false });
-
-        // Only filter by user if not bypassing auth and user exists
-        if (!BYPASS_AUTH && user) {
-          query = query.eq('user_id', user.id);
-        }
-
-        const { data, error } = await query;
 
         if (error) throw error;
         setProjects((data || []) as unknown as Project[]);
@@ -78,7 +71,7 @@ const History = () => {
       }
     };
 
-    if (BYPASS_AUTH || user) {
+    if (user) {
       fetchProjects();
     }
   }, [user]);
@@ -108,7 +101,7 @@ const History = () => {
     a.click();
   };
 
-  if (!BYPASS_AUTH && (authLoading || !user)) {
+  if (authLoading || !user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>

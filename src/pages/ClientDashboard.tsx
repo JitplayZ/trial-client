@@ -8,22 +8,19 @@ import QuickActions from '@/components/dashboard/QuickActions';
 import GamificationBar from '@/components/dashboard/GamificationBar';
 
 // Feature flag for gamification
-const GAMIFICATION_ENABLED = true; // Set to false to disable
-
-// Authentication is enforced - do not bypass in production
-const BYPASS_AUTH = false;
+const GAMIFICATION_ENABLED = true;
 
 const ClientDashboard = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!BYPASS_AUTH && !loading && !user) {
+    if (!loading && !user) {
       navigate('/auth');
     }
   }, [user, loading, navigate]);
 
-  if (!BYPASS_AUTH && loading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -31,7 +28,7 @@ const ClientDashboard = () => {
     );
   }
 
-  if (!BYPASS_AUTH && !user) {
+  if (!user) {
     return null;
   }
 
