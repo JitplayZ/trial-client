@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface Notification {
   id: string;
-  type: 'project' | 'referral' | 'billing' | 'system';
+  type: 'project' | 'referral' | 'billing' | 'system' | 'admin' | 'support';
   title: string;
   message: string;
   timestamp: string;
@@ -14,51 +16,196 @@ const STORAGE_KEY = 'notifications';
 
 const defaultNotifications: Notification[] = [
   {
-    id: '1',
-    type: 'project',
-    title: 'Project Generated',
-    message: 'Your Fashion Website project brief is ready to view.',
-    timestamp: '2h ago',
-    read: false
-  },
-  {
-    id: '2',
-    type: 'referral',
-    title: 'Referral Bonus',
-    message: 'You earned 100 XP for referring a friend!',
-    timestamp: '1d ago',
-    read: false
-  },
-  {
-    id: '3',
+    id: 'default-1',
     type: 'system',
-    title: 'New Features',
-    message: 'Check out our new project templates.',
-    timestamp: '1w ago',
-    read: true
+    title: 'Welcome to tRIAL-cLIENTS',
+    message: 'Get started by generating your first project brief!',
+    timestamp: 'Just now',
+    read: false
   }
 ];
 
 export const useNotifications = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Load from localStorage on mount
-  useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      try {
-        setNotifications(JSON.parse(stored));
-      } catch {
+  // Fetch notifications from database and local storage
+  const fetchNotifications = async () => {
+    if (!user) {
+      // Load from localStorage for non-authenticated state
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        try {
+          setNotifications(JSON.parse(stored));
+        } catch {
+          setNotifications(defaultNotifications);
+        }
+      } else {
         setNotifications(defaultNotifications);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultNotifications));
       }
-    } else {
-      setNotifications(defaultNotifications);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultNotifications));
+      setLoading(false);
+      return;
     }
-  }, []);
+
+    try {
+      // Fetch admin notifications for this user
+      const { data: adminNotifs, error: adminError } = await supabase
+        .from('admin_notifications')
+        .select('*')
+        .or(`target_user_id.eq.${user.id},target_user_id.is.null`)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (adminError) throw adminError;
+
+      // Fetch read status
+      const { data: readStatus } = await supabase
+        .from('user_notification_reads')
+        .select('notification_id')
+        .eq('user_id', user.id);
+
+      const readIds = new Set(readStatus?.map(r => r.notification_id) || []);
+
+      // Fetch support replies for this user
+      const { data: supportMessages } = await supabase
+        .from('support_messages')
+        .select('id')
+        .eq('user_id', user.id);
+
+      const messageIds = supportMessages?.map(m => m.id) || [];
+      
+      let supportReplies: any[] = [];
+      if (messageIds.length > 0) {
+        const { data: replies } = await supabase
+          .from('admin_replies')
+          .select('*')
+          .in('support_message_id', messageIds)
+          .order('created_at', { ascending: false });
+        supportReplies = replies || [];
+      }
+
+      // Convert to notification format
+      const adminNotifications: Notification[] = (adminNotifs || []).map(n => ({
+        id: `admin-${n.id}`,
+        type: 'admin' as const,
+        title: n.title,
+        message: n.message,
+        timestamp: formatTimeAgo(n.created_at),
+        read: readIds.has(n.id)
+      }));
+
+      const supportNotifications: Notification[] = supportReplies.map(r => ({
+        id: `support-${r.id}`,
+        type: 'support' as const,
+        title: 'Support Reply',
+        message: r.reply,
+        timestamp: formatTimeAgo(r.created_at),
+        read: false // Support replies don't have read tracking yet
+      }));
+
+      // Combine with any local notifications
+      const stored = localStorage.getItem(STORAGE_KEY);
+      let localNotifs: Notification[] = [];
+      if (stored) {
+        try {
+          localNotifs = JSON.parse(stored).filter((n: Notification) => 
+            !n.id.startsWith('admin-') && !n.id.startsWith('support-')
+          );
+        } catch {
+          // Ignore parse errors
+        }
+      }
+
+      const allNotifications = [...adminNotifications, ...supportNotifications, ...localNotifs];
+      setNotifications(allNotifications);
+      
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      // Fallback to local storage
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        try {
+          setNotifications(JSON.parse(stored));
+        } catch {
+          setNotifications(defaultNotifications);
+        }
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatTimeAgo = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const diff = Date.now() - date.getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 60) return `${mins}m ago`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days}d ago`;
+    return `${Math.floor(days / 7)}w ago`;
+  };
+
+  // Load notifications on mount and when user changes
+  useEffect(() => {
+    fetchNotifications();
+  }, [user?.id]);
+
+  // Set up real-time subscription for new notifications
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('user-notifications')
+      .on(
+        'postgres_changes',
+        { 
+          event: 'INSERT', 
+          schema: 'public', 
+          table: 'admin_notifications'
+        },
+        (payload) => {
+          const newNotif = payload.new as any;
+          // Check if this notification is for this user (targeted or global)
+          if (newNotif.target_user_id === user.id || newNotif.target_user_id === null) {
+            const notification: Notification = {
+              id: `admin-${newNotif.id}`,
+              type: 'admin',
+              title: newNotif.title,
+              message: newNotif.message,
+              timestamp: 'Just now',
+              read: false
+            };
+            setNotifications(prev => [notification, ...prev]);
+            toast({
+              title: newNotif.title,
+              description: newNotif.message,
+            });
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'admin_replies'
+        },
+        () => {
+          // Refetch to get the new reply
+          fetchNotifications();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id]);
 
   // Save to localStorage whenever notifications change
   useEffect(() => {
@@ -76,42 +223,49 @@ export const useNotifications = () => {
       )
     );
 
-    try {
-      if (import.meta.env.DEV) {
-        console.info('[notifications] Marked as read:', id);
+    // If it's an admin notification, mark as read in database
+    if (id.startsWith('admin-') && user) {
+      const notificationId = id.replace('admin-', '');
+      try {
+        await supabase
+          .from('user_notification_reads')
+          .insert({
+            user_id: user.id,
+            notification_id: notificationId
+          });
+      } catch (error) {
+        // Ignore duplicate errors
       }
-    } catch (error) {
-      setNotifications(prev =>
-        prev.map(notif =>
-          notif.id === id ? { ...notif, read: false } : notif
-        )
-      );
-      toast({
-        title: 'Failed to mark as read',
-        description: 'Please try again later.',
-        variant: 'destructive',
-      });
     }
   };
 
   const markAllAsRead = async () => {
-    const unreadIds = notifications.filter(n => !n.read).map(n => n.id);
+    const unreadNotifs = notifications.filter(n => !n.read);
     
     setNotifications(prev => prev.map(notif => ({ ...notif, read: true })));
 
-    try {
-      if (import.meta.env.DEV) {
-        console.info('[notifications] Marked all as read:', unreadIds);
+    // Mark admin notifications as read in database
+    if (user) {
+      const adminNotifIds = unreadNotifs
+        .filter(n => n.id.startsWith('admin-'))
+        .map(n => n.id.replace('admin-', ''));
+
+      if (adminNotifIds.length > 0) {
+        try {
+          const inserts = adminNotifIds.map(notificationId => ({
+            user_id: user.id,
+            notification_id: notificationId
+          }));
+          await supabase.from('user_notification_reads').insert(inserts);
+        } catch (error) {
+          // Ignore errors
+        }
       }
-      toast({
-        title: 'All notifications marked as read',
-      });
-    } catch (error) {
-      toast({
-        title: 'Failed to mark all as read',
-        variant: 'destructive',
-      });
     }
+
+    toast({
+      title: 'All notifications marked as read',
+    });
   };
 
   const deleteNotification = async (id: string) => {
@@ -122,26 +276,9 @@ export const useNotifications = () => {
 
     toast({
       title: 'Notification deleted',
-      description: 'Undo',
     });
 
-    setTimeout(async () => {
-      try {
-        if (import.meta.env.DEV) {
-          console.info('[notifications] Deleted:', id);
-        }
-      } catch (error) {
-        if (notificationToDelete) {
-          setNotifications(prev => [...prev, notificationToDelete]);
-        }
-        toast({
-          title: 'Failed to delete notification',
-          variant: 'destructive',
-        });
-      } finally {
-        setDeletingId(null);
-      }
-    }, 5000);
+    setDeletingId(null);
   };
 
   const clearAll = () => {
@@ -155,9 +292,11 @@ export const useNotifications = () => {
     notifications,
     unreadCount,
     deletingId,
+    loading,
     markAsRead,
     markAllAsRead,
     deleteNotification,
     clearAll,
+    refetch: fetchNotifications,
   };
 };
