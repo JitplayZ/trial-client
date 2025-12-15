@@ -270,15 +270,37 @@ export const useNotifications = () => {
 
   const deleteNotification = async (id: string) => {
     setDeletingId(id);
-    const notificationToDelete = notifications.find(n => n.id === id);
     
-    setNotifications(prev => prev.filter(notif => notif.id !== id));
+    try {
+      // Remove from local state immediately
+      setNotifications(prev => prev.filter(notif => notif.id !== id));
 
-    toast({
-      title: 'Notification deleted',
-    });
+      // If it's an admin notification, mark it as "deleted" by adding to reads with a special marker
+      // Since we can't delete admin_notifications (they're admin-owned), we just hide them locally
+      if (id.startsWith('admin-') && user) {
+        const notificationId = id.replace('admin-', '');
+        // Mark as read so it doesn't show as unread
+        await supabase
+          .from('user_notification_reads')
+          .upsert({
+            user_id: user.id,
+            notification_id: notificationId
+          }, { onConflict: 'user_id,notification_id' });
+      }
 
-    setDeletingId(null);
+      // Update localStorage to persist deletion
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(
+        notifications.filter(notif => notif.id !== id)
+      ));
+
+      toast({
+        title: 'Notification deleted',
+      });
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   const clearAll = () => {
