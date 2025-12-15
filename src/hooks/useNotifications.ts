@@ -51,6 +51,14 @@ export const useNotifications = () => {
     }
 
     try {
+      // Fetch deleted notification IDs for this user
+      const { data: deletedNotifs } = await supabase
+        .from('user_deleted_notifications')
+        .select('notification_id')
+        .eq('user_id', user.id);
+
+      const deletedIds = new Set(deletedNotifs?.map(d => d.notification_id) || []);
+
       // Fetch admin notifications for this user
       const { data: adminNotifs, error: adminError } = await supabase
         .from('admin_notifications')
@@ -87,52 +95,37 @@ export const useNotifications = () => {
         supportReplies = replies || [];
       }
 
-      // Convert to notification format
-      const adminNotifications: Notification[] = (adminNotifs || []).map(n => ({
-        id: `admin-${n.id}`,
-        type: 'admin' as const,
-        title: n.title,
-        message: n.message,
-        timestamp: formatTimeAgo(n.created_at),
-        read: readIds.has(n.id)
-      }));
+      // Convert to notification format - filter out deleted ones
+      const adminNotifications: Notification[] = (adminNotifs || [])
+        .filter(n => !deletedIds.has(n.id))
+        .map(n => ({
+          id: `admin-${n.id}`,
+          type: 'admin' as const,
+          title: n.title,
+          message: n.message,
+          timestamp: formatTimeAgo(n.created_at),
+          read: readIds.has(n.id)
+        }));
 
-      const supportNotifications: Notification[] = supportReplies.map(r => ({
-        id: `support-${r.id}`,
-        type: 'support' as const,
-        title: 'Support Reply',
-        message: r.reply,
-        timestamp: formatTimeAgo(r.created_at),
-        read: false // Support replies don't have read tracking yet
-      }));
+      // Filter out deleted support replies
+      const supportNotifications: Notification[] = supportReplies
+        .filter(r => !deletedIds.has(r.id))
+        .map(r => ({
+          id: `support-${r.id}`,
+          type: 'support' as const,
+          title: 'Support Reply',
+          message: r.reply,
+          timestamp: formatTimeAgo(r.created_at),
+          read: false
+        }));
 
-      // Combine with any local notifications
-      const stored = localStorage.getItem(STORAGE_KEY);
-      let localNotifs: Notification[] = [];
-      if (stored) {
-        try {
-          localNotifs = JSON.parse(stored).filter((n: Notification) => 
-            !n.id.startsWith('admin-') && !n.id.startsWith('support-')
-          );
-        } catch {
-          // Ignore parse errors
-        }
-      }
-
-      const allNotifications = [...adminNotifications, ...supportNotifications, ...localNotifs];
+      // Combine notifications (no more local ones for authenticated users)
+      const allNotifications = [...adminNotifications, ...supportNotifications];
       setNotifications(allNotifications);
       
     } catch (error) {
       console.error('Error fetching notifications:', error);
-      // Fallback to local storage
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        try {
-          setNotifications(JSON.parse(stored));
-        } catch {
-          setNotifications(defaultNotifications);
-        }
-      }
+      setNotifications([]);
     } finally {
       setLoading(false);
     }
@@ -275,23 +268,23 @@ export const useNotifications = () => {
       // Remove from local state immediately
       setNotifications(prev => prev.filter(notif => notif.id !== id));
 
-      // If it's an admin notification, mark it as "deleted" by adding to reads with a special marker
-      // Since we can't delete admin_notifications (they're admin-owned), we just hide them locally
-      if (id.startsWith('admin-') && user) {
-        const notificationId = id.replace('admin-', '');
-        // Mark as read so it doesn't show as unread
+      if (user) {
+        // Get the actual notification ID (remove prefix)
+        let notificationId = id;
+        if (id.startsWith('admin-')) {
+          notificationId = id.replace('admin-', '');
+        } else if (id.startsWith('support-')) {
+          notificationId = id.replace('support-', '');
+        }
+
+        // Persist deletion in database
         await supabase
-          .from('user_notification_reads')
-          .upsert({
+          .from('user_deleted_notifications')
+          .insert({
             user_id: user.id,
             notification_id: notificationId
-          }, { onConflict: 'user_id,notification_id' });
+          });
       }
-
-      // Update localStorage to persist deletion
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(
-        notifications.filter(notif => notif.id !== id)
-      ));
 
       toast({
         title: 'Notification deleted',
@@ -303,7 +296,33 @@ export const useNotifications = () => {
     }
   };
 
-  const clearAll = () => {
+  const clearAll = async () => {
+    if (user) {
+      try {
+        // Mark all current notifications as deleted in database
+        const inserts = notifications.map(n => {
+          let notificationId = n.id;
+          if (n.id.startsWith('admin-')) {
+            notificationId = n.id.replace('admin-', '');
+          } else if (n.id.startsWith('support-')) {
+            notificationId = n.id.replace('support-', '');
+          }
+          return {
+            user_id: user.id,
+            notification_id: notificationId
+          };
+        });
+
+        if (inserts.length > 0) {
+          await supabase
+            .from('user_deleted_notifications')
+            .insert(inserts);
+        }
+      } catch (error) {
+        console.error('Error clearing notifications:', error);
+      }
+    }
+    
     setNotifications([]);
     toast({
       title: 'All notifications cleared',

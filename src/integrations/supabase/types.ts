@@ -328,6 +328,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_deleted_notifications: {
+        Row: {
+          deleted_at: string
+          id: string
+          notification_id: string
+          user_id: string
+        }
+        Insert: {
+          deleted_at?: string
+          id?: string
+          notification_id: string
+          user_id: string
+        }
+        Update: {
+          deleted_at?: string
+          id?: string
+          notification_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_notification_reads: {
         Row: {
           id: string
