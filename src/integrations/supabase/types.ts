@@ -14,13 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_audit_logs: {
+        Row: {
+          action_type: string
+          admin_user_id: string
+          created_at: string
+          details: Json | null
+          id: string
+          target_user_id: string | null
+        }
+        Insert: {
+          action_type: string
+          admin_user_id: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          target_user_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          admin_user_id?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          target_user_id?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
           created_at: string
           display_name: string | null
           email: string | null
+          generation_enabled: boolean | null
           id: string
+          status: string | null
           updated_at: string
           user_id: string
         }
@@ -29,7 +58,9 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           email?: string | null
+          generation_enabled?: boolean | null
           id?: string
+          status?: string | null
           updated_at?: string
           user_id: string
         }
@@ -38,7 +69,9 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           email?: string | null
+          generation_enabled?: boolean | null
           id?: string
+          status?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -292,6 +325,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_update_user_credits: {
+        Args: {
+          _credit_change: number
+          _reason: string
+          _target_user_id: string
+        }
+        Returns: Json
+      }
+      admin_update_user_status: {
+        Args: {
+          _generation_enabled: boolean
+          _new_status: string
+          _target_user_id: string
+        }
+        Returns: Json
+      }
       check_and_consume_quota: {
         Args: { _level: string; _user_id: string }
         Returns: Json

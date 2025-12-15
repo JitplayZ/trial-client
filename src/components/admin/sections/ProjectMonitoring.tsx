@@ -18,7 +18,7 @@ import {
   RefreshCw,
   Play,
   Pause,
-  Eye
+  AlertTriangle
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -86,6 +86,7 @@ export const ProjectMonitoring = () => {
   const successCount = projects.filter(p => p.status === 'completed').length;
   const failedCount = projects.filter(p => p.status === 'failed').length;
   const generatingCount = projects.filter(p => p.status === 'generating').length;
+  const successRate = projects.length > 0 ? Math.round((successCount / projects.length) * 100) : 0;
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -116,6 +117,15 @@ export const ProjectMonitoring = () => {
     toast.success(generationPaused ? 'Generation queue resumed' : 'Generation queue paused');
   };
 
+  const formatTimeAgo = (date: string) => {
+    const diff = Date.now() - new Date(date).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 60) return `${mins}m ago`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h ago`;
+    return `${Math.floor(hours / 24)}d ago`;
+  };
+
   return (
     <div className="p-6 lg:p-8 space-y-6">
       {/* Header */}
@@ -125,7 +135,7 @@ export const ProjectMonitoring = () => {
             <FolderKanban className="h-7 w-7 text-primary" />
             Project Monitoring
           </h1>
-          <p className="text-foreground-secondary mt-1">Monitor project generation status</p>
+          <p className="text-foreground-secondary mt-1">Monitor project generation status and queue</p>
         </div>
         <div className="flex gap-2">
           <Button 
@@ -152,7 +162,7 @@ export const ProjectMonitoring = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
         <Card>
           <CardContent className="p-4 flex items-center gap-4">
             <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -160,7 +170,7 @@ export const ProjectMonitoring = () => {
             </div>
             <div>
               <p className="text-2xl font-bold">{projects.length}</p>
-              <p className="text-sm text-foreground-secondary">Total Projects</p>
+              <p className="text-sm text-foreground-secondary">Total</p>
             </div>
           </CardContent>
         </Card>
@@ -177,6 +187,17 @@ export const ProjectMonitoring = () => {
         </Card>
         <Card>
           <CardContent className="p-4 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center">
+              <Clock className="h-5 w-5 text-warning" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{generatingCount}</p>
+              <p className="text-sm text-foreground-secondary">In Queue</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 flex items-center gap-4">
             <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center">
               <XCircle className="h-5 w-5 text-destructive" />
             </div>
@@ -188,12 +209,12 @@ export const ProjectMonitoring = () => {
         </Card>
         <Card>
           <CardContent className="p-4 flex items-center gap-4">
-            <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center">
-              <Clock className="h-5 w-5 text-warning" />
+            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+              <AlertTriangle className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{generatingCount}</p>
-              <p className="text-sm text-foreground-secondary">In Progress</p>
+              <p className="text-2xl font-bold">{successRate}%</p>
+              <p className="text-sm text-foreground-secondary">Success Rate</p>
             </div>
           </CardContent>
         </Card>
@@ -214,11 +235,42 @@ export const ProjectMonitoring = () => {
         </Card>
       )}
 
+      {/* Pending/Generating Projects */}
+      {generatingCount > 0 && (
+        <Card className="border-warning/20">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Clock className="h-5 w-5 text-warning" />
+              Active Queue ({generatingCount})
+            </CardTitle>
+            <CardDescription>Projects currently being generated</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {projects.filter(p => p.status === 'generating').map((project) => (
+              <div 
+                key={project.id}
+                className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 border border-warning/20 bg-warning/5 rounded-lg"
+              >
+                <Clock className="h-5 w-5 text-warning animate-pulse flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2 mb-1">
+                    <p className="font-medium">{project.title}</p>
+                    {getLevelBadge(project.level)}
+                  </div>
+                  <p className="text-sm text-foreground-secondary">{project.user_email}</p>
+                  <p className="text-xs text-muted-foreground">{formatTimeAgo(project.created_at)}</p>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Projects Table */}
       <Card>
         <CardHeader className="pb-4">
-          <CardTitle className="text-lg">Recent Projects</CardTitle>
-          <CardDescription>All project generations and their status</CardDescription>
+          <CardTitle className="text-lg">All Projects</CardTitle>
+          <CardDescription>Complete project generation history</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -231,25 +283,24 @@ export const ProjectMonitoring = () => {
                   <TableHead>Type</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Created</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8">
+                    <TableCell colSpan={6} className="text-center py-8">
                       <RefreshCw className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
                     </TableCell>
                   </TableRow>
                 ) : projects.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                       No projects found
                     </TableCell>
                   </TableRow>
                 ) : (
                   projects.map((project) => (
-                    <TableRow key={project.id}>
+                    <TableRow key={project.id} className={project.status === 'failed' ? 'bg-destructive/5' : ''}>
                       <TableCell>
                         <span className="font-medium">{project.title}</span>
                       </TableCell>
@@ -263,13 +314,8 @@ export const ProjectMonitoring = () => {
                       <TableCell>{getStatusBadge(project.status)}</TableCell>
                       <TableCell>
                         <span className="text-sm text-muted-foreground">
-                          {new Date(project.created_at).toLocaleDateString()}
+                          {formatTimeAgo(project.created_at)}
                         </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm">
-                          <Eye className="h-4 w-4" />
-                        </Button>
                       </TableCell>
                     </TableRow>
                   ))
