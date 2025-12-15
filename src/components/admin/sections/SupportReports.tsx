@@ -15,7 +15,8 @@ import {
   Send,
   Bell,
   Globe,
-  User
+  User,
+  Trash2
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -58,6 +59,7 @@ export const SupportReports = () => {
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [replyText, setReplyText] = useState<{ [key: string]: string }>({});
   const [sendingReply, setSendingReply] = useState<string | null>(null);
+  const [deletingMessage, setDeletingMessage] = useState<string | null>(null);
   
   // Notification state
   const [notificationTitle, setNotificationTitle] = useState('');
@@ -226,6 +228,33 @@ export const SupportReports = () => {
     }
   };
 
+  const handleDeleteMessage = async (messageId: string) => {
+    setDeletingMessage(messageId);
+    try {
+      // First delete all replies associated with this message
+      await supabase
+        .from('admin_replies')
+        .delete()
+        .eq('support_message_id', messageId);
+
+      // Then delete the message itself
+      const { error } = await supabase
+        .from('support_messages')
+        .delete()
+        .eq('id', messageId);
+
+      if (error) throw error;
+
+      toast.success('Message deleted successfully');
+      fetchData();
+    } catch (error) {
+      console.error('Error deleting message:', error);
+      toast.error('Failed to delete message');
+    } finally {
+      setDeletingMessage(null);
+    }
+  };
+
   const formatTimeAgo = (date: string) => {
     const diff = Date.now() - new Date(date).getTime();
     const mins = Math.floor(diff / 60000);
@@ -383,11 +412,20 @@ export const SupportReports = () => {
                 key={msg.id}
                 className="p-4 border border-border rounded-lg space-y-3"
               >
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
                   <div className="flex items-center gap-2">
                     <Badge variant="outline">{msg.user_email}</Badge>
                     <span className="text-xs text-muted-foreground">{formatTimeAgo(msg.created_at)}</span>
                   </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDeleteMessage(msg.id)}
+                    disabled={deletingMessage === msg.id}
+                    className="h-8 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
                 <p className="text-sm bg-muted/50 p-3 rounded-lg">{msg.message}</p>
                 
