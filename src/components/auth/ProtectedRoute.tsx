@@ -7,18 +7,10 @@ interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
-// Set to false for production
-const BYPASS_AUTH = false;
-
 export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-
-  // Bypass authentication for testing
-  if (BYPASS_AUTH) {
-    return <>{children}</>;
-  }
 
   useEffect(() => {
     if (!loading && !user) {
