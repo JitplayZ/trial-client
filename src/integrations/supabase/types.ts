@@ -183,18 +183,24 @@ export type Database = {
           code: string
           created_at: string
           id: string
+          max_uses: number
+          use_count: number
           user_id: string
         }
         Insert: {
           code: string
           created_at?: string
           id?: string
+          max_uses?: number
+          use_count?: number
           user_id: string
         }
         Update: {
           code?: string
           created_at?: string
           id?: string
+          max_uses?: number
+          use_count?: number
           user_id?: string
         }
         Relationships: []
