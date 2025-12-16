@@ -120,7 +120,7 @@ const Navbar = () => {
                   <img 
                     src={videocamIcon} 
                     alt="Video" 
-                    className="h-5 w-5"
+                    className="h-4 w-4 sm:h-5 sm:w-5 invert dark:invert-0"
                   />
                 </Button>
                 <UserMenu onReferClick={() => setReferralModalOpen(true)} />
