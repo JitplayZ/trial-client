@@ -58,6 +58,19 @@ const ChartContainer = React.forwardRef<
 });
 ChartContainer.displayName = "Chart";
 
+// Sanitize color values to prevent CSS injection
+const sanitizeColorValue = (color: string): string | null => {
+  if (!color || typeof color !== 'string') return null;
+  // Allow only valid CSS color formats: hex, rgb, rgba, hsl, hsla, and named colors
+  const validColorPattern = /^(#[0-9A-Fa-f]{3,8}|rgb\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*\)|rgba\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*[\d.]+\s*\)|hsl\(\s*[\d.]+\s*,\s*[\d.]+%?\s*,\s*[\d.]+%?\s*\)|hsla\(\s*[\d.]+\s*,\s*[\d.]+%?\s*,\s*[\d.]+%?\s*,\s*[\d.]+\s*\)|[a-zA-Z]+)$/;
+  return validColorPattern.test(color.trim()) ? color.trim() : null;
+};
+
+// Sanitize CSS identifier to prevent injection
+const sanitizeCssIdentifier = (id: string): string => {
+  return id.replace(/[^a-zA-Z0-9_-]/g, '');
+};
+
 const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
   const colorConfig = Object.entries(config).filter(([_, config]) => config.theme || config.color);
 
@@ -65,25 +78,32 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
     return null;
   }
 
+  const sanitizedId = sanitizeCssIdentifier(id);
+
+  // Build CSS string with sanitized values
+  const cssContent = Object.entries(THEMES)
+    .map(([theme, prefix]) => {
+      const colorRules = colorConfig
+        .map(([key, itemConfig]) => {
+          const rawColor = itemConfig.theme?.[theme as keyof typeof itemConfig.theme] || itemConfig.color;
+          const sanitizedColor = rawColor ? sanitizeColorValue(rawColor) : null;
+          const sanitizedKey = sanitizeCssIdentifier(key);
+          return sanitizedColor ? `  --color-${sanitizedKey}: ${sanitizedColor};` : null;
+        })
+        .filter(Boolean)
+        .join("\n");
+      
+      return colorRules ? `${prefix} [data-chart=${sanitizedId}] {\n${colorRules}\n}` : null;
+    })
+    .filter(Boolean)
+    .join("\n");
+
+  if (!cssContent) {
+    return null;
+  }
+
   return (
-    <style
-      dangerouslySetInnerHTML={{
-        __html: Object.entries(THEMES)
-          .map(
-            ([theme, prefix]) => `
-${prefix} [data-chart=${id}] {
-${colorConfig
-  .map(([key, itemConfig]) => {
-    const color = itemConfig.theme?.[theme as keyof typeof itemConfig.theme] || itemConfig.color;
-    return color ? `  --color-${key}: ${color};` : null;
-  })
-  .join("\n")}
-}
-`,
-          )
-          .join("\n"),
-      }}
-    />
+    <style>{cssContent}</style>
   );
 };
 
