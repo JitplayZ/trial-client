@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Bell } from "lucide-react";
 import logo from "@/assets/logo.png";
+import videocamIcon from "@/assets/videocam-icon.svg";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import UserMenu from "@/components/UserMenu";
@@ -111,6 +112,17 @@ const Navbar = () => {
                     )}
                   </Button>
                 </NotificationsPanel>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9"
+                >
+                  <img 
+                    src={videocamIcon} 
+                    alt="Video" 
+                    className="h-5 w-5"
+                  />
+                </Button>
                 <UserMenu onReferClick={() => setReferralModalOpen(true)} />
               </div>
             ) : (
