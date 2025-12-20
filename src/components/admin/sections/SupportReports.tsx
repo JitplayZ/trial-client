@@ -1,3 +1,4 @@
+import { CopyUserId } from "../CopyUserId";
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -415,7 +416,7 @@ export const SupportReports = () => {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
                   <div className="flex items-center gap-2 flex-wrap">
                     <Badge variant="outline">{msg.user_email}</Badge>
-                    <span className="text-xs font-mono text-muted-foreground">ID: {msg.user_id.slice(0, 8)}...</span>
+                    <CopyUserId userId={msg.user_id} />
                     <span className="text-xs text-muted-foreground">{formatTimeAgo(msg.created_at)}</span>
                   </div>
                   <Button
@@ -496,7 +497,7 @@ export const SupportReports = () => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-medium">{flaggedUser.email}</span>
-                    <span className="text-xs font-mono text-muted-foreground">ID: {flaggedUser.user_id.slice(0, 8)}...</span>
+                    <CopyUserId userId={flaggedUser.user_id} />
                   </div>
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
