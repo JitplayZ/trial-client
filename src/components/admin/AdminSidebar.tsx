@@ -9,7 +9,8 @@ import {
   Shield,
   ChevronLeft,
   ChevronRight,
-  LogOut
+  LogOut,
+  Gift
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -43,6 +44,11 @@ const navItems = [
     label: 'Project Monitoring', 
     path: '/admin/projects', 
     icon: FolderKanban 
+  },
+  { 
+    label: 'Social Rewards', 
+    path: '/admin/social-rewards', 
+    icon: Gift 
   },
   { 
     label: 'System Settings', 

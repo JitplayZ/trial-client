@@ -253,6 +253,48 @@ export type Database = {
         }
         Relationships: []
       }
+      social_reward_requests: {
+        Row: {
+          created_at: string
+          credits_awarded: number | null
+          id: string
+          platform: string
+          post_url: string
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          credits_awarded?: number | null
+          id?: string
+          platform: string
+          post_url: string
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          credits_awarded?: number | null
+          id?: string
+          platform?: string
+          post_url?: string
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           beginner_left: number
@@ -461,6 +503,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_review_social_reward: {
+        Args: {
+          _approved: boolean
+          _credits_amount?: number
+          _rejection_reason?: string
+          _request_id: string
+        }
+        Returns: Json
+      }
       admin_update_user_credits: {
         Args: {
           _credit_change: number
