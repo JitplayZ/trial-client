@@ -6,7 +6,6 @@ import DashboardCards from '@/components/dashboard/DashboardCards';
 import RecentProjectsList from '@/components/dashboard/RecentProjectsList';
 import QuickActions from '@/components/dashboard/QuickActions';
 import GamificationBar from '@/components/dashboard/GamificationBar';
-import EarnCreditsSection from '@/components/dashboard/EarnCreditsSection';
 
 // Feature flag for gamification
 const GAMIFICATION_ENABLED = true;
@@ -69,11 +68,6 @@ const ClientDashboard = () => {
                 Transform your ideas into reality with AI-powered project generation
               </p>
             </div>
-          </div>
-
-          {/* Earn Credits Section */}
-          <div className="mb-8">
-            <EarnCreditsSection />
           </div>
 
           {/* Dashboard Grid */}
