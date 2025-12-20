@@ -413,8 +413,9 @@ export const SupportReports = () => {
                 className="p-4 border border-border rounded-lg space-y-3"
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <Badge variant="outline">{msg.user_email}</Badge>
+                    <span className="text-xs font-mono text-muted-foreground">ID: {msg.user_id.slice(0, 8)}...</span>
                     <span className="text-xs text-muted-foreground">{formatTimeAgo(msg.created_at)}</span>
                   </div>
                   <Button
@@ -492,6 +493,12 @@ export const SupportReports = () => {
                 key={flaggedUser.user_id}
                 className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 border border-warning/20 bg-warning/5 rounded-lg"
               >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-medium">{flaggedUser.email}</span>
+                    <span className="text-xs font-mono text-muted-foreground">ID: {flaggedUser.user_id.slice(0, 8)}...</span>
+                  </div>
+                </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
                   <AlertTriangle className="h-5 w-5 text-warning" />
                 </div>

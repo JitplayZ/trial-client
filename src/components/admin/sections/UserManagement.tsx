@@ -334,6 +334,7 @@ export const UserManagement = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>User</TableHead>
+                  <TableHead>User ID</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Plan</TableHead>
                   <TableHead>Credits</TableHead>
@@ -345,13 +346,13 @@ export const UserManagement = () => {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8">
+                    <TableCell colSpan={8} className="text-center py-8">
                       <RefreshCw className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
                     </TableCell>
                   </TableRow>
                 ) : filteredUsers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                       No users found
                     </TableCell>
                   </TableRow>
@@ -363,6 +364,9 @@ export const UserManagement = () => {
                           <p className="font-medium">{user.display_name}</p>
                           <p className="text-sm text-muted-foreground">{user.email}</p>
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-xs font-mono text-muted-foreground">{user.id.slice(0, 8)}...</span>
                       </TableCell>
                       <TableCell>{getStatusBadge(user.status, user.generation_enabled)}</TableCell>
                       <TableCell>{getPlanBadge(user.plan)}</TableCell>

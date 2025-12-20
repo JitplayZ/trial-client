@@ -30,6 +30,7 @@ interface ProjectData {
   level: string;
   type: string;
   created_at: string;
+  user_id: string;
   user_email: string;
 }
 
@@ -66,6 +67,7 @@ export const ProjectMonitoring = () => {
           level: project.level || 'beginner',
           type: project.type || 'web-app',
           created_at: project.created_at,
+          user_id: project.user_id,
           user_email: profile?.email || 'N/A'
         };
       });
@@ -279,6 +281,7 @@ export const ProjectMonitoring = () => {
                 <TableRow>
                   <TableHead>Project</TableHead>
                   <TableHead>User</TableHead>
+                  <TableHead>User ID</TableHead>
                   <TableHead>Level</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Status</TableHead>
@@ -288,13 +291,13 @@ export const ProjectMonitoring = () => {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8">
+                    <TableCell colSpan={7} className="text-center py-8">
                       <RefreshCw className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
                     </TableCell>
                   </TableRow>
                 ) : projects.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                       No projects found
                     </TableCell>
                   </TableRow>
@@ -306,6 +309,9 @@ export const ProjectMonitoring = () => {
                       </TableCell>
                       <TableCell>
                         <span className="text-sm text-muted-foreground">{project.user_email}</span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-xs font-mono text-muted-foreground">{project.user_id.slice(0, 8)}...</span>
                       </TableCell>
                       <TableCell>{getLevelBadge(project.level)}</TableCell>
                       <TableCell>
