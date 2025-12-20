@@ -238,6 +238,7 @@ export const BillingManagement = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>User</TableHead>
+                  <TableHead>User ID</TableHead>
                   <TableHead>Plan</TableHead>
                   <TableHead>Credits</TableHead>
                   <TableHead>Beginner</TableHead>
@@ -249,13 +250,13 @@ export const BillingManagement = () => {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8">
+                    <TableCell colSpan={8} className="text-center py-8">
                       <RefreshCw className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
                     </TableCell>
                   </TableRow>
                 ) : subscriptions.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                       No subscriptions found
                     </TableCell>
                   </TableRow>
@@ -264,6 +265,9 @@ export const BillingManagement = () => {
                     <TableRow key={sub.user_id}>
                       <TableCell>
                         <span className="text-sm">{sub.email}</span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-xs font-mono text-muted-foreground">{sub.user_id.slice(0, 8)}...</span>
                       </TableCell>
                       <TableCell>{getPlanBadge(sub.plan)}</TableCell>
                       <TableCell>

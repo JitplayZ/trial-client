@@ -1,4 +1,4 @@
-import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate, Link } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Users, 
@@ -74,29 +74,49 @@ export const AdminSidebar = () => {
       )}
     >
       {/* Logo Header */}
-      <div className="h-16 border-b border-border flex items-center justify-between px-4">
-        {!collapsed && (
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-              <Shield className="h-4 w-4 text-primary-foreground" />
-            </div>
-            <span className="font-display font-bold text-lg">Admin</span>
-          </div>
-        )}
-        {collapsed && (
-          <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center mx-auto">
+      <div className={cn(
+        "h-16 border-b border-border flex items-center px-3 gap-2",
+        collapsed ? "justify-center" : "justify-between"
+      )}>
+        <Link 
+          to="/" 
+          className={cn(
+            "flex items-center gap-2 hover:opacity-80 transition-opacity",
+            collapsed && "justify-center"
+          )}
+        >
+          <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center flex-shrink-0">
             <Shield className="h-4 w-4 text-primary-foreground" />
           </div>
+          {!collapsed && (
+            <span className="font-display font-bold text-lg">Admin</span>
+          )}
+        </Link>
+        {!collapsed && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setCollapsed(!collapsed)}
+            className="h-8 w-8 flex-shrink-0"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
         )}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setCollapsed(!collapsed)}
-          className={cn("h-8 w-8", collapsed && "mx-auto")}
-        >
-          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-        </Button>
       </div>
+
+      {/* Expand Button when collapsed - positioned below header */}
+      {collapsed && (
+        <div className="flex justify-center py-2 border-b border-border">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setCollapsed(!collapsed)}
+            className="h-8 w-8"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
 
       {/* Navigation */}
       <nav className="flex-1 py-4 px-2 space-y-1 overflow-y-auto">
