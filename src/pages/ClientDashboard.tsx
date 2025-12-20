@@ -6,7 +6,7 @@ import DashboardCards from '@/components/dashboard/DashboardCards';
 import RecentProjectsList from '@/components/dashboard/RecentProjectsList';
 import QuickActions from '@/components/dashboard/QuickActions';
 import GamificationBar from '@/components/dashboard/GamificationBar';
-import { SocialRewardCard } from '@/components/dashboard/SocialRewardCard';
+import EarnCreditsSection from '@/components/dashboard/EarnCreditsSection';
 
 // Feature flag for gamification
 const GAMIFICATION_ENABLED = true;
@@ -71,12 +71,16 @@ const ClientDashboard = () => {
             </div>
           </div>
 
+          {/* Earn Credits Section */}
+          <div className="mb-8">
+            <EarnCreditsSection />
+          </div>
+
           {/* Dashboard Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Left Column - Stats and Quick Actions */}
             <div className="lg:col-span-1 space-y-6">
               <DashboardCards />
-              <SocialRewardCard />
               <QuickActions />
             </div>
 
