@@ -49,6 +49,7 @@ export const ReferralModal = ({ isOpen, onClose }: ReferralModalProps) => {
   const [submitting, setSubmitting] = useState(false);
   const [platform, setPlatform] = useState<Platform | ''>('');
   const [postUrl, setPostUrl] = useState('');
+  const [showResubmitForm, setShowResubmitForm] = useState(false);
 
   useEffect(() => {
     if (user && isOpen) {
@@ -100,6 +101,30 @@ export const ReferralModal = ({ isOpen, onClose }: ReferralModalProps) => {
 
     setSubmitting(true);
     try {
+      // If resubmitting after rejection, update the existing record
+      if (existingRequest && existingRequest.status === 'rejected') {
+        const { error } = await supabase
+          .from('social_reward_requests')
+          .update({
+            platform,
+            post_url: postUrl.trim(),
+            status: 'pending',
+            rejection_reason: null,
+            reviewed_at: null,
+            reviewed_by: null
+          })
+          .eq('id', existingRequest.id);
+
+        if (error) throw error;
+        
+        toast.success('New request submitted! We will review your post shortly.');
+        setShowResubmitForm(false);
+        setPlatform('');
+        setPostUrl('');
+        fetchExistingRequest();
+        return;
+      }
+
       const { error } = await supabase
         .from('social_reward_requests')
         .insert({
@@ -318,13 +343,79 @@ export const ReferralModal = ({ isOpen, onClose }: ReferralModalProps) => {
                     </div>
                   )}
                   
-                  {existingRequest.status === 'rejected' && existingRequest.rejection_reason && (
-                    <div className="flex items-start gap-2 text-destructive bg-destructive/10 p-2 rounded">
-                      <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                      <span className="text-sm">{existingRequest.rejection_reason}</span>
-                    </div>
+                  {existingRequest.status === 'rejected' && (
+                    <>
+                      {existingRequest.rejection_reason && (
+                        <div className="flex items-start gap-2 text-destructive bg-destructive/10 p-2 rounded">
+                          <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                          <span className="text-sm">{existingRequest.rejection_reason}</span>
+                        </div>
+                      )}
+                      {!showResubmitForm && (
+                        <Button 
+                          onClick={() => setShowResubmitForm(true)} 
+                          variant="outline" 
+                          className="w-full mt-2"
+                        >
+                          Submit New Request
+                        </Button>
+                      )}
+                    </>
                   )}
                 </div>
+
+                {/* Resubmit Form for Rejected Requests */}
+                {showResubmitForm && (
+                  <div className="space-y-3 pt-3 border-t border-border">
+                    <p className="text-sm font-medium">Submit a New Post</p>
+                    <div className="space-y-2">
+                      <Label htmlFor="resubmit-platform">Platform</Label>
+                      <Select value={platform} onValueChange={(v) => setPlatform(v as Platform)}>
+                        <SelectTrigger id="resubmit-platform">
+                          <SelectValue placeholder="Select platform" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="x">X (Twitter)</SelectItem>
+                          <SelectItem value="linkedin">LinkedIn</SelectItem>
+                          <SelectItem value="reddit">Reddit</SelectItem>
+                          <SelectItem value="youtube">YouTube</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="resubmit-url">Post URL</Label>
+                      <Input
+                        id="resubmit-url"
+                        type="url"
+                        placeholder="https://x.com/yourpost..."
+                        value={postUrl}
+                        onChange={(e) => setPostUrl(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button 
+                        onClick={() => {
+                          setShowResubmitForm(false);
+                          setPlatform('');
+                          setPostUrl('');
+                        }} 
+                        variant="outline"
+                        className="flex-1"
+                      >
+                        Cancel
+                      </Button>
+                      <Button 
+                        onClick={handleSubmitSocial} 
+                        disabled={submitting || !platform || !postUrl.trim()}
+                        className="flex-1"
+                      >
+                        {submitting ? 'Submitting...' : 'Submit'}
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <>
