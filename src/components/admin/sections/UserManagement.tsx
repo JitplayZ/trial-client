@@ -1,3 +1,4 @@
+import { CopyUserId } from "../CopyUserId";
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -366,7 +367,7 @@ export const UserManagement = () => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <span className="text-xs font-mono text-muted-foreground">{user.id.slice(0, 8)}...</span>
+                        <CopyUserId userId={user.id} />
                       </TableCell>
                       <TableCell>{getStatusBadge(user.status, user.generation_enabled)}</TableCell>
                       <TableCell>{getPlanBadge(user.plan)}</TableCell>

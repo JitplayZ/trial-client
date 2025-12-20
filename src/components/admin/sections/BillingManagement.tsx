@@ -10,8 +10,9 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { 
-  CreditCard, 
+import { CopyUserId } from "../CopyUserId";
+import {
+  CreditCard,
   DollarSign, 
   TrendingUp,
   Users,
@@ -267,7 +268,7 @@ export const BillingManagement = () => {
                         <span className="text-sm">{sub.email}</span>
                       </TableCell>
                       <TableCell>
-                        <span className="text-xs font-mono text-muted-foreground">{sub.user_id.slice(0, 8)}...</span>
+                        <CopyUserId userId={sub.user_id} />
                       </TableCell>
                       <TableCell>{getPlanBadge(sub.plan)}</TableCell>
                       <TableCell>

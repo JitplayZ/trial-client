@@ -1,3 +1,4 @@
+import { CopyUserId } from "../CopyUserId";
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -311,7 +312,7 @@ export const ProjectMonitoring = () => {
                         <span className="text-sm text-muted-foreground">{project.user_email}</span>
                       </TableCell>
                       <TableCell>
-                        <span className="text-xs font-mono text-muted-foreground">{project.user_id.slice(0, 8)}...</span>
+                        <CopyUserId userId={project.user_id} />
                       </TableCell>
                       <TableCell>{getLevelBadge(project.level)}</TableCell>
                       <TableCell>
