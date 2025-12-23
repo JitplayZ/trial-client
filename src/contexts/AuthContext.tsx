@@ -3,12 +3,16 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-// Helper to trigger referral achievement XP (called after successful referral processing)
-const triggerReferralAchievement = async () => {
+// Helper to trigger referral achievement XP with session token
+const triggerReferralAchievement = async (accessToken: string) => {
   try {
     await supabase.functions.invoke('award-xp', {
-      body: { event_type: 'referral_success' }
+      body: { event_type: 'referral_success' },
+      headers: {
+        Authorization: `Bearer ${accessToken}`
+      }
     });
+    console.log('Referral achievement XP awarded successfully');
   } catch (error) {
     console.error('Failed to award referral XP:', error);
   }
@@ -60,8 +64,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           title: '🎉 Welcome Bonus!',
           description: `You received ${result.referred_credits ?? 2} credits for signing up with a referral!`,
         });
-        // Award referral achievement XP/badge to the new user
-        await triggerReferralAchievement();
+        // Award referral achievement XP/badge to the new user - pass access token
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) {
+          await triggerReferralAchievement(session.access_token);
+        }
       }
     } catch (error) {
       console.error('Error processing stored referral:', error);
