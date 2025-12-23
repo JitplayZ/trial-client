@@ -1,7 +1,18 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+
+// Helper to trigger referral achievement XP (called after successful referral processing)
+const triggerReferralAchievement = async () => {
+  try {
+    await supabase.functions.invoke('award-xp', {
+      body: { event_type: 'referral_success' }
+    });
+  } catch (error) {
+    console.error('Failed to award referral XP:', error);
+  }
+};
 
 interface AuthContextType {
   user: User | null;
@@ -49,6 +60,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           title: '🎉 Welcome Bonus!',
           description: `You received ${result.referred_credits ?? 2} credits for signing up with a referral!`,
         });
+        // Award referral achievement XP/badge to the new user
+        await triggerReferralAchievement();
       }
     } catch (error) {
       console.error('Error processing stored referral:', error);

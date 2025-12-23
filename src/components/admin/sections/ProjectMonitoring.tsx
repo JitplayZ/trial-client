@@ -19,8 +19,20 @@ import {
   RefreshCw,
   Play,
   Pause,
-  AlertTriangle
+  AlertTriangle,
+  Trash2
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -129,6 +141,57 @@ export const ProjectMonitoring = () => {
     return `${Math.floor(hours / 24)}d ago`;
   };
 
+  // Get stuck/stale projects (generating for more than 1 hour)
+  const getStuckProjects = () => {
+    const ONE_HOUR_MS = 60 * 60 * 1000;
+    return projects.filter(p => {
+      if (p.status !== 'generating') return false;
+      const createdTime = new Date(p.created_at).getTime();
+      return Date.now() - createdTime > ONE_HOUR_MS;
+    });
+  };
+
+  const stuckProjects = getStuckProjects();
+
+  // Delete a single stuck project
+  const deleteStuckProject = async (projectId: string) => {
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .delete()
+        .eq('id', projectId);
+
+      if (error) throw error;
+
+      toast.success('Stuck project removed successfully');
+      fetchProjects();
+    } catch (error) {
+      console.error('Error deleting project:', error);
+      toast.error('Failed to delete project');
+    }
+  };
+
+  // Delete all stuck projects
+  const deleteAllStuckProjects = async () => {
+    try {
+      const stuckIds = stuckProjects.map(p => p.id);
+      if (stuckIds.length === 0) return;
+
+      const { error } = await supabase
+        .from('projects')
+        .delete()
+        .in('id', stuckIds);
+
+      if (error) throw error;
+
+      toast.success(`Removed ${stuckIds.length} stuck project(s)`);
+      fetchProjects();
+    } catch (error) {
+      console.error('Error deleting stuck projects:', error);
+      toast.error('Failed to delete stuck projects');
+    }
+  };
+
   return (
     <div className="p-6 lg:p-8 space-y-6">
       {/* Header */}
@@ -234,6 +297,84 @@ export const ProjectMonitoring = () => {
                 <p className="text-sm text-foreground-secondary">New project generations are temporarily suspended</p>
               </div>
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Stuck/Stale Projects Warning */}
+      {stuckProjects.length > 0 && (
+        <Card className="border-destructive/20 bg-destructive/5">
+          <CardHeader className="pb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-lg text-destructive">
+                  <AlertTriangle className="h-5 w-5" />
+                  Stuck Queues ({stuckProjects.length})
+                </CardTitle>
+                <CardDescription>Projects stuck in "generating" for over 1 hour</CardDescription>
+              </div>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Remove All Stuck
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Remove all stuck projects?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently delete {stuckProjects.length} project(s) that have been stuck in "generating" status for over 1 hour. This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={deleteAllStuckProjects} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      Delete All
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {stuckProjects.map((project) => (
+              <div 
+                key={project.id}
+                className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 border border-destructive/20 bg-destructive/5 rounded-lg"
+              >
+                <AlertTriangle className="h-5 w-5 text-destructive flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2 mb-1">
+                    <p className="font-medium">{project.title}</p>
+                    {getLevelBadge(project.level)}
+                  </div>
+                  <p className="text-sm text-foreground-secondary">{project.user_email}</p>
+                  <p className="text-xs text-destructive">{formatTimeAgo(project.created_at)} - Stuck</p>
+                </div>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline" size="sm" className="border-destructive/30 text-destructive hover:bg-destructive/10">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Remove this stuck project?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will permanently delete "{project.title}". This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => deleteStuckProject(project.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            ))}
           </CardContent>
         </Card>
       )}

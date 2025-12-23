@@ -7,6 +7,17 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+// Helper to trigger referral achievement XP
+const triggerReferralAchievement = async () => {
+  try {
+    await supabase.functions.invoke('award-xp', {
+      body: { event_type: 'referral_success' }
+    });
+  } catch (error) {
+    console.error('Failed to award referral XP:', error);
+  }
+};
+
 // Session storage key for referral codes (must match AuthContext)
 const REFERRAL_CODE_KEY = 'referralCode';
 
@@ -48,6 +59,8 @@ const Auth = () => {
           title: '🎉 Welcome Bonus!',
           description: `You received ${result.referred_credits ?? 2} credits for signing up with a referral!`,
         });
+        // Award referral achievement XP/badge to the new user
+        await triggerReferralAchievement();
       }
     } catch (error) {
       console.error('Error processing referral:', error);
