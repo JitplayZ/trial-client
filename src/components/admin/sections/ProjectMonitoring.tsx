@@ -379,18 +379,18 @@ export const ProjectMonitoring = () => {
         </Card>
       )}
 
-      {/* Pending/Generating Projects */}
-      {generatingCount > 0 && (
+      {/* Pending/Generating Projects (exclude stuck ones - they show in stuck section) */}
+      {projects.filter(p => p.status === 'generating' && !stuckProjects.some(s => s.id === p.id)).length > 0 && (
         <Card className="border-warning/20">
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Clock className="h-5 w-5 text-warning" />
-              Active Queue ({generatingCount})
+              Active Queue ({projects.filter(p => p.status === 'generating' && !stuckProjects.some(s => s.id === p.id)).length})
             </CardTitle>
             <CardDescription>Projects currently being generated</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            {projects.filter(p => p.status === 'generating').map((project) => (
+            {projects.filter(p => p.status === 'generating' && !stuckProjects.some(s => s.id === p.id)).map((project) => (
               <div 
                 key={project.id}
                 className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 border border-warning/20 bg-warning/5 rounded-lg"
