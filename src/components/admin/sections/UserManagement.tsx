@@ -278,20 +278,22 @@ export const UserManagement = () => {
     }
   };
 
-  // Delete user (removes from database using existing delete_user_account pattern)
+  // Delete user using secure SECURITY DEFINER function with audit logging
   const handleDeleteUser = async () => {
     if (!selectedUser) return;
     
     setActionLoading(true);
     try {
-      // First delete all user data (profiles, subscriptions, etc. via cascade)
-      // We need to use service role for this, so we'll delete profile which should cascade
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('user_id', selectedUser.id);
+      // Use the secure admin_delete_user function which handles audit logging
+      const { data, error } = await supabase
+        .rpc('admin_delete_user' as any, { _target_user_id: selectedUser.id });
 
-      if (profileError) throw profileError;
+      if (error) throw error;
+      
+      const result = data as { success: boolean; error?: string; message?: string } | null;
+      if (!result?.success) {
+        throw new Error(result?.error || 'Failed to delete user');
+      }
 
       toast.success(`${selectedUser.display_name} has been removed`);
       setDeleteDialogOpen(false);
