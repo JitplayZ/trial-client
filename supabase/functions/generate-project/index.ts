@@ -86,6 +86,30 @@ serve(async (req) => {
     console.log('Authenticated user:', userId);
 
     // ============================================
+    // SECURITY: Check if user is banned/suspended
+    // ============================================
+    const { data: profile, error: profileError } = await supabaseClient
+      .from('profiles')
+      .select('status, generation_enabled')
+      .eq('user_id', userId)
+      .single();
+
+    if (profileError) {
+      console.error('Profile check error:', profileError);
+      return errorResponse(500, 'Failed to verify user status');
+    }
+
+    if (profile?.status === 'suspended') {
+      console.log('Security: User is suspended', userId);
+      return errorResponse(403, 'Your account has been suspended. Contact support for assistance.');
+    }
+
+    if (profile?.generation_enabled === false) {
+      console.log('Security: User generation disabled', userId);
+      return errorResponse(403, 'Project generation has been disabled for your account.');
+    }
+
+    // ============================================
     // SECURITY: Parse and validate input
     // ============================================
     let requestData;
