@@ -27,7 +27,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Label } from "@/components/ui/label";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { 
   Users, 
   Search, 
@@ -38,7 +55,11 @@ import {
   Edit,
   Coins,
   Power,
-  PowerOff
+  PowerOff,
+  Ban,
+  Trash2,
+  UserMinus,
+  ShieldAlert
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -47,6 +68,7 @@ interface UserData {
   id: string;
   email: string;
   display_name: string;
+  avatar_url: string | null;
   created_at: string;
   plan: string;
   credits: number;
@@ -64,6 +86,8 @@ export const UserManagement = () => {
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
   const [creditDialogOpen, setCreditDialogOpen] = useState(false);
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [banAllDialogOpen, setBanAllDialogOpen] = useState(false);
   const [creditChange, setCreditChange] = useState(0);
   const [creditReason, setCreditReason] = useState('');
   const [newStatus, setNewStatus] = useState('active');
@@ -75,7 +99,7 @@ export const UserManagement = () => {
     try {
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('user_id, email, display_name, created_at, status, generation_enabled')
+        .select('user_id, email, display_name, avatar_url, created_at, status, generation_enabled')
         .order('created_at', { ascending: false })
         .limit(100);
 
@@ -95,6 +119,7 @@ export const UserManagement = () => {
           id: profile.user_id,
           email: profile.email || 'N/A',
           display_name: profile.display_name || 'Unknown',
+          avatar_url: profile.avatar_url,
           created_at: profile.created_at,
           plan: sub?.plan || 'free',
           credits: sub?.credits || 0,
@@ -199,6 +224,127 @@ export const UserManagement = () => {
     }
   };
 
+  // Quick ban user (sets status to suspended and disables generation)
+  const handleBanUser = async (user: UserData) => {
+    setActionLoading(true);
+    try {
+      const { data, error } = await supabase.rpc('admin_update_user_status', {
+        _target_user_id: user.id,
+        _new_status: 'suspended',
+        _generation_enabled: false
+      });
+
+      if (error) throw error;
+      
+      const result = data as { ok: boolean; message: string };
+      if (!result.ok) throw new Error(result.message);
+
+      toast.success(`${user.display_name} has been banned`);
+      fetchUsers();
+    } catch (error: any) {
+      console.error('Error banning user:', error);
+      toast.error(error.message || 'Failed to ban user');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Quick unban user (sets status to active and enables generation)
+  const handleUnbanUser = async (user: UserData) => {
+    setActionLoading(true);
+    try {
+      const { data, error } = await supabase.rpc('admin_update_user_status', {
+        _target_user_id: user.id,
+        _new_status: 'active',
+        _generation_enabled: true
+      });
+
+      if (error) throw error;
+      
+      const result = data as { ok: boolean; message: string };
+      if (!result.ok) throw new Error(result.message);
+
+      toast.success(`${user.display_name} has been unbanned`);
+      fetchUsers();
+    } catch (error: any) {
+      console.error('Error unbanning user:', error);
+      toast.error(error.message || 'Failed to unban user');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Delete user (removes from database using existing delete_user_account pattern)
+  const handleDeleteUser = async () => {
+    if (!selectedUser) return;
+    
+    setActionLoading(true);
+    try {
+      // First delete all user data (profiles, subscriptions, etc. via cascade)
+      // We need to use service role for this, so we'll delete profile which should cascade
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('user_id', selectedUser.id);
+
+      if (profileError) throw profileError;
+
+      toast.success(`${selectedUser.display_name} has been removed`);
+      setDeleteDialogOpen(false);
+      setSelectedUser(null);
+      fetchUsers();
+    } catch (error: any) {
+      console.error('Error deleting user:', error);
+      toast.error(error.message || 'Failed to delete user');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Ban all users (except the current admin)
+  const handleBanAllUsers = async () => {
+    setActionLoading(true);
+    try {
+      // Get current admin user
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) throw new Error('Not authenticated');
+
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const user of users) {
+        // Skip the current admin
+        if (user.id === currentUser.id) continue;
+        // Skip already banned users
+        if (user.status === 'suspended' && !user.generation_enabled) continue;
+
+        try {
+          const { data, error } = await supabase.rpc('admin_update_user_status', {
+            _target_user_id: user.id,
+            _new_status: 'suspended',
+            _generation_enabled: false
+          });
+
+          if (error) throw error;
+          const result = data as { ok: boolean; message: string };
+          if (result.ok) successCount++;
+          else errorCount++;
+        } catch {
+          errorCount++;
+        }
+      }
+
+      toast.success(`Banned ${successCount} users${errorCount > 0 ? `, ${errorCount} failed` : ''}`);
+      setBanAllDialogOpen(false);
+      fetchUsers();
+    } catch (error: any) {
+      console.error('Error banning all users:', error);
+      toast.error(error.message || 'Failed to ban all users');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const openCreditDialog = (user: UserData) => {
     setSelectedUser(user);
     setCreditChange(0);
@@ -213,12 +359,22 @@ export const UserManagement = () => {
     setStatusDialogOpen(true);
   };
 
+  const openDeleteDialog = (user: UserData) => {
+    setSelectedUser(user);
+    setDeleteDialogOpen(true);
+  };
+
   const filteredUsers = users.filter(user => 
     user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.display_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const isBanned = (user: UserData) => user.status === 'suspended' && !user.generation_enabled;
+
   const getStatusBadge = (status: string, genEnabled: boolean) => {
+    if (status === 'suspended' && !genEnabled) {
+      return <Badge variant="destructive">Banned</Badge>;
+    }
     if (!genEnabled) {
       return <Badge variant="destructive">Generation Disabled</Badge>;
     }
@@ -245,6 +401,15 @@ export const UserManagement = () => {
     }
   };
 
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
   return (
     <div className="p-6 lg:p-8 space-y-6">
       {/* Header */}
@@ -256,14 +421,24 @@ export const UserManagement = () => {
           </h1>
           <p className="text-foreground-secondary mt-1">View and manage all registered users</p>
         </div>
-        <Button onClick={fetchUsers} disabled={loading}>
-          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="destructive" 
+            onClick={() => setBanAllDialogOpen(true)}
+            disabled={actionLoading}
+          >
+            <ShieldAlert className="h-4 w-4 mr-2" />
+            Ban All Users
+          </Button>
+          <Button onClick={fetchUsers} disabled={loading}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
         <Card>
           <CardContent className="p-4 flex items-center gap-4">
             <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -300,10 +475,21 @@ export const UserManagement = () => {
         <Card>
           <CardContent className="p-4 flex items-center gap-4">
             <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center">
+              <Ban className="h-5 w-5 text-destructive" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{users.filter(u => isBanned(u)).length}</p>
+              <p className="text-sm text-foreground-secondary">Banned</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center">
               <PowerOff className="h-5 w-5 text-destructive" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{users.filter(u => !u.generation_enabled).length}</p>
+              <p className="text-2xl font-bold">{users.filter(u => !u.generation_enabled && !isBanned(u)).length}</p>
               <p className="text-sm text-foreground-secondary">Gen. Disabled</p>
             </div>
           </CardContent>
@@ -359,11 +545,19 @@ export const UserManagement = () => {
                   </TableRow>
                 ) : (
                   filteredUsers.map((user) => (
-                    <TableRow key={user.id}>
+                    <TableRow key={user.id} className={isBanned(user) ? 'bg-destructive/5' : ''}>
                       <TableCell>
-                        <div>
-                          <p className="font-medium">{user.display_name}</p>
-                          <p className="text-sm text-muted-foreground">{user.email}</p>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={user.avatar_url || undefined} alt={user.display_name} />
+                            <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                              {getInitials(user.display_name)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-medium">{user.display_name}</p>
+                            <p className="text-sm text-muted-foreground">{user.email}</p>
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -385,24 +579,78 @@ export const UserManagement = () => {
                         </span>
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => openCreditDialog(user)}
-                            title="Manage Credits"
-                          >
-                            <Coins className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => openStatusDialog(user)}
-                            title="Manage Status"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </div>
+                        <TooltipProvider>
+                          <div className="flex items-center justify-end gap-1">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => openCreditDialog(user)}
+                                >
+                                  <Coins className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Manage Credits</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => openStatusDialog(user)}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Manage Status</TooltipContent>
+                            </Tooltip>
+                            {isBanned(user) ? (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => handleUnbanUser(user)}
+                                    disabled={actionLoading}
+                                    className="text-accent hover:text-accent"
+                                  >
+                                    <UserCheck className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Unban User</TooltipContent>
+                              </Tooltip>
+                            ) : (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => handleBanUser(user)}
+                                    disabled={actionLoading}
+                                    className="text-destructive hover:text-destructive"
+                                  >
+                                    <Ban className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Ban User</TooltipContent>
+                              </Tooltip>
+                            )}
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => openDeleteDialog(user)}
+                                  className="text-destructive hover:text-destructive"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Delete User</TooltipContent>
+                            </Tooltip>
+                          </div>
+                        </TooltipProvider>
                       </TableCell>
                     </TableRow>
                   ))
@@ -539,6 +787,57 @@ export const UserManagement = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete User Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete User</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to permanently delete {selectedUser?.display_name} ({selectedUser?.email})? 
+              This action cannot be undone and will remove all user data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteUser}
+              disabled={actionLoading}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {actionLoading ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : <Trash2 className="h-4 w-4 mr-2" />}
+              Delete User
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Ban All Users Confirmation Dialog */}
+      <AlertDialog open={banAllDialogOpen} onOpenChange={setBanAllDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <ShieldAlert className="h-5 w-5" />
+              Ban All Users
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This will ban ALL users except yourself. All users will have their status set to "suspended" 
+              and project generation disabled. This is a bulk action that affects {users.length - 1} users.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBanAllUsers}
+              disabled={actionLoading}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {actionLoading ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : <Ban className="h-4 w-4 mr-2" />}
+              Ban All Users
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
