@@ -5,3 +5,6 @@ verify_jwt = true
 
 [functions.award-xp]
 verify_jwt = true
+
+[functions.track-login]
+verify_jwt = true

@@ -18,6 +18,20 @@ const triggerReferralAchievement = async (accessToken: string) => {
   }
 };
 
+// Helper to track login and capture IP address
+const trackLogin = async (accessToken: string) => {
+  try {
+    await supabase.functions.invoke('track-login', {
+      headers: {
+        Authorization: `Bearer ${accessToken}`
+      }
+    });
+    console.log('Login tracked successfully');
+  } catch (error) {
+    console.error('Failed to track login:', error);
+  }
+};
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -88,6 +102,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Use setTimeout to avoid Supabase auth deadlock
           setTimeout(() => {
             processStoredReferralCode(session.user.id);
+            // Track login to capture IP address
+            if (session.access_token) {
+              trackLogin(session.access_token);
+            }
           }, 0);
         }
       }

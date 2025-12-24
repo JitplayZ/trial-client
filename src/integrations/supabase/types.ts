@@ -108,6 +108,8 @@ export type Database = {
           email: string | null
           generation_enabled: boolean | null
           id: string
+          last_ip: string | null
+          last_login_at: string | null
           status: string | null
           updated_at: string
           user_id: string
@@ -119,6 +121,8 @@ export type Database = {
           email?: string | null
           generation_enabled?: boolean | null
           id?: string
+          last_ip?: string | null
+          last_login_at?: string | null
           status?: string | null
           updated_at?: string
           user_id: string
@@ -130,6 +134,8 @@ export type Database = {
           email?: string | null
           generation_enabled?: boolean | null
           id?: string
+          last_ip?: string | null
+          last_login_at?: string | null
           status?: string | null
           updated_at?: string
           user_id?: string
@@ -556,6 +562,10 @@ export type Database = {
             Returns: Json
           }
       reset_monthly_quotas: { Args: never; Returns: undefined }
+      update_user_login_info: {
+        Args: { _ip_address: string; _user_id: string }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
