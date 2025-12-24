@@ -69,6 +69,8 @@ interface UserData {
   email: string;
   display_name: string;
   avatar_url: string | null;
+  last_ip: string | null;
+  last_login_at: string | null;
   created_at: string;
   plan: string;
   credits: number;
@@ -99,7 +101,7 @@ export const UserManagement = () => {
     try {
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('user_id, email, display_name, avatar_url, created_at, status, generation_enabled')
+        .select('user_id, email, display_name, avatar_url, last_ip, last_login_at, created_at, status, generation_enabled')
         .order('created_at', { ascending: false })
         .limit(100);
 
@@ -120,6 +122,8 @@ export const UserManagement = () => {
           email: profile.email || 'N/A',
           display_name: profile.display_name || 'Unknown',
           avatar_url: profile.avatar_url,
+          last_ip: (profile as any).last_ip || null,
+          last_login_at: (profile as any).last_login_at || null,
           created_at: profile.created_at,
           plan: sub?.plan || 'free',
           credits: sub?.credits || 0,
@@ -522,6 +526,7 @@ export const UserManagement = () => {
                 <TableRow>
                   <TableHead>User</TableHead>
                   <TableHead>User ID</TableHead>
+                  <TableHead>IP Address</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Plan</TableHead>
                   <TableHead>Credits</TableHead>
@@ -533,13 +538,13 @@ export const UserManagement = () => {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8">
+                    <TableCell colSpan={9} className="text-center py-8">
                       <RefreshCw className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
                     </TableCell>
                   </TableRow>
                 ) : filteredUsers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                       No users found
                     </TableCell>
                   </TableRow>
@@ -562,6 +567,33 @@ export const UserManagement = () => {
                       </TableCell>
                       <TableCell>
                         <CopyUserId userId={user.id} />
+                      </TableCell>
+                      <TableCell>
+                        <TooltipProvider>
+                          {user.last_ip ? (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="font-mono text-xs cursor-default">
+                                  {user.last_ip.length > 15 
+                                    ? `${user.last_ip.slice(0, 12)}...` 
+                                    : user.last_ip}
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <div className="text-xs">
+                                  <p className="font-mono">{user.last_ip}</p>
+                                  {user.last_login_at && (
+                                    <p className="text-muted-foreground mt-1">
+                                      Last login: {new Date(user.last_login_at).toLocaleString()}
+                                    </p>
+                                  )}
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
+                          ) : (
+                            <span className="text-muted-foreground text-xs">N/A</span>
+                          )}
+                        </TooltipProvider>
                       </TableCell>
                       <TableCell>{getStatusBadge(user.status, user.generation_enabled)}</TableCell>
                       <TableCell>{getPlanBadge(user.plan)}</TableCell>
