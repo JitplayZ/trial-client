@@ -509,6 +509,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_delete_user: { Args: { _target_user_id: string }; Returns: Json }
       admin_review_social_reward: {
         Args: {
           _approved: boolean
