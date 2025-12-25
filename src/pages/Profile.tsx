@@ -44,7 +44,9 @@ export default function Profile() {
     user?.email?.split('@')[0] || ''
   );
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [hasCustomAvatar, setHasCustomAvatar] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [removingAvatar, setRemovingAvatar] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [gamificationEnabled, setGamificationEnabled] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(true);
@@ -91,9 +93,10 @@ export default function Profile() {
 
       if (error) throw error;
       if (data?.avatar_url) {
-        // If avatar_url is a path, generate signed URL; if already a full URL, use as-is
+        // If avatar_url is a path (not starting with http), it's a custom upload
         if (data.avatar_url.startsWith('http')) {
           setAvatarUrl(data.avatar_url);
+          setHasCustomAvatar(false); // Google/OAuth avatar
         } else {
           // Generate signed URL for private storage (1 hour expiry)
           const { data: signedUrlData } = await supabase.storage
@@ -103,7 +106,11 @@ export default function Profile() {
           if (signedUrlData?.signedUrl) {
             setAvatarUrl(signedUrlData.signedUrl);
           }
+          setHasCustomAvatar(true); // Custom uploaded avatar
         }
+      } else {
+        setAvatarUrl(null);
+        setHasCustomAvatar(false);
       }
     } catch (error) {
       if (import.meta.env.DEV) {
@@ -188,6 +195,7 @@ export default function Profile() {
       if (signedUrlData?.signedUrl) {
         setAvatarUrl(signedUrlData.signedUrl);
       }
+      setHasCustomAvatar(true);
       window.dispatchEvent(new Event('profile-updated'));
       toast({
         title: 'Avatar Updated',
@@ -204,6 +212,60 @@ export default function Profile() {
       });
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    if (!user?.id) return;
+    
+    setRemovingAvatar(true);
+    try {
+      // Get current avatar_url to check if it's a storage path
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('avatar_url')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      // If it's a storage path, delete the file
+      if (profile?.avatar_url && !profile.avatar_url.startsWith('http')) {
+        await supabase.storage
+          .from('avatars')
+          .remove([profile.avatar_url]);
+      }
+
+      // Get original Google avatar from user metadata
+      const googleAvatar = user.user_metadata?.avatar_url || user.user_metadata?.picture || null;
+
+      // Update profile with Google avatar (or null if no Google avatar)
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: googleAvatar })
+        .eq('user_id', user.id);
+
+      if (updateError) throw updateError;
+
+      setAvatarUrl(googleAvatar);
+      setHasCustomAvatar(false);
+      window.dispatchEvent(new Event('profile-updated'));
+      
+      toast({
+        title: 'Avatar Removed',
+        description: googleAvatar 
+          ? 'Reverted to your Google profile picture.' 
+          : 'Custom avatar has been removed.',
+      });
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        console.error('Error removing avatar:', error);
+      }
+      toast({
+        title: 'Error',
+        description: 'Failed to remove avatar. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setRemovingAvatar(false);
     }
   };
 
@@ -320,7 +382,7 @@ export default function Profile() {
                     {displayName.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <div>
+                <div className="space-y-2">
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -328,16 +390,30 @@ export default function Profile() {
                     onChange={handleAvatarUpload}
                     className="hidden"
                   />
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={handleAvatarClick}
-                    disabled={uploading}
-                  >
-                    <Camera className="h-4 w-4 mr-2" />
-                    {uploading ? 'Uploading...' : 'Change Avatar'}
-                  </Button>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={handleAvatarClick}
+                      disabled={uploading || removingAvatar}
+                    >
+                      <Camera className="h-4 w-4 mr-2" />
+                      {uploading ? 'Uploading...' : 'Change Avatar'}
+                    </Button>
+                    {hasCustomAvatar && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={handleRemoveAvatar}
+                        disabled={uploading || removingAvatar}
+                        className="text-muted-foreground hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        {removingAvatar ? 'Removing...' : 'Remove'}
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
                     Max 2MB, JPG/PNG
                   </p>
                 </div>
