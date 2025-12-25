@@ -96,6 +96,26 @@ export const UserManagement = () => {
   const [generationEnabled, setGenerationEnabled] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
 
+  // Helper to resolve avatar URL (Google URL or storage path)
+  const resolveAvatarUrl = async (avatarUrl: string | null): Promise<string | null> => {
+    if (!avatarUrl) return null;
+    
+    // If it's already a full URL (Google OAuth), use directly
+    if (avatarUrl.startsWith('http')) {
+      return avatarUrl;
+    }
+    
+    // It's a storage path - generate signed URL
+    try {
+      const { data: signedUrlData } = await supabase.storage
+        .from('avatars')
+        .createSignedUrl(avatarUrl, 3600);
+      return signedUrlData?.signedUrl || null;
+    } catch {
+      return null;
+    }
+  };
+
   const fetchUsers = async () => {
     setLoading(true);
     try {
@@ -115,13 +135,16 @@ export const UserManagement = () => {
 
       if (subError) throw subError;
 
-      const mergedUsers: UserData[] = (profiles || []).map(profile => {
+      // Resolve all avatar URLs in parallel
+      const mergedUsersPromises = (profiles || []).map(async (profile) => {
         const sub = subscriptions?.find(s => s.user_id === profile.user_id);
+        const resolvedAvatarUrl = await resolveAvatarUrl(profile.avatar_url);
+        
         return {
           id: profile.user_id,
           email: profile.email || 'N/A',
           display_name: profile.display_name || 'Unknown',
-          avatar_url: profile.avatar_url,
+          avatar_url: resolvedAvatarUrl,
           last_ip: (profile as any).last_ip || null,
           last_login_at: (profile as any).last_login_at || null,
           created_at: profile.created_at,
@@ -135,6 +158,7 @@ export const UserManagement = () => {
         };
       });
 
+      const mergedUsers = await Promise.all(mergedUsersPromises);
       setUsers(mergedUsers);
     } catch (error) {
       console.error('Error fetching users:', error);

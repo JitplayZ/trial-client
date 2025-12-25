@@ -127,8 +127,23 @@ const UserMenu = ({ onReferClick }: UserMenuProps) => {
         .maybeSingle();
 
       if (data) {
-        setAvatarUrl(data.avatar_url);
         setDisplayName(data.display_name || user?.email?.split('@')[0] || 'User');
+        
+        if (data.avatar_url) {
+          // If avatar_url is a full URL (Google OAuth), use directly
+          if (data.avatar_url.startsWith('http')) {
+            setAvatarUrl(data.avatar_url);
+          } else {
+            // It's a storage path - generate signed URL
+            const { data: signedUrlData } = await supabase.storage
+              .from('avatars')
+              .createSignedUrl(data.avatar_url, 3600);
+            
+            if (signedUrlData?.signedUrl) {
+              setAvatarUrl(signedUrlData.signedUrl);
+            }
+          }
+        }
       } else {
         setDisplayName(user?.email?.split('@')[0] || 'User');
       }
