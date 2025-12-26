@@ -55,46 +55,31 @@ export const useQuotaManagement = () => {
 
       if (error) throw error;
 
-      // If subscription doesn't exist, create one with free plan defaults
+      // If subscription doesn't exist, this is a critical error
+      // Subscriptions should be created by the handle_new_user trigger on signup
+      // Users should never be in a state without a subscription
       if (!data) {
-        const { data: newSubscription, error: insertError } = await supabase
-          .from('subscriptions')
-          .insert({
-            user_id: user.id,
-            plan: 'free',
-            beginner_left: 3,  // Updated: 3 free beginner projects
-            intermediate_left: 2,
-            veteran_left: 0,
-            credits: 5,  // Updated: 5 starting credits (not 10)
-            reset_at: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toISOString()
-          })
-          .select()
-          .single();
-
-        if (insertError) throw insertError;
-
-        setQuotaData({
-          plan: newSubscription.plan as PlanType,
-          credits: newSubscription.credits ?? 0,
-          quotas: {
-            beginnerLeft: newSubscription.beginner_left,
-            intermediateLeft: newSubscription.intermediate_left,
-            veteranLeft: newSubscription.veteran_left,
-            resetAt: newSubscription.reset_at
-          }
+        console.error('Critical: User has no subscription record. This should have been created on signup.');
+        toast({
+          title: 'Account Setup Issue',
+          description: 'Your subscription data is missing. Please contact support.',
+          variant: 'destructive'
         });
-      } else {
-        setQuotaData({
-          plan: data.plan as PlanType,
-          credits: data.credits ?? 0,
-          quotas: {
-            beginnerLeft: data.beginner_left,
-            intermediateLeft: data.intermediate_left,
-            veteranLeft: data.veteran_left,
-            resetAt: data.reset_at
-          }
-        });
+        setLoading(false);
+        return;
       }
+      
+      // Subscription exists, use it
+      setQuotaData({
+        plan: data.plan as PlanType,
+        credits: data.credits ?? 0,
+        quotas: {
+          beginnerLeft: data.beginner_left,
+          intermediateLeft: data.intermediate_left,
+          veteranLeft: data.veteran_left,
+          resetAt: data.reset_at
+        }
+      });
     } catch (error) {
       if (import.meta.env.DEV) {
         console.error('Error fetching subscription:', error);
