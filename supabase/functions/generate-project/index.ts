@@ -2,10 +2,30 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+// CORS configuration - restrict to known origins
+const allowedOrigins = [
+  'https://avsuyudchzyoyakxotfm.lovable.app',
+  /^https:\/\/.*\.lovable\.app$/,
+  /^https:\/\/.*\.lovable\.dev$/,
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://localhost:8080',
+  'http://localhost:8081',
+];
+
+function getCorsHeaders(req: Request): Record<string, string> {
+  const origin = req.headers.get('origin') || '';
+  const isAllowed = allowedOrigins.some(allowed => {
+    if (typeof allowed === 'string') return origin === allowed;
+    return allowed.test(origin);
+  });
+  return {
+    'Access-Control-Allow-Origin': isAllowed ? origin : '',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+    'Access-Control-Allow-Credentials': 'true',
+  };
+}
 
 // ============================================
 // SECURITY: Input Validation Schema
@@ -35,7 +55,7 @@ function sanitizeInput(input: string): string {
 // ============================================
 // SECURITY: Create safe error response
 // ============================================
-function errorResponse(status: number, message: string): Response {
+function errorResponse(status: number, message: string, corsHeaders: Record<string, string>): Response {
   return new Response(
     JSON.stringify({ 
       ok: false, 
@@ -50,6 +70,8 @@ function errorResponse(status: number, message: string): Response {
 }
 
 serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -62,7 +84,7 @@ serve(async (req) => {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       console.error('Security: Missing authorization header');
-      return errorResponse(401, 'Unauthorized: Missing authorization header');
+      return errorResponse(401, 'Unauthorized: Missing authorization header', corsHeaders);
     }
 
     // Initialize Supabase client with service role for admin operations
@@ -79,7 +101,7 @@ serve(async (req) => {
     
     if (authError || !user) {
       console.error('Security: Invalid token', authError?.message);
-      return errorResponse(401, 'Unauthorized: Invalid token');
+      return errorResponse(401, 'Unauthorized: Invalid token', corsHeaders);
     }
 
     const userId = user.id;
@@ -96,17 +118,17 @@ serve(async (req) => {
 
     if (profileError) {
       console.error('Profile check error:', profileError);
-      return errorResponse(500, 'Failed to verify user status');
+      return errorResponse(500, 'Failed to verify user status', corsHeaders);
     }
 
     if (profile?.status === 'suspended') {
       console.log('Security: User is suspended', userId);
-      return errorResponse(403, 'Your account has been suspended. Contact support for assistance.');
+      return errorResponse(403, 'Your account has been suspended. Contact support for assistance.', corsHeaders);
     }
 
     if (profile?.generation_enabled === false) {
       console.log('Security: User generation disabled', userId);
-      return errorResponse(403, 'Project generation has been disabled for your account.');
+      return errorResponse(403, 'Project generation has been disabled for your account.', corsHeaders);
     }
 
     // ============================================
@@ -116,7 +138,7 @@ serve(async (req) => {
     try {
       requestData = await req.json();
     } catch {
-      return errorResponse(400, 'Invalid JSON payload');
+      return errorResponse(400, 'Invalid JSON payload', corsHeaders);
     }
 
     // Sanitize inputs before validation
@@ -131,7 +153,7 @@ serve(async (req) => {
     const validationResult = generateProjectSchema.safeParse(requestData);
     if (!validationResult.success) {
       console.error('Security: Validation failed', validationResult.error.errors);
-      return errorResponse(400, `Invalid input: ${validationResult.error.errors.map(e => e.message).join(', ')}`);
+      return errorResponse(400, `Invalid input: ${validationResult.error.errors.map(e => e.message).join(', ')}`, corsHeaders);
     }
     
     const { level, projectType, industry } = validationResult.data;
@@ -149,12 +171,12 @@ serve(async (req) => {
 
     if (quotaCheckError) {
       console.error('Quota check error:', quotaCheckError);
-      return errorResponse(500, 'Failed to check quota');
+      return errorResponse(500, 'Failed to check quota', corsHeaders);
     }
 
     if (!quotaCheckResult.ok) {
       console.log('Quota denied:', quotaCheckResult.message);
-      return errorResponse(quotaCheckResult.status, quotaCheckResult.message);
+      return errorResponse(quotaCheckResult.status, quotaCheckResult.message, corsHeaders);
     }
 
     console.log('Quota check passed (not consumed yet):', quotaCheckResult.message);
@@ -179,7 +201,7 @@ serve(async (req) => {
 
     if (dbError) {
       console.error('Database error:', dbError);
-      return errorResponse(500, 'Failed to create project');
+      return errorResponse(500, 'Failed to create project', corsHeaders);
     }
 
     console.log('Project created with ID:', project.id);
@@ -197,7 +219,7 @@ serve(async (req) => {
         .update({ status: 'failed' })
         .eq('id', project.id);
       
-      return errorResponse(500, 'Webhook configuration error');
+      return errorResponse(500, 'Webhook configuration error', corsHeaders);
     }
 
     const n8nWebhookUrl = new URL(n8nWebhookBaseUrl);
@@ -226,7 +248,7 @@ serve(async (req) => {
         .update({ status: 'failed' })
         .eq('id', project.id);
       
-      return errorResponse(500, 'Failed to connect to brief generation service');
+      return errorResponse(500, 'Failed to connect to brief generation service', corsHeaders);
     }
 
     if (!n8nResponse.ok) {
@@ -239,7 +261,7 @@ serve(async (req) => {
         .update({ status: 'failed' })
         .eq('id', project.id);
       
-      return errorResponse(500, 'Failed to generate brief');
+      return errorResponse(500, 'Failed to generate brief', corsHeaders);
     }
 
     // Parse n8n response
@@ -255,7 +277,7 @@ serve(async (req) => {
         .update({ status: 'failed' })
         .eq('id', project.id);
       
-      return errorResponse(500, 'Invalid response from brief generation service');
+      return errorResponse(500, 'Invalid response from brief generation service', corsHeaders);
     }
 
     console.log('Received brief data from n8n');
@@ -273,7 +295,7 @@ serve(async (req) => {
         .update({ status: 'failed' })
         .eq('id', project.id);
       
-      return errorResponse(500, 'Empty brief received from generation service');
+      return errorResponse(500, 'Empty brief received from generation service', corsHeaders);
     }
 
     // Update project with brief data and completed status
@@ -294,7 +316,7 @@ serve(async (req) => {
         .update({ status: 'failed' })
         .eq('id', project.id);
       
-      return errorResponse(500, 'Failed to save brief data');
+      return errorResponse(500, 'Failed to save brief data', corsHeaders);
     }
 
     console.log('Project updated with brief data successfully');
@@ -411,6 +433,7 @@ serve(async (req) => {
     // SECURITY: Safe error handling - no stack traces
     // ============================================
     console.error('Unexpected error:', error);
-    return errorResponse(500, 'An unexpected error occurred');
+    const corsHeaders = getCorsHeaders(req);
+    return errorResponse(500, 'An unexpected error occurred', corsHeaders);
   }
 });
