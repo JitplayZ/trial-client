@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Lock, Zap, ArrowRight, Check } from 'lucide-react';
+import { Lock, Zap, Scissors, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Link } from 'react-router-dom';
 import { LevelType } from '@/hooks/useQuotaManagement';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface QuotaLevelCardProps {
   level: LevelType;
@@ -23,27 +23,113 @@ interface QuotaLevelCardProps {
   generating: boolean;
 }
 
-const levelIcons = {
-  beginner: Zap,
-  intermediate: Zap,
-  veteran: Zap
+const levelConfig = {
+  beginner: {
+    icon: Zap,
+    iconBg: 'bg-emerald-500/20',
+    iconColor: 'text-emerald-400',
+    borderColor: 'border-emerald-500/30',
+    badgeColor: 'bg-emerald-500/20 text-emerald-400',
+  },
+  intermediate: {
+    icon: Scissors,
+    iconBg: 'bg-orange-500/20',
+    iconColor: 'text-orange-400',
+    borderColor: 'border-orange-500/30',
+    badgeColor: 'bg-orange-500/20 text-orange-400',
+  },
+  veteran: {
+    icon: Crown,
+    iconBg: 'bg-red-500/20',
+    iconColor: 'text-red-400',
+    borderColor: 'border-red-500/30',
+    badgeColor: 'bg-red-500/20 text-red-400',
+  }
 };
 
-const levelBadges = {
-  beginner: null,
-  intermediate: "Popular",
-  veteran: "Pro"
+const projectTypes = {
+  beginner: [
+    { value: 'portfolio-website', label: 'Portfolio Website' },
+    { value: 'landing-page', label: 'Landing Page' },
+    { value: 'simple-blog', label: 'Simple Blog Website' },
+    { value: 'product-showcase', label: 'Product / Service Showcase Page' },
+    { value: 'restaurant-menu', label: 'Restaurant Menu Website' },
+    { value: 'gallery-showcase', label: 'Gallery / Media Showcase' },
+    { value: 'contact-form', label: 'Contact Form Website' },
+    { value: 'personal-bio', label: 'Single-page Personal Bio Site' },
+    { value: 'event-invitation', label: 'Event Invitation / Info Website' },
+    { value: 'basic-info', label: 'Basic Info Website (Static)' },
+  ],
+  intermediate: [
+    { value: 'ecommerce-shop', label: 'E-commerce Website / Shop System' },
+    { value: 'booking-system', label: 'Booking or Appointment System' },
+    { value: 'dashboard-analytics', label: 'Dashboard / Analytics Panel' },
+    { value: 'blogging-cms', label: 'Blogging Platform with CMS' },
+    { value: 'food-delivery-app', label: 'Food Delivery Web App' },
+    { value: 'job-portal', label: 'Job Portal / Recruitment System' },
+    { value: 'course-platform', label: 'Course Platform (Mini LMS)' },
+    { value: 'membership-website', label: 'Membership Website' },
+    { value: 'real-estate-listing', label: 'Real Estate Listing Website' },
+    { value: 'chat-messaging', label: 'Chat / Messaging Web App' },
+  ],
+  veteran: [
+    { value: 'ai-saas-platform', label: 'AI SaaS Platform (credit-based)' },
+    { value: 'fintech-dashboard', label: 'FinTech Dashboard / Portfolio Tracker' },
+    { value: 'full-lms', label: 'Full LMS (Advanced Learning System)' },
+    { value: 'automation-builder', label: 'Automation Workflow Builder' },
+    { value: 'marketplace-platform', label: 'Marketplace Platform (Multi-vendor)' },
+    { value: 'social-media-clone', label: 'Social Media Platform Clone' },
+    { value: 'ai-chatbot', label: 'AI Chatbot System' },
+    { value: 'enterprise-dashboard', label: 'Enterprise Admin Dashboard' },
+    { value: 'data-visualization', label: 'Data Visualization System' },
+    { value: 'project-management', label: 'Project Management / Collaboration Tool' },
+  ],
+};
+
+const industries = {
+  beginner: [
+    { value: 'personal-branding', label: 'Personal Branding' },
+    { value: 'local-business', label: 'Local Business' },
+    { value: 'blogging-content', label: 'Blogging & Content' },
+    { value: 'portfolio-creative', label: 'Portfolio & Creative Arts' },
+    { value: 'education-tutors', label: 'Education (Students / Tutors)' },
+    { value: 'restaurant-cafe', label: 'Restaurant / Café' },
+    { value: 'fitness-wellness', label: 'Fitness & Wellness' },
+    { value: 'photography', label: 'Photography' },
+    { value: 'travel-diaries', label: 'Travel Diaries' },
+    { value: 'event-celebrations', label: 'Event & Celebrations' },
+  ],
+  intermediate: [
+    { value: 'ecommerce-retail', label: 'E-commerce & Retail' },
+    { value: 'healthcare-fitness', label: 'Healthcare / Fitness' },
+    { value: 'real-estate', label: 'Real Estate' },
+    { value: 'travel-hospitality', label: 'Travel & Hospitality' },
+    { value: 'saas-productivity', label: 'SAAS / Productivity Tools' },
+    { value: 'food-delivery', label: 'Food Delivery & Services' },
+    { value: 'media-news', label: 'Media & News' },
+    { value: 'hr-job-platforms', label: 'HR & Job Platforms' },
+    { value: 'online-course', label: 'Online Course / Learning' },
+    { value: 'entertainment-streaming', label: 'Entertainment & Streaming' },
+  ],
+  veteran: [
+    { value: 'ai-ml', label: 'AI & Machine Learning' },
+    { value: 'fintech-investment', label: 'FinTech & Investment' },
+    { value: 'edtech-large', label: 'EdTech (Large Scale)' },
+    { value: 'cybersecurity', label: 'Cybersecurity' },
+    { value: 'b2b-saas', label: 'B2B SaaS' },
+    { value: 'automation-workflow', label: 'Automation & Workflow Tools' },
+    { value: 'social-platforms', label: 'Social Platforms' },
+    { value: 'healthcare-tech', label: 'Healthcare Technology' },
+    { value: 'marketplace-ecosystems', label: 'Marketplace Ecosystems' },
+    { value: 'data-analytics', label: 'Data & Analytics Companies' },
+  ],
 };
 
 export const QuotaLevelCard = ({
   level,
   title,
-  description,
   isLocked,
   remaining,
-  limit,
-  creditCost,
-  availableCredits,
   canUseCredits,
   onGenerate,
   generating
@@ -56,27 +142,13 @@ export const QuotaLevelCard = ({
     onGenerate(projectType, industry);
   };
 
-  const getBadgeContent = () => {
-    if (isLocked || remaining === 'locked') {
-      return <Badge variant="destructive">Locked - Requires Paid Plan</Badge>;
-    }
-    if (typeof remaining === 'number' && remaining > 0) {
-      return <Badge variant="secondary">{remaining} free left this month</Badge>;
-    }
-    if (canUseCredits) {
-      return <Badge variant="outline">{creditCost} credits per project</Badge>;
-    }
-    return <Badge variant="destructive">No quota or credits</Badge>;
-  };
-
   const hasAccess = !isLocked && remaining !== 'locked' && (
     (typeof remaining === 'number' && remaining > 0) || canUseCredits
   );
-  const canGenerate = hasAccess && projectType && industry && !generating;
+  const canGenerateNow = hasAccess && projectType && industry && !generating;
 
-  const Icon = levelIcons[level];
-  const badge = levelBadges[level];
-  const isPopular = level === 'intermediate';
+  const config = levelConfig[level];
+  const Icon = config.icon;
 
   return (
     <motion.div
@@ -85,161 +157,60 @@ export const QuotaLevelCard = ({
       className="relative"
     >
       <Card 
-        className={`glass-card hover-lift border-border/20 relative ${
-          isPopular ? 'border-primary/50 ring-2 ring-primary/20' : ''
-        } ${isLocked ? 'opacity-75' : ''}`}
+        className={`bg-card/50 backdrop-blur-sm border-2 ${config.borderColor} relative ${isLocked ? 'opacity-75' : ''}`}
       >
-        {badge && !isLocked && (
-          <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-            <Badge className="bg-gradient-primary text-primary-foreground px-4 py-1">
-              {badge}
+        <CardHeader className="text-center pb-4 pt-6">
+          <div className={`w-14 h-14 mx-auto mb-3 rounded-xl flex items-center justify-center ${config.iconBg}`}>
+            <Icon className={`h-7 w-7 ${config.iconColor}`} />
+          </div>
+          
+          <CardTitle className="text-xl font-display">{title}</CardTitle>
+          
+          <div className="mt-2">
+            <Badge className={`${config.badgeColor} border-0`}>
+              {level}
             </Badge>
-          </div>
-        )}
-        
-        <CardHeader className="text-center pb-8 pt-8">
-          <div className={`w-16 h-16 mx-auto mb-4 rounded-xl flex items-center justify-center ${
-            isPopular ? 'bg-gradient-primary' : 'bg-muted'
-          }`}>
-            <Icon className={`h-8 w-8 ${
-              isPopular ? 'text-primary-foreground' : 'text-foreground'
-            }`} />
-          </div>
-          
-          <CardTitle className="text-2xl font-display">{title}</CardTitle>
-          <CardDescription className="text-base">
-            {description}
-          </CardDescription>
-          
-          {/* Credit Cost Display */}
-          <div className="mt-4 p-3 bg-primary/10 rounded-lg">
-            <p className="text-sm font-medium text-primary">
-              Cost: {creditCost} credit{creditCost > 1 ? 's' : ''} per project
-            </p>
-          </div>
-          
-          <div className="mt-4">
-            {getBadgeContent()}
           </div>
         </CardHeader>
 
-        <CardContent className="space-y-6">
-          {/* Form */}
-          <div className="space-y-4">
+        <CardContent className="space-y-4 pt-0">
+          <div className="space-y-3">
             <div>
-              <Label htmlFor={`${level}-industry`}>Industry</Label>
-              <Select value={industry} onValueChange={(val) => { setIndustry(val); setProjectType(''); }} disabled={isLocked || generating}>
-                <SelectTrigger id={`${level}-industry`}>
-                  <SelectValue placeholder="Select industry" />
+              <Label htmlFor={`${level}-type`} className="text-sm text-muted-foreground">Project Type</Label>
+              <Select value={projectType} onValueChange={setProjectType} disabled={isLocked || generating}>
+                <SelectTrigger id={`${level}-type`} className="bg-muted/50 border-border/30">
+                  <SelectValue placeholder="Select type..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {level === 'beginner' && (
-                    <>
-                      <SelectItem value="personal-branding">Personal Branding</SelectItem>
-                      <SelectItem value="local-business">Local Business</SelectItem>
-                      <SelectItem value="blogging-content">Blogging & Content</SelectItem>
-                      <SelectItem value="portfolio-creative">Portfolio & Creative Arts</SelectItem>
-                      <SelectItem value="education-tutors">Education (Students / Tutors)</SelectItem>
-                      <SelectItem value="restaurant-cafe">Restaurant / Café</SelectItem>
-                      <SelectItem value="fitness-wellness">Fitness & Wellness</SelectItem>
-                      <SelectItem value="photography">Photography</SelectItem>
-                      <SelectItem value="travel-diaries">Travel Diaries</SelectItem>
-                      <SelectItem value="event-celebrations">Event & Celebrations</SelectItem>
-                    </>
-                  )}
-                  {level === 'intermediate' && (
-                    <>
-                      <SelectItem value="ecommerce-retail">E-commerce & Retail</SelectItem>
-                      <SelectItem value="healthcare-fitness">Healthcare / Fitness</SelectItem>
-                      <SelectItem value="real-estate">Real Estate</SelectItem>
-                      <SelectItem value="travel-hospitality">Travel & Hospitality</SelectItem>
-                      <SelectItem value="saas-productivity">SAAS / Productivity Tools</SelectItem>
-                      <SelectItem value="food-delivery">Food Delivery & Services</SelectItem>
-                      <SelectItem value="media-news">Media & News</SelectItem>
-                      <SelectItem value="hr-job-platforms">HR & Job Platforms</SelectItem>
-                      <SelectItem value="online-course">Online Course / Learning</SelectItem>
-                      <SelectItem value="entertainment-streaming">Entertainment & Streaming</SelectItem>
-                    </>
-                  )}
-                  {level === 'veteran' && (
-                    <>
-                      <SelectItem value="ai-ml">AI & Machine Learning</SelectItem>
-                      <SelectItem value="fintech-investment">FinTech & Investment</SelectItem>
-                      <SelectItem value="edtech-large">EdTech (Large Scale)</SelectItem>
-                      <SelectItem value="cybersecurity">Cybersecurity</SelectItem>
-                      <SelectItem value="b2b-saas">B2B SaaS</SelectItem>
-                      <SelectItem value="automation-workflow">Automation & Workflow Tools</SelectItem>
-                      <SelectItem value="social-platforms">Social Platforms</SelectItem>
-                      <SelectItem value="healthcare-tech">Healthcare Technology</SelectItem>
-                      <SelectItem value="marketplace-ecosystems">Marketplace Ecosystems</SelectItem>
-                      <SelectItem value="data-analytics">Data & Analytics Companies</SelectItem>
-                    </>
-                  )}
+                  {projectTypes[level].map((item) => (
+                    <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
 
             <div>
-              <Label htmlFor={`${level}-type`}>Project Type</Label>
-              <Select value={projectType} onValueChange={setProjectType} disabled={isLocked || generating || !industry}>
-                <SelectTrigger id={`${level}-type`}>
-                  <SelectValue placeholder={industry ? "Select type" : "Select industry first"} />
+              <Label htmlFor={`${level}-industry`} className="text-sm text-muted-foreground">Industry</Label>
+              <Select value={industry} onValueChange={setIndustry} disabled={isLocked || generating}>
+                <SelectTrigger id={`${level}-industry`} className="bg-muted/50 border-border/30">
+                  <SelectValue placeholder="Select industry..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {level === 'beginner' && (
-                    <>
-                      <SelectItem value="portfolio-website">Portfolio Website</SelectItem>
-                      <SelectItem value="landing-page">Landing Page</SelectItem>
-                      <SelectItem value="simple-blog">Simple Blog Website</SelectItem>
-                      <SelectItem value="product-showcase">Product / Service Showcase Page</SelectItem>
-                      <SelectItem value="restaurant-menu">Restaurant Menu Website</SelectItem>
-                      <SelectItem value="gallery-showcase">Gallery / Media Showcase</SelectItem>
-                      <SelectItem value="contact-form">Contact Form Website</SelectItem>
-                      <SelectItem value="personal-bio">Single-page Personal Bio Site</SelectItem>
-                      <SelectItem value="event-invitation">Event Invitation / Info Website</SelectItem>
-                      <SelectItem value="basic-info">Basic Info Website (Static)</SelectItem>
-                    </>
-                  )}
-                  {level === 'intermediate' && (
-                    <>
-                      <SelectItem value="ecommerce-shop">E-commerce Website / Shop System</SelectItem>
-                      <SelectItem value="booking-system">Booking or Appointment System</SelectItem>
-                      <SelectItem value="dashboard-analytics">Dashboard / Analytics Panel</SelectItem>
-                      <SelectItem value="blogging-cms">Blogging Platform with CMS</SelectItem>
-                      <SelectItem value="food-delivery-app">Food Delivery Web App</SelectItem>
-                      <SelectItem value="job-portal">Job Portal / Recruitment System</SelectItem>
-                      <SelectItem value="course-platform">Course Platform (Mini LMS)</SelectItem>
-                      <SelectItem value="membership-website">Membership Website</SelectItem>
-                      <SelectItem value="real-estate-listing">Real Estate Listing Website</SelectItem>
-                      <SelectItem value="chat-messaging">Chat / Messaging Web App</SelectItem>
-                    </>
-                  )}
-                  {level === 'veteran' && (
-                    <>
-                      <SelectItem value="ai-saas-platform">AI SaaS Platform (credit-based)</SelectItem>
-                      <SelectItem value="fintech-dashboard">FinTech Dashboard / Portfolio Tracker</SelectItem>
-                      <SelectItem value="full-lms">Full LMS (Advanced Learning System)</SelectItem>
-                      <SelectItem value="automation-builder">Automation Workflow Builder</SelectItem>
-                      <SelectItem value="marketplace-platform">Marketplace Platform (Multi-vendor)</SelectItem>
-                      <SelectItem value="social-media-clone">Social Media Platform Clone</SelectItem>
-                      <SelectItem value="ai-chatbot">AI Chatbot System</SelectItem>
-                      <SelectItem value="enterprise-dashboard">Enterprise Admin Dashboard</SelectItem>
-                      <SelectItem value="data-visualization">Data Visualization System</SelectItem>
-                      <SelectItem value="project-management">Project Management / Collaboration Tool</SelectItem>
-                    </>
-                  )}
+                  {industries[level].map((item) => (
+                    <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
+
+            <p className="text-xs text-muted-foreground text-center">
+              Estimated time: {level === 'beginner' ? '5-10' : level === 'intermediate' ? '10-20' : '20-30'} minutes
+            </p>
 
             <Button 
               onClick={handleGenerate}
-              disabled={!canGenerate}
-              className={`w-full ${
-                isPopular 
-                  ? 'bg-gradient-primary hover-glow' 
-                  : 'bg-secondary hover:bg-secondary-dark'
-              }`}
+              disabled={!canGenerateNow}
+              className="w-full bg-primary hover:bg-primary/90"
               size="lg"
             >
               {generating ? (
@@ -254,34 +225,10 @@ export const QuotaLevelCard = ({
                   Generating...
                 </>
               ) : (
-                <>
-                  <Zap className="h-4 w-4 mr-2" />
-                  Generate Brief
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </>
+                'Generate Brief'
               )}
             </Button>
           </div>
-
-          {/* Features List */}
-          <ul className="space-y-3 pt-4 border-t border-border/20">
-            <li className="flex items-start space-x-3">
-              <Check className="h-5 w-5 text-accent flex-shrink-0 mt-0.5" />
-              <span className="text-sm text-foreground-secondary leading-relaxed">
-                {level === 'beginner' && 'Basic project templates'}
-                {level === 'intermediate' && 'Advanced project templates'}
-                {level === 'veteran' && 'Professional-grade templates'}
-              </span>
-            </li>
-            <li className="flex items-start space-x-3">
-              <Check className="h-5 w-5 text-accent flex-shrink-0 mt-0.5" />
-              <span className="text-sm text-foreground-secondary leading-relaxed">
-                {level === 'beginner' && 'Simple client scenarios'}
-                {level === 'intermediate' && 'Complex client requirements'}
-                {level === 'veteran' && 'Enterprise-level projects'}
-              </span>
-            </li>
-          </ul>
         </CardContent>
 
         {/* Locked Overlay */}
@@ -289,7 +236,7 @@ export const QuotaLevelCard = ({
           <div className="absolute inset-0 bg-background/80 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center">
             <Lock className="h-12 w-12 text-muted-foreground mb-4" />
             <p className="text-sm font-semibold text-center mb-2">Locked on your plan</p>
-            <Button variant="default" size="sm" className="bg-gradient-primary" asChild>
+            <Button variant="default" size="sm" className="bg-primary" asChild>
               <Link to="/pricing?upgrade=pro">
                 Upgrade to {level === 'veteran' ? 'Pro' : 'Pro+'}
               </Link>
