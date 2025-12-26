@@ -131,6 +131,9 @@ export const QuotaLevelCard = ({
   title,
   isLocked,
   remaining,
+  limit,
+  creditCost,
+  availableCredits,
   canUseCredits,
   onGenerate,
   generating
@@ -171,6 +174,34 @@ export const QuotaLevelCard = ({
             <Badge className={`${config.badgeColor} border-0`}>
               {level}
             </Badge>
+          </div>
+
+          {/* Quota & Credit Info */}
+          <div className="mt-4 space-y-2 text-sm">
+            <div className="flex justify-between items-center px-4 py-2 bg-muted/30 rounded-lg">
+              <span className="text-muted-foreground">Free left:</span>
+              <span className="font-semibold">
+                {remaining === 'locked' ? (
+                  <span className="text-muted-foreground">—</span>
+                ) : (
+                  <span className={remaining > 0 ? 'text-emerald-400' : 'text-muted-foreground'}>
+                    {remaining} / {limit}
+                  </span>
+                )}
+              </span>
+            </div>
+            <div className="flex justify-between items-center px-4 py-2 bg-muted/30 rounded-lg">
+              <span className="text-muted-foreground">Credit cost:</span>
+              <span className="font-semibold text-primary">{creditCost} credit{creditCost > 1 ? 's' : ''}</span>
+            </div>
+            {remaining !== 'locked' && remaining <= 0 && (
+              <div className="flex justify-between items-center px-4 py-2 bg-primary/10 rounded-lg border border-primary/20">
+                <span className="text-muted-foreground">Your credits:</span>
+                <span className={`font-semibold ${availableCredits >= creditCost ? 'text-emerald-400' : 'text-destructive'}`}>
+                  {availableCredits}
+                </span>
+              </div>
+            )}
           </div>
         </CardHeader>
 
