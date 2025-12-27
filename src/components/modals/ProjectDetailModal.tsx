@@ -46,12 +46,23 @@ export const ProjectDetailModal = ({ isOpen, onClose }: ProjectDetailModalProps)
         body: { level, projectType, industry, userId: user?.id }
       });
 
-      if (error) throw error;
+      // Handle function invocation errors (network, server errors)
+      if (error) {
+        console.error('Generation error:', error);
+        onClose();
+        navigate('/500', { 
+          state: { 
+            retryData: { level, projectType, industry } 
+          } 
+        });
+        return;
+      }
+
+      // Handle API response errors
       if (!data?.ok) {
-        // Check if it's a server error (500-level)
+        // Server errors (500-level) - redirect to 500 page
         if (data?.status >= 500) {
           onClose();
-          // Navigate to 500 page with retry data
           navigate('/500', { 
             state: { 
               retryData: { level, projectType, industry } 
@@ -59,6 +70,7 @@ export const ProjectDetailModal = ({ isOpen, onClose }: ProjectDetailModalProps)
           });
           return;
         }
+        // Client errors (4xx) - show toast
         throw new Error(data?.message || 'Generation failed');
       }
       
@@ -71,10 +83,14 @@ export const ProjectDetailModal = ({ isOpen, onClose }: ProjectDetailModalProps)
       navigate(`/projects/${data.id}`);
       onClose();
     } catch (error: any) {
+      console.error('Project generation catch error:', error);
+      
       // Check for network or server errors
       const isServerError = error?.message?.includes('500') || 
                            error?.message?.includes('server') ||
                            error?.message?.toLowerCase().includes('network') ||
+                           error?.message?.toLowerCase().includes('fetch') ||
+                           error?.message?.toLowerCase().includes('failed to fetch') ||
                            error?.status >= 500;
       
       if (isServerError) {

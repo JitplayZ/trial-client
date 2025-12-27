@@ -45,12 +45,8 @@ const AdminLogin = () => {
         if (isAdmin) {
           navigate('/admin', { replace: true });
         } else {
-          toast({
-            title: 'Access Denied',
-            description: 'You do not have admin privileges.',
-            variant: 'destructive',
-          });
-          navigate('/dashboard', { replace: true });
+          // Non-admin users must see 403 Forbidden page
+          navigate('/403', { replace: true });
         }
       }
     };

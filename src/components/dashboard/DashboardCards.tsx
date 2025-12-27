@@ -19,11 +19,12 @@ const DashboardCards = () => {
     }
 
     try {
-      // Fetch total project count
+      // Fetch total SUCCESSFUL project count (exclude failed projects)
       const { count: total, error: totalError } = await supabase
         .from('projects')
         .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id);
+        .eq('user_id', user.id)
+        .eq('status', 'completed');
 
       if (totalError) throw totalError;
 
@@ -35,6 +36,7 @@ const DashboardCards = () => {
         .from('projects')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id)
+        .eq('status', 'completed')
         .gte('created_at', weekAgo.toISOString());
 
       if (weeklyError) throw weeklyError;
