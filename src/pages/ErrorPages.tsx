@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertTriangle, Home, ArrowLeft, Shield, Settings } from "lucide-react";
-import { Link } from "react-router-dom";
+import { AlertTriangle, Home, Shield, Settings, RefreshCw } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 export const ForbiddenPage = () => {
   return (
@@ -51,7 +51,41 @@ export const ForbiddenPage = () => {
   );
 };
 
-export const ServerErrorPage = () => {
+interface ServerErrorPageProps {
+  onRetry?: () => void;
+  retryData?: {
+    level?: string;
+    projectType?: string;
+    industry?: string;
+  };
+}
+
+export const ServerErrorPage = ({ onRetry, retryData }: ServerErrorPageProps) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Get retry data from location state if not passed as props
+  const stateData = location.state as { retryData?: ServerErrorPageProps['retryData'] } | null;
+  const effectiveRetryData = retryData || stateData?.retryData;
+
+  const handleRetry = () => {
+    if (onRetry) {
+      onRetry();
+    } else if (effectiveRetryData) {
+      // Navigate back to dashboard with retry intent
+      navigate('/dashboard', { 
+        state: { 
+          retryGeneration: true, 
+          ...effectiveRetryData 
+        },
+        replace: true
+      });
+    } else {
+      // Simple page reload if no specific retry action
+      window.location.reload();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
       <div className="w-full max-w-md relative z-10">
@@ -68,21 +102,24 @@ export const ServerErrorPage = () => {
 
           <CardContent className="space-y-6">
             <div className="text-center">
-              <p className="text-foreground-secondary mb-6">
+              <p className="text-foreground-secondary mb-4">
                 We're experiencing technical difficulties. Our team has been notified and is working on a fix.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Don't worry — no credits or quota were deducted for this failed request.
               </p>
             </div>
 
             <div className="space-y-3">
-              <Button size="lg" className="w-full bg-gradient-primary hover-glow" onClick={() => window.location.reload()}>
-                <Settings className="h-4 w-4 mr-2" />
+              <Button size="lg" className="w-full bg-gradient-primary hover-glow" onClick={handleRetry}>
+                <RefreshCw className="h-4 w-4 mr-2" />
                 Try Again
               </Button>
               
               <Button variant="outline" size="lg" className="w-full" asChild>
-                <Link to="/" className="flex items-center justify-center space-x-2">
+                <Link to="/dashboard" className="flex items-center justify-center space-x-2">
                   <Home className="h-4 w-4" />
-                  <span>Return Home</span>
+                  <span>Return to Dashboard</span>
                 </Link>
               </Button>
             </div>
@@ -97,14 +134,18 @@ export const ServerErrorPage = () => {
   );
 };
 
-export const MaintenancePage = () => {
+interface MaintenancePageProps {
+  message?: string;
+}
+
+export const MaintenancePage = ({ message }: MaintenancePageProps) => {
   return (
     <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
       <div className="w-full max-w-md relative z-10">
         <Card className="glass-card border-border/20 animate-slide-up">
           <CardHeader className="text-center pb-8">
             <div className="w-16 h-16 bg-primary/10 border border-primary/20 rounded-xl flex items-center justify-center mx-auto mb-4">
-              <Settings className="h-8 w-8 text-primary animate-spin" />
+              <Settings className="h-8 w-8 text-primary animate-spin" style={{ animationDuration: '3s' }} />
             </div>
             <CardTitle className="text-2xl font-display">Under Maintenance</CardTitle>
             <CardDescription className="text-base">
@@ -115,17 +156,27 @@ export const MaintenancePage = () => {
           <CardContent className="space-y-6">
             <div className="text-center">
               <p className="text-foreground-secondary mb-4">
-                tRIAL-cLIENTS is currently undergoing scheduled maintenance to improve performance and add new features.
+                {message || 'tRIAL-cLIENTS is currently undergoing scheduled maintenance to improve performance and add new features.'}
               </p>
               <p className="text-sm text-accent mb-6">
-                Estimated completion: 30 minutes
+                We'll be back shortly. Thank you for your patience.
               </p>
             </div>
 
             <Button size="lg" className="w-full bg-gradient-primary hover-glow" onClick={() => window.location.reload()}>
-              <Settings className="h-4 w-4 mr-2" />
+              <RefreshCw className="h-4 w-4 mr-2" />
               Check Status
             </Button>
+
+            {/* Admin login link - subtle but accessible */}
+            <div className="pt-4 border-t border-border/20">
+              <Link 
+                to="/login/admin" 
+                className="block text-xs text-center text-muted-foreground hover:text-foreground-secondary transition-colors"
+              >
+                Admin Access
+              </Link>
+            </div>
 
             <p className="text-xs text-center text-foreground-secondary">
               We apologize for any inconvenience. Follow us for updates.
