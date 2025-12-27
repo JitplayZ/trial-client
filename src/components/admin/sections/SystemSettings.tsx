@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   Settings, 
   Server, 
@@ -12,13 +14,18 @@ import {
   Shield,
   Database,
   Save,
-  RefreshCw
+  RefreshCw,
+  AlertTriangle
 } from "lucide-react";
 import { toast } from "sonner";
+import { useMaintenanceMode } from '@/hooks/useMaintenanceMode';
 
 export const SystemSettings = () => {
+  const { isMaintenanceMode, maintenanceMessage, loading: maintenanceLoading, setMaintenanceMode } = useMaintenanceMode();
+  
   const [settings, setSettings] = useState({
     maintenanceMode: false,
+    maintenanceMessage: '',
     emailNotifications: true,
     autoBackup: true,
     debugMode: false,
@@ -28,10 +35,47 @@ export const SystemSettings = () => {
   });
 
   const [saving, setSaving] = useState(false);
+  const [togglingMaintenance, setTogglingMaintenance] = useState(false);
+
+  // Sync maintenance mode state from backend
+  useEffect(() => {
+    if (!maintenanceLoading) {
+      setSettings(prev => ({
+        ...prev,
+        maintenanceMode: isMaintenanceMode,
+        maintenanceMessage: maintenanceMessage
+      }));
+    }
+  }, [isMaintenanceMode, maintenanceMessage, maintenanceLoading]);
+
+  const handleMaintenanceToggle = async (enabled: boolean) => {
+    setTogglingMaintenance(true);
+    const result = await setMaintenanceMode(enabled, settings.maintenanceMessage || undefined);
+    
+    if (result.success) {
+      setSettings(prev => ({ ...prev, maintenanceMode: enabled }));
+      toast.success(enabled ? 'Maintenance mode enabled' : 'Maintenance mode disabled');
+    } else {
+      toast.error(result.error || 'Failed to update maintenance mode');
+    }
+    setTogglingMaintenance(false);
+  };
+
+  const handleSaveMaintenanceMessage = async () => {
+    setSaving(true);
+    const result = await setMaintenanceMode(settings.maintenanceMode, settings.maintenanceMessage);
+    
+    if (result.success) {
+      toast.success('Maintenance message saved');
+    } else {
+      toast.error(result.error || 'Failed to save message');
+    }
+    setSaving(false);
+  };
 
   const handleSave = async () => {
     setSaving(true);
-    // Simulate API call
+    // Simulate API call for non-maintenance settings
     await new Promise(resolve => setTimeout(resolve, 1000));
     toast.success('Settings saved successfully');
     setSaving(false);
@@ -58,7 +102,75 @@ export const SystemSettings = () => {
         </Button>
       </div>
 
+      {/* Maintenance Mode Alert */}
+      {settings.maintenanceMode && (
+        <div className="bg-warning/10 border border-warning/30 rounded-lg p-4 flex items-start gap-3">
+          <AlertTriangle className="h-5 w-5 text-warning flex-shrink-0 mt-0.5" />
+          <div>
+            <h3 className="font-semibold text-warning">Maintenance Mode Active</h3>
+            <p className="text-sm text-foreground-secondary mt-1">
+              All non-admin users are currently blocked from accessing the application. 
+              Only administrators can sign in and access the system.
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Maintenance Mode Card */}
+        <Card className={settings.maintenanceMode ? 'border-warning/50' : ''}>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between text-lg">
+              <span className="flex items-center gap-2">
+                <Server className="h-5 w-5" />
+                Maintenance Mode
+              </span>
+              {settings.maintenanceMode && (
+                <Badge variant="outline" className="bg-warning/10 text-warning border-warning/30">
+                  Active
+                </Badge>
+              )}
+            </CardTitle>
+            <CardDescription>Control site-wide access for non-admin users</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Enable Maintenance Mode</Label>
+                <p className="text-sm text-muted-foreground">
+                  Block all users except admins from accessing the site
+                </p>
+              </div>
+              <Switch 
+                checked={settings.maintenanceMode}
+                onCheckedChange={handleMaintenanceToggle}
+                disabled={togglingMaintenance || maintenanceLoading}
+              />
+            </div>
+            <Separator />
+            <div className="space-y-2">
+              <Label>Maintenance Message</Label>
+              <Textarea 
+                value={settings.maintenanceMessage}
+                onChange={(e) => setSettings({...settings, maintenanceMessage: e.target.value})}
+                placeholder="Enter the message to display to users..."
+                rows={3}
+              />
+              <p className="text-xs text-muted-foreground">
+                This message will be shown on the maintenance page
+              </p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleSaveMaintenanceMessage}
+                disabled={saving}
+              >
+                Save Message
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* General Settings */}
         <Card>
           <CardHeader>
@@ -69,17 +181,6 @@ export const SystemSettings = () => {
             <CardDescription>Core system configuration</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>Maintenance Mode</Label>
-                <p className="text-sm text-muted-foreground">Disable all generation services</p>
-              </div>
-              <Switch 
-                checked={settings.maintenanceMode}
-                onCheckedChange={(checked) => setSettings({...settings, maintenanceMode: checked})}
-              />
-            </div>
-            <Separator />
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label>Debug Mode</Label>
@@ -159,7 +260,7 @@ export const SystemSettings = () => {
         </Card>
 
         {/* Database Settings */}
-        <Card>
+        <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <Database className="h-5 w-5" />
@@ -179,7 +280,7 @@ export const SystemSettings = () => {
               />
             </div>
             <Separator />
-            <Button variant="outline" className="w-full">
+            <Button variant="outline">
               <Database className="h-4 w-4 mr-2" />
               Create Manual Backup
             </Button>

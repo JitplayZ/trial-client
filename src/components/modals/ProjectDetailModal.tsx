@@ -47,7 +47,20 @@ export const ProjectDetailModal = ({ isOpen, onClose }: ProjectDetailModalProps)
       });
 
       if (error) throw error;
-      if (!data?.ok) throw new Error(data?.message || 'Generation failed');
+      if (!data?.ok) {
+        // Check if it's a server error (500-level)
+        if (data?.status >= 500) {
+          onClose();
+          // Navigate to 500 page with retry data
+          navigate('/500', { 
+            state: { 
+              retryData: { level, projectType, industry } 
+            } 
+          });
+          return;
+        }
+        throw new Error(data?.message || 'Generation failed');
+      }
       
       toast({
         title: "Generating Your Brief",
@@ -57,7 +70,23 @@ export const ProjectDetailModal = ({ isOpen, onClose }: ProjectDetailModalProps)
       // Navigate immediately to show generating state
       navigate(`/projects/${data.id}`);
       onClose();
-    } catch (error) {
+    } catch (error: any) {
+      // Check for network or server errors
+      const isServerError = error?.message?.includes('500') || 
+                           error?.message?.includes('server') ||
+                           error?.message?.toLowerCase().includes('network') ||
+                           error?.status >= 500;
+      
+      if (isServerError) {
+        onClose();
+        navigate('/500', { 
+          state: { 
+            retryData: { level, projectType, industry } 
+          } 
+        });
+        return;
+      }
+      
       toast({
         title: "Generation Failed",
         description: error instanceof Error ? error.message : "Please try again later.",

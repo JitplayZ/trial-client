@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom';
 import { LevelType } from '@/hooks/useQuotaManagement';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Progress } from '@/components/ui/progress';
 
 interface QuotaLevelCardProps {
   level: LevelType;
@@ -175,6 +176,18 @@ export const QuotaLevelCard = ({
               {level}
             </Badge>
           </div>
+
+          {/* Quota Progress Bar */}
+          {remaining !== 'locked' && typeof remaining === 'number' && typeof limit === 'number' && limit > 0 && (
+            <div className="mt-4 px-2">
+              <Progress 
+                value={((limit - remaining) / limit) * 100} 
+                showLabel 
+                label="Free quota used"
+                variant={remaining === 0 ? 'warning' : remaining <= 1 ? 'warning' : 'default'}
+              />
+            </div>
+          )}
 
           {/* Quota & Credit Info */}
           <div className="mt-4 space-y-2 text-sm">

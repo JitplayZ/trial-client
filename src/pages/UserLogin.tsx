@@ -1,15 +1,64 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Shield, Zap } from "lucide-react";
-import { Link } from "react-router-dom";
+import { ArrowLeft, Shield, Zap, Loader2 } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const UserLogin = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [checkingMaintenance, setCheckingMaintenance] = useState(true);
+  const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
   const { signInWithGoogle } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const checkMaintenanceMode = async () => {
+      try {
+        const { data } = await supabase
+          .from('system_settings')
+          .select('value')
+          .eq('key', 'maintenance_mode')
+          .single();
+
+        const enabled = (data?.value as { enabled?: boolean } | null)?.enabled ?? false;
+        setIsMaintenanceMode(enabled);
+        
+        if (enabled) {
+          navigate('/maintenance', { replace: true });
+        }
+      } catch (error) {
+        // If we can't check, assume maintenance is off
+        if (import.meta.env.DEV) {
+          console.error('Error checking maintenance mode:', error);
+        }
+      } finally {
+        setCheckingMaintenance(false);
+      }
+    };
+
+    checkMaintenanceMode();
+  }, [navigate]);
 
   const handleGoogleLogin = async () => {
+    // Double-check maintenance mode before allowing login
+    try {
+      const { data } = await supabase
+        .from('system_settings')
+        .select('value')
+        .eq('key', 'maintenance_mode')
+        .single();
+
+      const enabled = (data?.value as { enabled?: boolean } | null)?.enabled ?? false;
+      if (enabled) {
+        navigate('/maintenance', { replace: true });
+        return;
+      }
+    } catch {
+      // Proceed with login if check fails
+    }
+
     setIsLoading(true);
     
     // Use the real Google OAuth flow
@@ -20,6 +69,18 @@ const UserLogin = () => {
     }
     // If successful, the OAuth flow will redirect automatically
   };
+
+  if (checkingMaintenance) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (isMaintenanceMode) {
+    return null; // Will redirect to maintenance page
+  }
 
   return (
     <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">

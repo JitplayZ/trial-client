@@ -1,11 +1,25 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Zap, Shield, Gift } from 'lucide-react';
+import { ArrowLeft, Zap, Shield, Gift, Loader2 } from 'lucide-react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+
+// Check maintenance mode before allowing auth
+const checkMaintenanceMode = async (): Promise<boolean> => {
+  try {
+    const { data } = await supabase
+      .from('system_settings')
+      .select('value')
+      .eq('key', 'maintenance_mode')
+      .single();
+    return (data?.value as { enabled?: boolean } | null)?.enabled ?? false;
+  } catch {
+    return false;
+  }
+};
 
 // Helper to trigger referral achievement XP with session token
 const triggerReferralAchievement = async (accessToken: string) => {
@@ -75,6 +89,13 @@ const Auth = () => {
   };
 
   const handleGoogleLogin = async () => {
+    // Check maintenance mode before allowing login
+    const maintenanceEnabled = await checkMaintenanceMode();
+    if (maintenanceEnabled) {
+      navigate('/maintenance', { replace: true });
+      return;
+    }
+    
     setIsLoading(true);
     // Store referral code in sessionStorage for processing after OAuth callback
     if (referralCode) {

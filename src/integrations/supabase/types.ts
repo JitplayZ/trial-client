@@ -361,6 +361,30 @@ export type Database = {
         }
         Relationships: []
       }
+      system_settings: {
+        Row: {
+          id: string
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          id?: string
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Update: {
+          id?: string
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
       user_badges: {
         Row: {
           badge_type: string
@@ -556,6 +580,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_maintenance_mode: { Args: never; Returns: boolean }
       process_referral:
         | { Args: { _referral_code: string }; Returns: Json }
         | {
@@ -563,6 +588,10 @@ export type Database = {
             Returns: Json
           }
       reset_monthly_quotas: { Args: never; Returns: undefined }
+      set_maintenance_mode: {
+        Args: { _enabled: boolean; _message?: string }
+        Returns: Json
+      }
       update_user_login_info: {
         Args: { _ip_address: string; _user_id: string }
         Returns: Json
