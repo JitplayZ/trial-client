@@ -530,7 +530,27 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      system_settings_public: {
+        Row: {
+          id: string | null
+          key: string | null
+          updated_at: string | null
+          value: Json | null
+        }
+        Insert: {
+          id?: string | null
+          key?: string | null
+          updated_at?: string | null
+          value?: Json | null
+        }
+        Update: {
+          id?: string | null
+          key?: string | null
+          updated_at?: string | null
+          value?: Json | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       admin_delete_user: { Args: { _target_user_id: string }; Returns: Json }
