@@ -7,11 +7,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-// Check maintenance mode before allowing auth
+// Check maintenance mode before allowing auth (uses public view to hide admin IDs)
 const checkMaintenanceMode = async (): Promise<boolean> => {
   try {
     const { data } = await supabase
-      .from('system_settings')
+      .from('system_settings_public')
       .select('value')
       .eq('key', 'maintenance_mode')
       .single();

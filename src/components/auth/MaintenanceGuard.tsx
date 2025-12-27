@@ -25,9 +25,9 @@ export const MaintenanceGuard = ({ children }: MaintenanceGuardProps) => {
       }
 
       try {
-        // Check maintenance mode
+        // Check maintenance mode using public view (hides admin IDs)
         const { data: settingsData } = await supabase
-          .from('system_settings')
+          .from('system_settings_public')
           .select('value')
           .eq('key', 'maintenance_mode')
           .single();
