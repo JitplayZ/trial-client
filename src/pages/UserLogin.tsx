@@ -16,8 +16,9 @@ const UserLogin = () => {
   useEffect(() => {
     const checkMaintenanceMode = async () => {
       try {
+        // Use public view to avoid exposing admin user IDs
         const { data } = await supabase
-          .from('system_settings')
+          .from('system_settings_public')
           .select('value')
           .eq('key', 'maintenance_mode')
           .single();
@@ -44,8 +45,9 @@ const UserLogin = () => {
   const handleGoogleLogin = async () => {
     // Double-check maintenance mode before allowing login
     try {
+      // Use public view to avoid exposing admin user IDs
       const { data } = await supabase
-        .from('system_settings')
+        .from('system_settings_public')
         .select('value')
         .eq('key', 'maintenance_mode')
         .single();

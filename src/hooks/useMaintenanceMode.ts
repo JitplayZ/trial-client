@@ -12,8 +12,9 @@ export const useMaintenanceMode = () => {
 
   const fetchMaintenanceMode = async () => {
     try {
+      // Use the public view to avoid exposing admin user IDs
       const { data, error } = await supabase
-        .from('system_settings')
+        .from('system_settings_public')
         .select('value')
         .eq('key', 'maintenance_mode')
         .single();
