@@ -1,7 +1,9 @@
+import { useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle, Home, Shield, Settings, RefreshCw } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { supabase } from '@/integrations/supabase/client';
 
 export const ForbiddenPage = () => {
   return (
@@ -139,6 +141,59 @@ interface MaintenancePageProps {
 }
 
 export const MaintenancePage = ({ message }: MaintenancePageProps) => {
+  const navigate = useNavigate();
+
+  // Real-time subscription to detect when maintenance mode is turned OFF
+  useEffect(() => {
+    // Function to check current maintenance status
+    const checkMaintenanceStatus = async () => {
+      try {
+        const { data } = await supabase
+          .from('system_settings_public')
+          .select('value')
+          .eq('key', 'maintenance_mode')
+          .single();
+        
+        const isEnabled = (data?.value as { enabled?: boolean } | null)?.enabled ?? false;
+        
+        // If maintenance is OFF, redirect user back to home
+        if (!isEnabled) {
+          navigate('/', { replace: true });
+        }
+      } catch (error) {
+        // On error, stay on maintenance page
+        if (import.meta.env.DEV) {
+          console.error('Error checking maintenance status:', error);
+        }
+      }
+    };
+
+    // Check immediately on mount
+    checkMaintenanceStatus();
+
+    // Subscribe to real-time changes on system_settings table
+    const channel = supabase
+      .channel('maintenance_page_listener')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'system_settings',
+          filter: 'key=eq.maintenance_mode'
+        },
+        () => {
+          // When maintenance_mode changes, check if it's now OFF
+          checkMaintenanceStatus();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [navigate]);
+
   return (
     <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
       <div className="w-full max-w-md relative z-10">
