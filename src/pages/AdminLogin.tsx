@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, AlertTriangle, Zap } from "lucide-react";
+import { ArrowLeft, AlertTriangle, Zap, Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,51 +8,67 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 const AdminLogin = () => {
-  const { signInWithGoogle, user } = useAuth();
+  const { signInWithGoogle, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [checkingAdmin, setCheckingAdmin] = useState(true);
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const { toast } = useToast();
 
-  // Redirect if already logged in and is admin
+  // Check admin status immediately when user is authenticated
   useEffect(() => {
-    const checkAdminWithRetry = async (userId: string, maxRetries = 5): Promise<boolean> => {
-      for (let i = 0; i < maxRetries; i++) {
-        try {
-          const { data: isAdmin } = await supabase.rpc('has_role', {
-            _user_id: userId,
-            _role: 'admin'
-          });
-          
-          if (isAdmin) return true;
-          
-          // Exponential backoff: 100ms, 200ms, 400ms, 800ms, 1600ms
-          if (i < maxRetries - 1) {
-            await new Promise(resolve => setTimeout(resolve, Math.min(100 * Math.pow(2, i), 2000)));
-          }
-        } catch (error) {
-          if (import.meta.env.DEV) {
-            console.error('Error checking admin status:', error);
-          }
-        }
-      }
-      return false;
-    };
-
     const checkAdminStatus = async () => {
-      if (user) {
-        const isAdmin = await checkAdminWithRetry(user.id);
+      // Wait for auth to be ready
+      if (authLoading) return;
 
-        if (isAdmin) {
-          navigate('/admin', { replace: true });
-        } else {
-          // Non-admin users must see 403 Forbidden page
-          navigate('/403', { replace: true });
+      // If no user, allow access to login page
+      if (!user) {
+        setCheckingAdmin(false);
+        setIsAdmin(null);
+        return;
+      }
+
+      // User is authenticated - check admin status with retry
+      setCheckingAdmin(true);
+      
+      const checkAdminWithRetry = async (maxRetries = 5): Promise<boolean> => {
+        for (let i = 0; i < maxRetries; i++) {
+          try {
+            const { data: isAdminResult } = await supabase.rpc('has_role', {
+              _user_id: user.id,
+              _role: 'admin'
+            });
+            
+            if (isAdminResult) return true;
+            
+            // Exponential backoff: 100ms, 200ms, 400ms, 800ms, 1600ms
+            if (i < maxRetries - 1) {
+              await new Promise(resolve => setTimeout(resolve, Math.min(100 * Math.pow(2, i), 2000)));
+            }
+          } catch (error) {
+            if (import.meta.env.DEV) {
+              console.error('Error checking admin status:', error);
+            }
+          }
         }
+        return false;
+      };
+
+      const adminResult = await checkAdminWithRetry();
+      setIsAdmin(adminResult);
+      setCheckingAdmin(false);
+
+      if (adminResult) {
+        // Admin user - redirect to admin dashboard
+        navigate('/admin', { replace: true });
+      } else {
+        // Non-admin user - show 403 immediately
+        navigate('/403', { replace: true });
       }
     };
 
     checkAdminStatus();
-  }, [user, navigate, toast]);
+  }, [user, authLoading, navigate]);
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);
@@ -78,6 +94,26 @@ const AdminLogin = () => {
     }
   };
 
+  // Show loading while checking auth or admin status
+  if (authLoading || checkingAdmin) {
+    return (
+      <div className="min-h-screen bg-gradient-hero flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // If user is authenticated, we already redirected in useEffect
+  // This prevents the admin login page from flashing
+  if (user) {
+    return (
+      <div className="min-h-screen bg-gradient-hero flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Only render login form for unauthenticated users
   return (
     <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
       <div className="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-pulse"></div>

@@ -1,24 +1,46 @@
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import Navbar from '@/components/navbar';
 import DashboardCards from '@/components/dashboard/DashboardCards';
 import RecentProjectsList from '@/components/dashboard/RecentProjectsList';
 import QuickActions from '@/components/dashboard/QuickActions';
 import GamificationBar from '@/components/dashboard/GamificationBar';
+import { ProjectDetailModal } from '@/components/modals/ProjectDetailModal';
 
 // Feature flag for gamification
 const GAMIFICATION_ENABLED = true;
 
+interface RetryState {
+  retryGeneration?: boolean;
+  level?: string;
+  projectType?: string;
+  industry?: string;
+}
+
 const ClientDashboard = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [showRetryModal, setShowRetryModal] = useState(false);
+  const [retryData, setRetryData] = useState<RetryState | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
       navigate('/auth');
     }
   }, [user, loading, navigate]);
+
+  // Handle retry generation from 500 error page
+  useEffect(() => {
+    const state = location.state as RetryState | null;
+    if (state?.retryGeneration) {
+      setRetryData(state);
+      setShowRetryModal(true);
+      // Clear the state to prevent re-triggering on navigation
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, navigate, location.pathname]);
 
   if (loading) {
     return (
@@ -85,6 +107,15 @@ const ClientDashboard = () => {
           </div>
         </div>
       </main>
+
+      {/* Retry Modal - auto-opens when coming from 500 page */}
+      <ProjectDetailModal 
+        isOpen={showRetryModal} 
+        onClose={() => {
+          setShowRetryModal(false);
+          setRetryData(null);
+        }}
+      />
     </div>
   );
 };
