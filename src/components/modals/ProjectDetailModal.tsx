@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuotaManagement, LevelType } from '@/hooks/useQuotaManagement';
 import { QuotaLevelCard } from '@/components/QuotaLevelCard';
@@ -14,15 +14,41 @@ import { Link } from 'react-router-dom';
 interface ProjectDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
+  retryData?: {
+    level?: string;
+    projectType?: string;
+    industry?: string;
+  };
 }
 
-export const ProjectDetailModal = ({ isOpen, onClose }: ProjectDetailModalProps) => {
+export const ProjectDetailModal = ({ isOpen, onClose, retryData }: ProjectDetailModalProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const { quotaData, getQuotaStatus, getResetDate } = useQuotaManagement();
   const [generatingLevel, setGeneratingLevel] = useState<LevelType | null>(null);
   const [quotaExceededLevel, setQuotaExceededLevel] = useState<LevelType | null>(null);
+  
+  // Get retry data from location state or props
+  const locationState = location.state as { level?: string; projectType?: string; industry?: string } | null;
+  const effectiveRetryData = retryData || locationState;
+
+  // Auto-trigger generation if we have retry data and modal is open
+  useEffect(() => {
+    if (isOpen && effectiveRetryData?.level && effectiveRetryData?.projectType && effectiveRetryData?.industry) {
+      const level = effectiveRetryData.level as LevelType;
+      const projectType = effectiveRetryData.projectType;
+      const industry = effectiveRetryData.industry;
+      
+      // Small delay to ensure modal is fully rendered
+      const timer = setTimeout(() => {
+        handleGenerate(level, projectType, industry);
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, effectiveRetryData]);
 
   const handleGenerate = async (level: LevelType, projectType: string, industry: string) => {
     const status = getQuotaStatus(level);

@@ -115,6 +115,11 @@ const ClientDashboard = () => {
           setShowRetryModal(false);
           setRetryData(null);
         }}
+        retryData={retryData ? {
+          level: retryData.level,
+          projectType: retryData.projectType,
+          industry: retryData.industry
+        } : undefined}
       />
     </div>
   );
