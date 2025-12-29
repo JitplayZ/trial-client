@@ -342,23 +342,6 @@ export const SocialRewardsManagement = () => {
                         ) : (
                           <span className="text-xs text-muted-foreground">Reviewed</span>
                         )}
-                              Approve
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                              onClick={() => openRejectDialog(request)}
-                            >
-                              <XCircle className="h-4 w-4 mr-1" />
-                              Reject
-                            </Button>
-                          </div>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">
-                            Reviewed
-                          </span>
-                        )}
                       </TableCell>
                     </TableRow>
                   ))
