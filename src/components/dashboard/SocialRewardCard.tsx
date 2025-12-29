@@ -23,6 +23,12 @@ interface SocialRewardRequest {
   created_at: string;
 }
 
+interface CanSubmitResult {
+  allowed: boolean;
+  reason: string;
+  days_remaining?: number;
+}
+
 const platformLabels: Record<Platform, string> = {
   x: 'X (Twitter)',
   linkedin: 'LinkedIn',
@@ -37,10 +43,12 @@ export const SocialRewardCard = () => {
   const [submitting, setSubmitting] = useState(false);
   const [platform, setPlatform] = useState<Platform | ''>('');
   const [postUrl, setPostUrl] = useState('');
+  const [canSubmit, setCanSubmit] = useState<CanSubmitResult | null>(null);
 
   useEffect(() => {
     if (user) {
       fetchExistingRequest();
+      checkCanSubmit();
     }
   }, [user]);
 
@@ -50,6 +58,8 @@ export const SocialRewardCard = () => {
         .from('social_reward_requests')
         .select('*')
         .eq('user_id', user?.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       if (error) throw error;
@@ -61,13 +71,26 @@ export const SocialRewardCard = () => {
     }
   };
 
+  const checkCanSubmit = async () => {
+    try {
+      const { data, error } = await supabase.rpc('can_submit_social_reward', {
+        _user_id: user?.id
+      });
+      if (error) throw error;
+      if (data && typeof data === 'object') {
+        setCanSubmit(data as unknown as CanSubmitResult);
+      }
+    } catch (error) {
+      console.error('Error checking submit eligibility:', error);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!platform || !postUrl.trim()) {
       toast.error('Please select a platform and enter a valid post URL');
       return;
     }
 
-    // Basic URL validation
     try {
       new URL(postUrl);
     } catch {
@@ -92,6 +115,8 @@ export const SocialRewardCard = () => {
           } else {
             toast.error('You have already submitted a request');
           }
+        } else if (error.message.includes('Social reward submission blocked')) {
+          toast.error(error.message.replace('Social reward submission blocked: ', ''));
         } else {
           throw error;
         }
@@ -100,6 +125,7 @@ export const SocialRewardCard = () => {
 
       toast.success('Request submitted! We will review your post shortly.');
       fetchExistingRequest();
+      checkCanSubmit();
     } catch (error) {
       console.error('Error submitting request:', error);
       toast.error('Failed to submit request');
@@ -149,8 +175,8 @@ export const SocialRewardCard = () => {
     );
   }
 
-  // Show existing request status
-  if (existingRequest) {
+  // Show existing pending request status
+  if (existingRequest && existingRequest.status === 'pending') {
     return (
       <Card>
         <CardHeader className="pb-3">
@@ -180,20 +206,41 @@ export const SocialRewardCard = () => {
               </p>
               <p><strong>Submitted:</strong> {new Date(existingRequest.created_at).toLocaleDateString()}</p>
             </div>
-            
-            {existingRequest.status === 'approved' && existingRequest.credits_awarded && (
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Show weekly limit message if not allowed
+  if (canSubmit && !canSubmit.allowed) {
+    return (
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Gift className="h-5 w-5 text-primary" />
+            Earn Free Credits
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="p-4 bg-muted/50 rounded-lg space-y-3">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Clock className="h-4 w-4" />
+              <span className="text-sm font-medium">{canSubmit.reason}</span>
+            </div>
+            {existingRequest && existingRequest.status === 'approved' && (
               <div className="flex items-center gap-2 text-green-600 bg-green-500/10 p-2 rounded">
                 <CheckCircle className="h-4 w-4" />
-                <span className="text-sm font-medium">You earned {existingRequest.credits_awarded} credits!</span>
+                <span className="text-sm font-medium">Last reward: +{existingRequest.credits_awarded} credits</span>
               </div>
             )}
-            
-            {existingRequest.status === 'rejected' && existingRequest.rejection_reason && (
+            {existingRequest && existingRequest.status === 'rejected' && existingRequest.rejection_reason && (
               <div className="flex items-start gap-2 text-destructive bg-destructive/10 p-2 rounded">
                 <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                <span className="text-sm">{existingRequest.rejection_reason}</span>
+                <span className="text-sm">Last submission rejected: {existingRequest.rejection_reason}</span>
               </div>
             )}
+            <p className="text-xs text-muted-foreground">You can submit one social post for review each week.</p>
           </div>
         </CardContent>
       </Card>
@@ -213,7 +260,6 @@ export const SocialRewardCard = () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Rules */}
         <div className="p-3 bg-muted/50 rounded-lg space-y-2 text-sm">
           <p className="font-medium">How it works:</p>
           <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
@@ -224,12 +270,11 @@ export const SocialRewardCard = () => {
           <div className="mt-3 pt-2 border-t border-border space-y-1 text-muted-foreground text-xs">
             <p>• Low-effort or spam posts do NOT qualify</p>
             <p>• Credits are granted only after manual review</p>
-            <p>• This reward is limited to one submission</p>
+            <p>• This reward is limited to once per week</p>
             <p>• Submitting does NOT guarantee credits</p>
           </div>
         </div>
 
-        {/* Form */}
         <div className="space-y-3">
           <div className="space-y-2">
             <Label htmlFor="platform">Platform</Label>
