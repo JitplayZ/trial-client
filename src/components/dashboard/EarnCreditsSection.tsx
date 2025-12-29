@@ -302,6 +302,15 @@ const EarnCreditsSection = () => {
             ) : canSubmit && !canSubmit.allowed ? (
               <div className="space-y-3">
                 <div className="p-3 bg-muted/30 rounded-lg space-y-2">
+                  {canSubmit.days_remaining !== undefined && canSubmit.days_remaining > 0 && (
+                    <div className="flex items-center justify-center gap-3 p-2 bg-primary/10 rounded-lg mb-2">
+                      <Clock className="h-5 w-5 text-primary" />
+                      <div className="text-center">
+                        <p className="text-xl font-bold text-primary">{canSubmit.days_remaining}</p>
+                        <p className="text-xs text-muted-foreground">day{canSubmit.days_remaining !== 1 ? 's' : ''} left</p>
+                      </div>
+                    </div>
+                  )}
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Clock className="h-4 w-4" />
                     <span className="text-sm font-medium">{canSubmit.reason}</span>
