@@ -579,6 +579,7 @@ export type Database = {
         }
         Returns: Json
       }
+      can_submit_social_reward: { Args: { _user_id: string }; Returns: Json }
       check_and_consume_quota: {
         Args: { _level: string; _user_id: string }
         Returns: Json

@@ -36,6 +36,12 @@ const platformLabels: Record<Platform, string> = {
   youtube: 'YouTube'
 };
 
+interface CanSubmitResult {
+  allowed: boolean;
+  reason: string;
+  days_remaining?: number;
+}
+
 const EarnCreditsSection = () => {
   const { user } = useAuth();
   const { referralData, loading: referralLoading, getReferralLink, copyReferralLink } = useReferral();
@@ -47,10 +53,12 @@ const EarnCreditsSection = () => {
   const [submitting, setSubmitting] = useState(false);
   const [platform, setPlatform] = useState<Platform | ''>('');
   const [postUrl, setPostUrl] = useState('');
+  const [canSubmit, setCanSubmit] = useState<CanSubmitResult | null>(null);
 
   useEffect(() => {
     if (user) {
       fetchExistingRequest();
+      checkCanSubmit();
     }
   }, [user]);
 
@@ -60,6 +68,8 @@ const EarnCreditsSection = () => {
         .from('social_reward_requests')
         .select('*')
         .eq('user_id', user?.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       if (error) throw error;
@@ -68,6 +78,20 @@ const EarnCreditsSection = () => {
       console.error('Error fetching social reward request:', error);
     } finally {
       setSocialLoading(false);
+    }
+  };
+
+  const checkCanSubmit = async () => {
+    try {
+      const { data, error } = await supabase.rpc('can_submit_social_reward', {
+        _user_id: user?.id
+      });
+      if (error) throw error;
+      if (data && typeof data === 'object') {
+        setCanSubmit(data as unknown as CanSubmitResult);
+      }
+    } catch (error) {
+      console.error('Error checking submit eligibility:', error);
     }
   };
 
@@ -252,7 +276,7 @@ const EarnCreditsSection = () => {
               </div>
             </div>
 
-            {existingRequest ? (
+            {existingRequest && existingRequest.status === 'pending' ? (
               <div className="space-y-3">
                 <div className="p-3 bg-muted/30 rounded-lg space-y-2">
                   <div className="flex items-center justify-between">
@@ -273,20 +297,28 @@ const EarnCreditsSection = () => {
                       </a>
                     </p>
                   </div>
-                  
-                  {existingRequest.status === 'approved' && existingRequest.credits_awarded && (
+                </div>
+              </div>
+            ) : canSubmit && !canSubmit.allowed ? (
+              <div className="space-y-3">
+                <div className="p-3 bg-muted/30 rounded-lg space-y-2">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Clock className="h-4 w-4" />
+                    <span className="text-sm font-medium">{canSubmit.reason}</span>
+                  </div>
+                  {existingRequest && existingRequest.status === 'approved' && (
                     <div className="flex items-center gap-2 text-green-600 bg-green-500/10 p-2 rounded text-sm">
                       <CheckCircle className="h-4 w-4" />
                       <span className="font-medium">+{existingRequest.credits_awarded} credits earned!</span>
                     </div>
                   )}
-                  
-                  {existingRequest.status === 'rejected' && existingRequest.rejection_reason && (
+                  {existingRequest && existingRequest.status === 'rejected' && existingRequest.rejection_reason && (
                     <div className="flex items-start gap-2 text-destructive bg-destructive/10 p-2 rounded text-xs">
                       <AlertCircle className="h-3 w-3 mt-0.5 flex-shrink-0" />
                       <span>{existingRequest.rejection_reason}</span>
                     </div>
                   )}
+                  <p className="text-xs text-muted-foreground">One submission per week.</p>
                 </div>
               </div>
             ) : (
@@ -325,6 +357,7 @@ const EarnCreditsSection = () => {
                 <div className="text-xs text-muted-foreground space-y-1 pt-3 border-t border-border/50">
                   <p>• Post about tRIAL-CLIENTS on social media</p>
                   <p>• Credits after manual review (2-5)</p>
+                  <p>• Once per week limit</p>
                 </div>
 
                 <Button 
