@@ -224,6 +224,15 @@ export const SocialRewardCard = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="p-4 bg-muted/50 rounded-lg space-y-3">
+            {canSubmit.days_remaining !== undefined && canSubmit.days_remaining > 0 && (
+              <div className="flex items-center justify-center gap-3 p-3 bg-primary/10 rounded-lg">
+                <Clock className="h-5 w-5 text-primary" />
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-primary">{canSubmit.days_remaining}</p>
+                  <p className="text-xs text-muted-foreground">day{canSubmit.days_remaining !== 1 ? 's' : ''} remaining</p>
+                </div>
+              </div>
+            )}
             <div className="flex items-center gap-2 text-muted-foreground">
               <Clock className="h-4 w-4" />
               <span className="text-sm font-medium">{canSubmit.reason}</span>
