@@ -6,7 +6,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Calendar, Download, Eye, X, Loader2, ArrowLeft } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { FileText, Calendar, Download, Eye, X, Loader2, ArrowLeft, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface BriefData {
   company_name: string;
@@ -42,6 +54,9 @@ const History = () => {
   const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -49,28 +64,29 @@ const History = () => {
     }
   }, [user, authLoading, navigate]);
 
-  useEffect(() => {
-    const fetchProjects = async () => {
-      if (!user) return;
-      
-      try {
-        const { data, error } = await supabase
-          .from('projects')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
+  const fetchProjects = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
-        if (error) throw error;
-        setProjects((data || []) as unknown as Project[]);
-      } catch (error) {
-        if (import.meta.env.DEV) {
-          console.error('Error fetching projects:', error);
-        }
-      } finally {
-        setLoading(false);
+      if (error) throw error;
+      setProjects((data || []) as unknown as Project[]);
+      setSelectedIds(new Set()); // Clear selections after refresh
+    } catch (error) {
+      if (import.meta.env.DEV) {
+        console.error('Error fetching projects:', error);
       }
-    };
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     if (user) {
       fetchProjects();
     }
@@ -101,6 +117,49 @@ const History = () => {
     a.click();
   };
 
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === projects.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(projects.map(p => p.id)));
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedIds.size === 0) return;
+    
+    setDeleting(true);
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .delete()
+        .in('id', Array.from(selectedIds));
+
+      if (error) throw error;
+
+      toast.success(`Deleted ${selectedIds.size} project(s) successfully`);
+      setDeleteDialogOpen(false);
+      fetchProjects();
+    } catch (error) {
+      console.error('Error deleting projects:', error);
+      toast.error('Failed to delete projects');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   if (authLoading || !user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -129,10 +188,37 @@ const History = () => {
               <p className="text-xs sm:text-sm text-muted-foreground">View all your generated projects</p>
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="absolute right-4 top-4 sm:static">
-            <X className="h-5 w-5" />
-          </Button>
+          <div className="flex items-center gap-2">
+            {selectedIds.size > 0 && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setDeleteDialogOpen(true)}
+                className="gap-1.5"
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete ({selectedIds.size})
+              </Button>
+            )}
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="sm:static">
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
+
+        {/* Select All */}
+        {projects.length > 0 && !loading && (
+          <div className="flex items-center gap-2 mb-4">
+            <Checkbox
+              id="select-all"
+              checked={selectedIds.size === projects.length && projects.length > 0}
+              onCheckedChange={toggleSelectAll}
+            />
+            <label htmlFor="select-all" className="text-sm text-muted-foreground cursor-pointer">
+              Select All ({projects.length})
+            </label>
+          </div>
+        )}
 
         {/* Content */}
         {loading ? (
@@ -167,22 +253,29 @@ const History = () => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {projects.map((project) => (
-              <Card key={project.id} className="glass-card hover-lift flex flex-col">
+              <Card key={project.id} className={`glass-card hover-lift flex flex-col ${selectedIds.has(project.id) ? 'ring-2 ring-primary' : ''}`}>
                 <CardHeader className="pb-2 sm:pb-4">
                   <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1 min-w-0">
-                      <CardTitle className="text-foreground text-base sm:text-lg line-clamp-1">
-                        {project.brief_data?.company_name || project.title}
-                      </CardTitle>
-                      <CardDescription className="text-muted-foreground mt-0.5 text-xs sm:text-sm line-clamp-1">
-                        {project.brief_data?.tagline || project.type || 'Web Project'}
-                      </CardDescription>
+                    <div className="flex items-start gap-2 flex-1 min-w-0">
+                      <Checkbox
+                        checked={selectedIds.has(project.id)}
+                        onCheckedChange={() => toggleSelect(project.id)}
+                        className="mt-1"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="text-foreground text-base sm:text-lg line-clamp-1">
+                          {project.brief_data?.company_name || project.title}
+                        </CardTitle>
+                        <CardDescription className="text-muted-foreground mt-0.5 text-xs sm:text-sm line-clamp-1">
+                          {project.brief_data?.tagline || project.type || 'Web Project'}
+                        </CardDescription>
+                      </div>
                     </div>
                     {project.status === 'generating' && (
                       <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin text-primary flex-shrink-0" />
                     )}
                   </div>
-                  <div className="flex flex-wrap gap-1 mt-2">
+                  <div className="flex flex-wrap gap-1 mt-2 ml-6">
                     {project.level && (
                       <Badge variant="outline" className="text-[10px] sm:text-xs px-1.5 py-0">{project.level}</Badge>
                     )}
@@ -254,6 +347,28 @@ const History = () => {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {selectedIds.size} project(s)?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. The selected projects will be permanently deleted from your history.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteSelected}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
