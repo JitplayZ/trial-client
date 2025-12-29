@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,8 +14,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useEffect } from 'react';
 import { SocialRewardCooldown } from "@/components/dashboard/SocialRewardCooldown";
+import { useSocialCooldown } from "@/hooks/useSocialCooldown";
 
 type Platform = 'x' | 'linkedin' | 'reddit' | 'youtube';
 type RequestStatus = 'pending' | 'approved' | 'rejected';
@@ -38,12 +38,6 @@ const platformLabels: Record<Platform, string> = {
   youtube: 'YouTube'
 };
 
-interface CanSubmitResult {
-  allowed: boolean;
-  reason: string;
-  days_remaining?: number;
-}
-
 const EarnCreditsSection = () => {
   const { user } = useAuth();
   const { referralData, loading: referralLoading, getReferralLink, copyReferralLink } = useReferral();
@@ -55,12 +49,13 @@ const EarnCreditsSection = () => {
   const [submitting, setSubmitting] = useState(false);
   const [platform, setPlatform] = useState<Platform | ''>('');
   const [postUrl, setPostUrl] = useState('');
-  const [canSubmit, setCanSubmit] = useState<CanSubmitResult | null>(null);
+
+  // Backend cooldown state
+  const { cooldown, refetch: refetchCooldown } = useSocialCooldown();
 
   useEffect(() => {
     if (user) {
       fetchExistingRequest();
-      checkCanSubmit();
     }
   }, [user]);
 
@@ -80,20 +75,6 @@ const EarnCreditsSection = () => {
       console.error('Error fetching social reward request:', error);
     } finally {
       setSocialLoading(false);
-    }
-  };
-
-  const checkCanSubmit = async () => {
-    try {
-      const { data, error } = await supabase.rpc('can_submit_social_reward', {
-        _user_id: user?.id
-      });
-      if (error) throw error;
-      if (data && typeof data === 'object') {
-        setCanSubmit(data as unknown as CanSubmitResult);
-      }
-    } catch (error) {
-      console.error('Error checking submit eligibility:', error);
     }
   };
 
@@ -141,6 +122,7 @@ const EarnCreditsSection = () => {
 
       toast.success('Request submitted! We will review your post shortly.');
       fetchExistingRequest();
+      refetchCooldown();
     } catch (error) {
       console.error('Error submitting request:', error);
       toast.error('Failed to submit request');
@@ -301,19 +283,11 @@ const EarnCreditsSection = () => {
                   </div>
                 </div>
               </div>
-            ) : canSubmit && !canSubmit.allowed ? (
+            ) : cooldown && !cooldown.allowed ? (
               <div className="space-y-3">
                 <div className="p-3 bg-muted/30 rounded-lg space-y-2">
-                  {existingRequest?.status === 'approved' && (
-                    <SocialRewardCooldown
-                      lastRewardAt={existingRequest.reviewed_at ?? existingRequest.created_at}
-                      label="Next submission available in"
-                    />
-                  )}
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Clock className="h-4 w-4" />
-                    <span className="text-sm font-medium">{canSubmit.reason}</span>
-                  </div>
+                  {/* Backend-driven cooldown box */}
+                  <SocialRewardCooldown cooldown={cooldown} label="Next submission available in" />
                   {existingRequest && existingRequest.status === 'approved' && (
                     <div className="flex items-center gap-2 text-green-600 bg-green-500/10 p-2 rounded text-sm">
                       <CheckCircle className="h-4 w-4" />
@@ -331,11 +305,9 @@ const EarnCreditsSection = () => {
               </div>
             ) : (
               <>
-                {existingRequest?.status === 'approved' && (
-                  <SocialRewardCooldown
-                    lastRewardAt={existingRequest.reviewed_at ?? existingRequest.created_at}
-                    label="Next submission available in"
-                  />
+                {/* Backend-driven cooldown (visible if approved but now eligible again) */}
+                {existingRequest?.status === 'approved' && cooldown && cooldown.ms_remaining !== null && (
+                  <SocialRewardCooldown cooldown={cooldown} label="Next submission available in" />
                 )}
 
                 {/* Form */}
