@@ -5,9 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { 
-  Copy, Gift, Users, Share2, ExternalLink, Clock, CheckCircle, 
-  XCircle, AlertCircle, Megaphone, UserPlus 
+import {
+  Copy, Gift, Users, Share2, ExternalLink, Clock, CheckCircle,
+  XCircle, AlertCircle, Megaphone, UserPlus
 } from 'lucide-react';
 import { useReferral } from '@/hooks/useReferral';
 import { useAuth } from '@/contexts/AuthContext';
@@ -15,6 +15,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useEffect } from 'react';
+import { SocialRewardCooldown } from "@/components/dashboard/SocialRewardCooldown";
 
 type Platform = 'x' | 'linkedin' | 'reddit' | 'youtube';
 type RequestStatus = 'pending' | 'approved' | 'rejected';
@@ -27,6 +28,7 @@ interface SocialRewardRequest {
   credits_awarded: number | null;
   rejection_reason: string | null;
   created_at: string;
+  reviewed_at?: string | null;
 }
 
 const platformLabels: Record<Platform, string> = {
@@ -302,14 +304,11 @@ const EarnCreditsSection = () => {
             ) : canSubmit && !canSubmit.allowed ? (
               <div className="space-y-3">
                 <div className="p-3 bg-muted/30 rounded-lg space-y-2">
-                  {canSubmit.days_remaining !== undefined && canSubmit.days_remaining > 0 && (
-                    <div className="flex items-center justify-center gap-3 p-2 bg-primary/10 rounded-lg mb-2">
-                      <Clock className="h-5 w-5 text-primary" />
-                      <div className="text-center">
-                        <p className="text-xl font-bold text-primary">{canSubmit.days_remaining}</p>
-                        <p className="text-xs text-muted-foreground">day{canSubmit.days_remaining !== 1 ? 's' : ''} left</p>
-                      </div>
-                    </div>
+                  {existingRequest?.status === 'approved' && (
+                    <SocialRewardCooldown
+                      lastRewardAt={existingRequest.reviewed_at ?? existingRequest.created_at}
+                      label="Next submission available in"
+                    />
                   )}
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Clock className="h-4 w-4" />
@@ -332,6 +331,13 @@ const EarnCreditsSection = () => {
               </div>
             ) : (
               <>
+                {existingRequest?.status === 'approved' && (
+                  <SocialRewardCooldown
+                    lastRewardAt={existingRequest.reviewed_at ?? existingRequest.created_at}
+                    label="Next submission available in"
+                  />
+                )}
+
                 {/* Form */}
                 <div className="space-y-3">
                   <div className="space-y-1.5">
