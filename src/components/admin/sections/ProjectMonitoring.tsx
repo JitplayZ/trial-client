@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { 
   Table, 
   TableBody, 
@@ -51,6 +52,9 @@ export const ProjectMonitoring = () => {
   const [projects, setProjects] = useState<ProjectData[]>([]);
   const [loading, setLoading] = useState(true);
   const [generationPaused, setGenerationPaused] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchProjects = async () => {
     setLoading(true);
@@ -86,6 +90,7 @@ export const ProjectMonitoring = () => {
       });
 
       setProjects(merged);
+      setSelectedIds(new Set()); // Clear selections on refresh
     } catch (error) {
       console.error('Error fetching projects:', error);
       toast.error('Failed to fetch projects');
@@ -192,6 +197,50 @@ export const ProjectMonitoring = () => {
     }
   };
 
+  // Selection handlers
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === projects.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(projects.map(p => p.id)));
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedIds.size === 0) return;
+    
+    setDeleting(true);
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .delete()
+        .in('id', Array.from(selectedIds));
+
+      if (error) throw error;
+
+      toast.success(`Deleted ${selectedIds.size} project(s) successfully`);
+      setDeleteDialogOpen(false);
+      fetchProjects();
+    } catch (error) {
+      console.error('Error deleting projects:', error);
+      toast.error('Failed to delete projects');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <div className="p-6 lg:p-8 space-y-6">
       {/* Header */}
@@ -204,6 +253,15 @@ export const ProjectMonitoring = () => {
           <p className="text-foreground-secondary mt-1">Monitor project generation status and queue</p>
         </div>
         <div className="flex gap-2">
+          {selectedIds.size > 0 && (
+            <Button
+              variant="destructive"
+              onClick={() => setDeleteDialogOpen(true)}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete ({selectedIds.size})
+            </Button>
+          )}
           <Button 
             variant={generationPaused ? "default" : "outline"}
             onClick={toggleGeneration}
@@ -421,6 +479,12 @@ export const ProjectMonitoring = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-12">
+                    <Checkbox
+                      checked={selectedIds.size === projects.length && projects.length > 0}
+                      onCheckedChange={toggleSelectAll}
+                    />
+                  </TableHead>
                   <TableHead>Project</TableHead>
                   <TableHead>User</TableHead>
                   <TableHead>User ID</TableHead>
@@ -433,19 +497,25 @@ export const ProjectMonitoring = () => {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8">
+                    <TableCell colSpan={8} className="text-center py-8">
                       <RefreshCw className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
                     </TableCell>
                   </TableRow>
                 ) : projects.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                       No projects found
                     </TableCell>
                   </TableRow>
                 ) : (
                   projects.map((project) => (
-                    <TableRow key={project.id} className={project.status === 'failed' ? 'bg-destructive/5' : ''}>
+                    <TableRow key={project.id} className={`${project.status === 'failed' ? 'bg-destructive/5' : ''} ${selectedIds.has(project.id) ? 'bg-primary/5' : ''}`}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedIds.has(project.id)}
+                          onCheckedChange={() => toggleSelect(project.id)}
+                        />
+                      </TableCell>
                       <TableCell>
                         <span className="font-medium">{project.title}</span>
                       </TableCell>
@@ -473,6 +543,28 @@ export const ProjectMonitoring = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {selectedIds.size} project(s)?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. The selected projects will be permanently deleted from the database.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteSelected}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
