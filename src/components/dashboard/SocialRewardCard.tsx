@@ -9,6 +9,7 @@ import { Gift, ExternalLink, Clock, CheckCircle, XCircle, AlertCircle } from "lu
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { SocialRewardCooldown } from "@/components/dashboard/SocialRewardCooldown";
 
 type Platform = 'x' | 'linkedin' | 'reddit' | 'youtube';
 type RequestStatus = 'pending' | 'approved' | 'rejected';
@@ -21,6 +22,7 @@ interface SocialRewardRequest {
   credits_awarded: number | null;
   rejection_reason: string | null;
   created_at: string;
+  reviewed_at?: string | null;
 }
 
 interface CanSubmitResult {
@@ -224,14 +226,10 @@ export const SocialRewardCard = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="p-4 bg-muted/50 rounded-lg space-y-3">
-            {canSubmit.days_remaining !== undefined && canSubmit.days_remaining > 0 && (
-              <div className="flex items-center justify-center gap-3 p-3 bg-primary/10 rounded-lg">
-                <Clock className="h-5 w-5 text-primary" />
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-primary">{canSubmit.days_remaining}</p>
-                  <p className="text-xs text-muted-foreground">day{canSubmit.days_remaining !== 1 ? 's' : ''} remaining</p>
-                </div>
-              </div>
+            {existingRequest?.status === 'approved' && (
+              <SocialRewardCooldown
+                lastRewardAt={existingRequest.reviewed_at ?? existingRequest.created_at}
+              />
             )}
             <div className="flex items-center gap-2 text-muted-foreground">
               <Clock className="h-4 w-4" />
@@ -283,6 +281,12 @@ export const SocialRewardCard = () => {
             <p>• Submitting does NOT guarantee credits</p>
           </div>
         </div>
+
+        {existingRequest?.status === 'approved' && (
+          <SocialRewardCooldown
+            lastRewardAt={existingRequest.reviewed_at ?? existingRequest.created_at}
+          />
+        )}
 
         <div className="space-y-3">
           <div className="space-y-2">
