@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { SocialRewardCooldown } from "@/components/dashboard/SocialRewardCooldown";
+import { useSocialCooldown } from "@/hooks/useSocialCooldown";
 
 type Platform = 'x' | 'linkedin' | 'reddit' | 'youtube';
 type RequestStatus = 'pending' | 'approved' | 'rejected';
@@ -23,12 +24,6 @@ interface SocialRewardRequest {
   rejection_reason: string | null;
   created_at: string;
   reviewed_at?: string | null;
-}
-
-interface CanSubmitResult {
-  allowed: boolean;
-  reason: string;
-  days_remaining?: number;
 }
 
 const platformLabels: Record<Platform, string> = {
@@ -45,12 +40,13 @@ export const SocialRewardCard = () => {
   const [submitting, setSubmitting] = useState(false);
   const [platform, setPlatform] = useState<Platform | ''>('');
   const [postUrl, setPostUrl] = useState('');
-  const [canSubmit, setCanSubmit] = useState<CanSubmitResult | null>(null);
+
+  // Backend cooldown state
+  const { cooldown, refetch: refetchCooldown } = useSocialCooldown();
 
   useEffect(() => {
     if (user) {
       fetchExistingRequest();
-      checkCanSubmit();
     }
   }, [user]);
 
@@ -70,20 +66,6 @@ export const SocialRewardCard = () => {
       console.error('Error fetching social reward request:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const checkCanSubmit = async () => {
-    try {
-      const { data, error } = await supabase.rpc('can_submit_social_reward', {
-        _user_id: user?.id
-      });
-      if (error) throw error;
-      if (data && typeof data === 'object') {
-        setCanSubmit(data as unknown as CanSubmitResult);
-      }
-    } catch (error) {
-      console.error('Error checking submit eligibility:', error);
     }
   };
 
@@ -127,7 +109,7 @@ export const SocialRewardCard = () => {
 
       toast.success('Request submitted! We will review your post shortly.');
       fetchExistingRequest();
-      checkCanSubmit();
+      refetchCooldown();
     } catch (error) {
       console.error('Error submitting request:', error);
       toast.error('Failed to submit request');
@@ -214,8 +196,8 @@ export const SocialRewardCard = () => {
     );
   }
 
-  // Show weekly limit message if not allowed
-  if (canSubmit && !canSubmit.allowed) {
+  // Show weekly limit message if not allowed (backend-enforced)
+  if (cooldown && !cooldown.allowed) {
     return (
       <Card>
         <CardHeader className="pb-3">
@@ -226,15 +208,9 @@ export const SocialRewardCard = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="p-4 bg-muted/50 rounded-lg space-y-3">
-            {existingRequest?.status === 'approved' && (
-              <SocialRewardCooldown
-                lastRewardAt={existingRequest.reviewed_at ?? existingRequest.created_at}
-              />
-            )}
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Clock className="h-4 w-4" />
-              <span className="text-sm font-medium">{canSubmit.reason}</span>
-            </div>
+            {/* Backend-driven cooldown box */}
+            <SocialRewardCooldown cooldown={cooldown} />
+
             {existingRequest && existingRequest.status === 'approved' && (
               <div className="flex items-center gap-2 text-green-600 bg-green-500/10 p-2 rounded">
                 <CheckCircle className="h-4 w-4" />
@@ -282,10 +258,9 @@ export const SocialRewardCard = () => {
           </div>
         </div>
 
-        {existingRequest?.status === 'approved' && (
-          <SocialRewardCooldown
-            lastRewardAt={existingRequest.reviewed_at ?? existingRequest.created_at}
-          />
+        {/* Backend-driven cooldown (visible if approved but now eligible again) */}
+        {existingRequest?.status === 'approved' && cooldown && cooldown.ms_remaining !== null && (
+          <SocialRewardCooldown cooldown={cooldown} />
         )}
 
         <div className="space-y-3">

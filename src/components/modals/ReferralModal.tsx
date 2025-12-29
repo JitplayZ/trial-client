@@ -12,6 +12,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
+import { SocialRewardCooldown } from '@/components/dashboard/SocialRewardCooldown';
+import { useSocialCooldown } from '@/hooks/useSocialCooldown';
 
 interface ReferralModalProps {
   isOpen: boolean;
@@ -29,6 +31,7 @@ interface SocialRewardRequest {
   credits_awarded: number | null;
   rejection_reason: string | null;
   created_at: string;
+  reviewed_at?: string | null;
 }
 
 const platformLabels: Record<Platform, string> = {
@@ -51,9 +54,13 @@ export const ReferralModal = ({ isOpen, onClose }: ReferralModalProps) => {
   const [postUrl, setPostUrl] = useState('');
   const [showResubmitForm, setShowResubmitForm] = useState(false);
 
+  // Backend cooldown
+  const { cooldown, refetch: refetchCooldown } = useSocialCooldown();
+
   useEffect(() => {
     if (user && isOpen) {
       fetchExistingRequest();
+      refetchCooldown();
     }
   }, [user, isOpen]);
 
@@ -63,6 +70,8 @@ export const ReferralModal = ({ isOpen, onClose }: ReferralModalProps) => {
         .from('social_reward_requests')
         .select('*')
         .eq('user_id', user?.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       if (error) throw error;
@@ -337,10 +346,16 @@ export const ReferralModal = ({ isOpen, onClose }: ReferralModalProps) => {
                   </div>
                   
                   {existingRequest.status === 'approved' && existingRequest.credits_awarded && (
-                    <div className="flex items-center gap-2 text-green-600 bg-green-500/10 p-2 rounded">
-                      <CheckCircle className="h-4 w-4" />
-                      <span className="text-sm font-medium">You earned {existingRequest.credits_awarded} credits!</span>
-                    </div>
+                    <>
+                      {/* Backend-driven cooldown */}
+                      {cooldown && cooldown.ms_remaining !== null && (
+                        <SocialRewardCooldown cooldown={cooldown} />
+                      )}
+                      <div className="flex items-center gap-2 text-green-600 bg-green-500/10 p-2 rounded">
+                        <CheckCircle className="h-4 w-4" />
+                        <span className="text-sm font-medium">You earned {existingRequest.credits_awarded} credits!</span>
+                      </div>
+                    </>
                   )}
                   
                   {existingRequest.status === 'rejected' && (

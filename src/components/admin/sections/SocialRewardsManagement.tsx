@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Gift, ExternalLink, Clock, CheckCircle, XCircle, RefreshCw } from "lucide-react";
+import { Gift, ExternalLink, Clock, CheckCircle, XCircle, RefreshCw, TestTube } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { CopyUserId } from "../CopyUserId";
@@ -48,6 +48,9 @@ export const SocialRewardsManagement = () => {
   // Rejection dialog
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
+
+  // Test cooldown
+  const [testingCooldown, setTestingCooldown] = useState<string | null>(null);
 
   useEffect(() => {
     fetchRequests();
@@ -145,6 +148,28 @@ export const SocialRewardsManagement = () => {
   const openRejectDialog = (request: SocialRewardRequest) => {
     setSelectedRequest(request);
     setRejectDialogOpen(true);
+  };
+
+  const handleTestCooldown = async (userId: string) => {
+    setTestingCooldown(userId);
+    try {
+      const { data, error } = await supabase.rpc('admin_set_social_reward_reviewed_at_now', {
+        _target_user_id: userId
+      });
+      if (error) throw error;
+      const result = data as { ok: boolean; message: string };
+      if (!result.ok) {
+        toast.error(result.message);
+        return;
+      }
+      toast.success('reviewed_at set to now() for testing');
+      fetchRequests();
+    } catch (error) {
+      console.error('Error testing cooldown:', error);
+      toast.error('Failed to set test cooldown');
+    } finally {
+      setTestingCooldown(null);
+    }
   };
 
   const getStatusBadge = (status: RequestStatus) => {
@@ -289,6 +314,34 @@ export const SocialRewardsManagement = () => {
                               onClick={() => openApproveDialog(request)}
                             >
                               <CheckCircle className="h-4 w-4 mr-1" />
+                              Approve
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => openRejectDialog(request)}
+                            >
+                              <XCircle className="h-4 w-4 mr-1" />
+                              Reject
+                            </Button>
+                          </div>
+                        ) : request.status === 'approved' ? (
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleTestCooldown(request.user_id)}
+                              disabled={testingCooldown === request.user_id}
+                              title="Set reviewed_at = now() for testing cooldown"
+                            >
+                              <TestTube className="h-4 w-4 mr-1" />
+                              {testingCooldown === request.user_id ? 'Testing...' : 'Test Cooldown'}
+                            </Button>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">Reviewed</span>
+                        )}
                               Approve
                             </Button>
                             <Button

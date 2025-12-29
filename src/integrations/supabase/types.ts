@@ -563,6 +563,10 @@ export type Database = {
         }
         Returns: Json
       }
+      admin_set_social_reward_reviewed_at_now: {
+        Args: { _target_user_id: string }
+        Returns: Json
+      }
       admin_update_user_credits: {
         Args: {
           _credit_change: number
@@ -594,6 +598,7 @@ export type Database = {
       }
       delete_user_account: { Args: never; Returns: undefined }
       generate_referral_code: { Args: never; Returns: string }
+      get_social_reward_cooldown: { Args: never; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
