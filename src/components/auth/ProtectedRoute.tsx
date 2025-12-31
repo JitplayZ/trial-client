@@ -122,13 +122,17 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
             </p>
           </div>
           <div className="space-y-3">
-            <Button 
-              variant="outline" 
+            <a 
+              href="mailto:help.trialclients@gmail.com?subject=Account%20Ban%20Appeal"
               className="w-full"
-              onClick={() => window.location.href = 'mailto:help.trialclients@gmail.com?subject=Account%20Ban%20Appeal'}
             >
-              Contact Support
-            </Button>
+              <Button 
+                variant="outline" 
+                className="w-full"
+              >
+                Contact Support
+              </Button>
+            </a>
             <Button 
               variant="ghost" 
               className="w-full"
