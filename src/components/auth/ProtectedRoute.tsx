@@ -122,17 +122,15 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
             </p>
           </div>
           <div className="space-y-3">
-            <a 
-              href="mailto:help.trialclients@gmail.com?subject=Account%20Ban%20Appeal"
+            <Button 
+              variant="outline" 
               className="w-full"
+              asChild
             >
-              <Button 
-                variant="outline" 
-                className="w-full"
-              >
+              <a href="mailto:help.trialclients@gmail.com?subject=Account%20Ban%20Appeal">
                 Contact Support
-              </Button>
-            </a>
+              </a>
+            </Button>
             <Button 
               variant="ghost" 
               className="w-full"
