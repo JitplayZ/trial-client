@@ -131,6 +131,20 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
                 Contact Support
               </a>
             </Button>
+
+            <Button
+              variant="secondary"
+              className="w-full"
+              asChild
+            >
+              <a
+                href="https://mail.google.com/mail/?view=cm&fs=1&to=help.trialclients@gmail.com&su=Account%20Ban%20Appeal"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Open in Gmail
+              </a>
+            </Button>
             <Button 
               variant="ghost" 
               className="w-full"
