@@ -35,7 +35,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
       try {
         const { data: profile, error } = await supabase
           .from('profiles')
-          .select('status, generation_enabled')
+          .select('status, generation_enabled, ban_reason')
           .eq('user_id', user.id)
           .single();
 
@@ -48,7 +48,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
         // Check if user is banned (suspended status AND generation disabled)
         if (profile?.status === 'suspended') {
           setIsBanned(true);
-          setBanReason('Your account has been suspended by an administrator.');
+          setBanReason(profile?.ban_reason || 'Your account has been suspended by an administrator.');
         } else {
           setIsBanned(false);
           setBanReason(null);
@@ -77,10 +77,10 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
             filter: `user_id=eq.${user.id}`
           },
           (payload) => {
-            const newStatus = payload.new as { status?: string; generation_enabled?: boolean };
+            const newStatus = payload.new as { status?: string; generation_enabled?: boolean; ban_reason?: string };
             if (newStatus.status === 'suspended') {
               setIsBanned(true);
-              setBanReason('Your account has been suspended by an administrator.');
+              setBanReason(newStatus.ban_reason || 'Your account has been suspended by an administrator.');
             } else {
               setIsBanned(false);
               setBanReason(null);
@@ -125,7 +125,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
             <Button 
               variant="outline" 
               className="w-full"
-              onClick={() => window.location.href = 'mailto:support@example.com'}
+              onClick={() => window.location.href = 'mailto:help.trialclients@gmail.com?subject=Account%20Ban%20Appeal'}
             >
               Contact Support
             </Button>
