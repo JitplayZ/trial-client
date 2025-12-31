@@ -103,6 +103,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          ban_reason: string | null
           created_at: string
           display_name: string | null
           email: string | null
@@ -116,6 +117,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          ban_reason?: string | null
           created_at?: string
           display_name?: string | null
           email?: string | null
@@ -129,6 +131,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          ban_reason?: string | null
           created_at?: string
           display_name?: string | null
           email?: string | null
@@ -575,14 +578,24 @@ export type Database = {
         }
         Returns: Json
       }
-      admin_update_user_status: {
-        Args: {
-          _generation_enabled: boolean
-          _new_status: string
-          _target_user_id: string
-        }
-        Returns: Json
-      }
+      admin_update_user_status:
+        | {
+            Args: {
+              _generation_enabled: boolean
+              _new_status: string
+              _target_user_id: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              _ban_reason?: string
+              _generation_enabled: boolean
+              _new_status: string
+              _target_user_id: string
+            }
+            Returns: Json
+          }
       can_submit_social_reward: { Args: { _user_id: string }; Returns: Json }
       check_and_consume_quota: {
         Args: { _level: string; _user_id: string }

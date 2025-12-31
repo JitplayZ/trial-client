@@ -79,6 +79,7 @@ interface UserData {
   beginner_left: number;
   intermediate_left: number;
   veteran_left: number;
+  ban_reason: string | null;
 }
 
 export const UserManagement = () => {
@@ -90,10 +91,12 @@ export const UserManagement = () => {
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [banAllDialogOpen, setBanAllDialogOpen] = useState(false);
+  const [banDialogOpen, setBanDialogOpen] = useState(false);
   const [creditChange, setCreditChange] = useState(0);
   const [creditReason, setCreditReason] = useState('');
   const [newStatus, setNewStatus] = useState('active');
   const [generationEnabled, setGenerationEnabled] = useState(true);
+  const [banReason, setBanReason] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
 
   // Helper to resolve avatar URL (Google URL or storage path)
@@ -121,7 +124,7 @@ export const UserManagement = () => {
     try {
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('user_id, email, display_name, avatar_url, last_ip, last_login_at, created_at, status, generation_enabled')
+        .select('user_id, email, display_name, avatar_url, last_ip, last_login_at, created_at, status, generation_enabled, ban_reason')
         .order('created_at', { ascending: false })
         .limit(100);
 
@@ -154,7 +157,8 @@ export const UserManagement = () => {
           generation_enabled: profile.generation_enabled !== false,
           beginner_left: sub?.beginner_left || 0,
           intermediate_left: sub?.intermediate_left || 0,
-          veteran_left: sub?.veteran_left || 0
+          veteran_left: sub?.veteran_left || 0,
+          ban_reason: (profile as any).ban_reason || null
         };
       });
 
@@ -252,14 +256,24 @@ export const UserManagement = () => {
     }
   };
 
-  // Quick ban user (sets status to suspended and disables generation)
-  const handleBanUser = async (user: UserData) => {
+  // Open ban dialog with reason input
+  const openBanDialog = (user: UserData) => {
+    setSelectedUser(user);
+    setBanReason('');
+    setBanDialogOpen(true);
+  };
+
+  // Ban user with reason
+  const handleBanUser = async () => {
+    if (!selectedUser || !banReason.trim()) return;
+    
     setActionLoading(true);
     try {
       const { data, error } = await supabase.rpc('admin_update_user_status', {
-        _target_user_id: user.id,
+        _target_user_id: selectedUser.id,
         _new_status: 'suspended',
-        _generation_enabled: false
+        _generation_enabled: false,
+        _ban_reason: banReason.trim()
       });
 
       if (error) throw error;
@@ -267,7 +281,10 @@ export const UserManagement = () => {
       const result = data as { ok: boolean; message: string };
       if (!result.ok) throw new Error(result.message);
 
-      toast.success(`${user.display_name} has been banned`);
+      toast.success(`${selectedUser.display_name} has been banned`);
+      setBanDialogOpen(false);
+      setBanReason('');
+      setSelectedUser(null);
       fetchUsers();
     } catch (error: any) {
       console.error('Error banning user:', error);
@@ -684,7 +701,7 @@ export const UserManagement = () => {
                                   <Button 
                                     variant="ghost" 
                                     size="sm"
-                                    onClick={() => handleBanUser(user)}
+                                    onClick={() => openBanDialog(user)}
                                     disabled={actionLoading}
                                     className="text-destructive hover:text-destructive"
                                   >
@@ -869,6 +886,48 @@ export const UserManagement = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Ban User Dialog with Reason */}
+      <Dialog open={banDialogOpen} onOpenChange={setBanDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <Ban className="h-5 w-5" />
+              Ban User
+            </DialogTitle>
+            <DialogDescription>
+              Banning {selectedUser?.display_name} ({selectedUser?.email}). This will suspend their account and disable project generation.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="ban-reason">Ban Reason (required)</Label>
+              <Input
+                id="ban-reason"
+                placeholder="e.g., Violation of terms of service, Spam activity..."
+                value={banReason}
+                onChange={(e) => setBanReason(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                This message will be shown to the user when they try to access their account.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBanDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive"
+              onClick={handleBanUser}
+              disabled={actionLoading || !banReason.trim()}
+            >
+              {actionLoading ? <RefreshCw className="h-4 w-4 animate-spin mr-2" /> : <Ban className="h-4 w-4 mr-2" />}
+              Ban User
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Ban All Users Confirmation Dialog */}
       <AlertDialog open={banAllDialogOpen} onOpenChange={setBanAllDialogOpen}>
