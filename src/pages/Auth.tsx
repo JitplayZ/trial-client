@@ -10,14 +10,12 @@ import { useToast } from '@/hooks/use-toast';
 // Check maintenance mode before allowing auth (uses public view to hide admin IDs)
 const checkMaintenanceMode = async (): Promise<boolean> => {
   try {
-    const { data } = await supabase
-      .from('system_settings_public')
-      .select('value')
-      .eq('key', 'maintenance_mode')
-      .single();
-    return (data?.value as { enabled?: boolean } | null)?.enabled ?? false;
+    // SECURITY: Use SECURITY DEFINER RPC (system_settings has no SELECT policy by design)
+    const { data, error } = await supabase.rpc('is_maintenance_mode');
+    if (error) return true; // fail-closed
+    return data === true;
   } catch {
-    return false;
+    return true; // fail-closed
   }
 };
 

@@ -16,24 +16,21 @@ const UserLogin = () => {
   useEffect(() => {
     const checkMaintenanceMode = async () => {
       try {
-        // Use public view to avoid exposing admin user IDs
-        const { data } = await supabase
-          .from('system_settings_public')
-          .select('value')
-          .eq('key', 'maintenance_mode')
-          .single();
+        const { data, error } = await supabase.rpc('is_maintenance_mode');
 
-        const enabled = (data?.value as { enabled?: boolean } | null)?.enabled ?? false;
+        // Fail-closed: if we can't verify, treat as maintenance ON
+        const enabled = error ? true : data === true;
         setIsMaintenanceMode(enabled);
-        
+
         if (enabled) {
           navigate('/maintenance', { replace: true });
         }
       } catch (error) {
-        // If we can't check, assume maintenance is off
         if (import.meta.env.DEV) {
           console.error('Error checking maintenance mode:', error);
         }
+        setIsMaintenanceMode(true);
+        navigate('/maintenance', { replace: true });
       } finally {
         setCheckingMaintenance(false);
       }
@@ -45,27 +42,24 @@ const UserLogin = () => {
   const handleGoogleLogin = async () => {
     // Double-check maintenance mode before allowing login
     try {
-      // Use public view to avoid exposing admin user IDs
-      const { data } = await supabase
-        .from('system_settings_public')
-        .select('value')
-        .eq('key', 'maintenance_mode')
-        .single();
+      const { data, error } = await supabase.rpc('is_maintenance_mode');
+      const enabled = error ? true : data === true;
 
-      const enabled = (data?.value as { enabled?: boolean } | null)?.enabled ?? false;
       if (enabled) {
         navigate('/maintenance', { replace: true });
         return;
       }
     } catch {
-      // Proceed with login if check fails
+      // Fail-closed
+      navigate('/maintenance', { replace: true });
+      return;
     }
 
     setIsLoading(true);
-    
+
     // Use the real Google OAuth flow
     const { error } = await signInWithGoogle();
-    
+
     if (error) {
       setIsLoading(false);
     }

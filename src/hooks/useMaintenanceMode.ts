@@ -12,12 +12,8 @@ export const useMaintenanceMode = () => {
 
   const fetchMaintenanceMode = async () => {
     try {
-      // Use the public view to avoid exposing admin user IDs
-      const { data, error } = await supabase
-        .from('system_settings_public')
-        .select('value')
-        .eq('key', 'maintenance_mode')
-        .single();
+      // SECURITY: Use a SECURITY DEFINER RPC (avoids exposing admin IDs and bypasses system_settings RLS)
+      const { data, error } = await supabase.rpc('is_maintenance_mode');
 
       if (error) {
         if (import.meta.env.DEV) {
@@ -25,10 +21,12 @@ export const useMaintenanceMode = () => {
         }
         setMaintenanceData({ enabled: false, message: '' });
       } else {
-        const value = data?.value as { enabled?: boolean; message?: string } | null;
+        const enabled = data === true;
         setMaintenanceData({
-          enabled: value?.enabled ?? false,
-          message: value?.message ?? 'We are currently undergoing scheduled maintenance.'
+          enabled,
+          message: enabled
+            ? 'We are currently undergoing scheduled maintenance.'
+            : ''
         });
       }
     } catch (error) {
