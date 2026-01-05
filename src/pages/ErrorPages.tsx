@@ -146,27 +146,21 @@ export const MaintenancePage = ({ message }: MaintenancePageProps) => {
   // Real-time subscription to detect when maintenance mode is turned OFF
   useEffect(() => {
     // Function to check current maintenance status
-    const checkMaintenanceStatus = async () => {
-      try {
-        const { data } = await supabase
-          .from('system_settings_public')
-          .select('value')
-          .eq('key', 'maintenance_mode')
-          .single();
-        
-        const isEnabled = (data?.value as { enabled?: boolean } | null)?.enabled ?? false;
-        
-        // If maintenance is OFF, redirect user back to home
-        if (!isEnabled) {
-          navigate('/', { replace: true });
+      const checkMaintenanceStatus = async () => {
+        try {
+          const { data, error } = await supabase.rpc('is_maintenance_mode');
+
+          // If maintenance is OFF, redirect user back to home
+          if (!error && data !== true) {
+            navigate('/', { replace: true });
+          }
+        } catch (error) {
+          // On error, stay on maintenance page
+          if (import.meta.env.DEV) {
+            console.error('Error checking maintenance status:', error);
+          }
         }
-      } catch (error) {
-        // On error, stay on maintenance page
-        if (import.meta.env.DEV) {
-          console.error('Error checking maintenance status:', error);
-        }
-      }
-    };
+      };
 
     // Check immediately on mount
     checkMaintenanceStatus();

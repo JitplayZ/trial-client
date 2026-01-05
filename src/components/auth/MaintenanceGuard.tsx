@@ -24,20 +24,24 @@ export const MaintenanceGuard = ({ children }: MaintenanceGuardProps) => {
     }
 
     try {
-      // Check maintenance mode using public view (hides admin IDs)
-      const { data: settingsData } = await supabase
-        .from('system_settings_public')
-        .select('value')
-        .eq('key', 'maintenance_mode')
-        .single();
+      // SECURITY: Use SECURITY DEFINER RPC (system_settings has no SELECT policy by design)
+      const { data: isMaintenance, error: maintenanceError } = await supabase.rpc('is_maintenance_mode');
 
-      const maintenanceEnabled = (settingsData?.value as { enabled?: boolean } | null)?.enabled ?? false;
+      if (maintenanceError) {
+        if (import.meta.env.DEV) {
+          console.error('Error checking maintenance mode:', maintenanceError);
+        }
+        setIsMaintenanceMode(false);
+        setIsAdmin(false);
+        return;
+      }
+
+      const maintenanceEnabled = isMaintenance === true;
       setIsMaintenanceMode(maintenanceEnabled);
 
       if (!maintenanceEnabled) {
         // Maintenance is OFF - ensure users can access the app
         setIsAdmin(false);
-        setChecking(false);
         return;
       }
 
@@ -47,10 +51,13 @@ export const MaintenanceGuard = ({ children }: MaintenanceGuardProps) => {
           _user_id: user.id,
           _role: 'admin'
         });
-        setIsAdmin(roleData === true);
-        
-        // If not admin and maintenance mode is on, redirect
-        if (!roleData) {
+
+        const admin = roleData === true;
+        setIsAdmin(admin);
+
+        // If not admin and maintenance mode is on, invalidate session and redirect
+        if (!admin) {
+          await supabase.auth.signOut();
           navigate('/maintenance', { replace: true });
         }
       } else {
