@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { SocialRewardCooldown } from "@/components/dashboard/SocialRewardCooldown";
 import { useSocialCooldown } from "@/hooks/useSocialCooldown";
+import { validateSocialUrl } from "@/lib/validateSocialUrl";
 
 type Platform = 'x' | 'linkedin' | 'reddit' | 'youtube';
 type RequestStatus = 'pending' | 'approved' | 'rejected';
@@ -70,15 +71,14 @@ export const SocialRewardCard = () => {
   };
 
   const handleSubmit = async () => {
-    if (!platform || !postUrl.trim()) {
-      toast.error('Please select a platform and enter a valid post URL');
+    if (!platform) {
+      toast.error('Please select a platform');
       return;
     }
 
-    try {
-      new URL(postUrl);
-    } catch {
-      toast.error('Please enter a valid URL');
+    const urlValidation = validateSocialUrl(postUrl);
+    if (!urlValidation.valid) {
+      toast.error(urlValidation.error || 'Invalid URL');
       return;
     }
 
