@@ -14,6 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { SocialRewardCooldown } from '@/components/dashboard/SocialRewardCooldown';
 import { useSocialCooldown } from '@/hooks/useSocialCooldown';
+import { validateSocialUrl } from "@/lib/validateSocialUrl";
 
 interface ReferralModalProps {
   isOpen: boolean;
@@ -96,15 +97,14 @@ export const ReferralModal = ({ isOpen, onClose }: ReferralModalProps) => {
   };
 
   const handleSubmitSocial = async () => {
-    if (!platform || !postUrl.trim()) {
-      toast.error('Please select a platform and enter a valid post URL');
+    if (!platform) {
+      toast.error('Please select a platform');
       return;
     }
 
-    try {
-      new URL(postUrl);
-    } catch {
-      toast.error('Please enter a valid URL');
+    const urlValidation = validateSocialUrl(postUrl);
+    if (!urlValidation.valid) {
+      toast.error(urlValidation.error || 'Invalid URL');
       return;
     }
 
@@ -124,7 +124,14 @@ export const ReferralModal = ({ isOpen, onClose }: ReferralModalProps) => {
           })
           .eq('id', existingRequest.id);
 
-        if (error) throw error;
+        if (error) {
+          if (error.message.includes('Invalid URL')) {
+            toast.error('Invalid URL. Please submit a valid link from X/Twitter, LinkedIn, Reddit, or YouTube.');
+          } else {
+            throw error;
+          }
+          return;
+        }
         
         toast.success('New request submitted! We will review your post shortly.');
         setShowResubmitForm(false);
@@ -149,6 +156,8 @@ export const ReferralModal = ({ isOpen, onClose }: ReferralModalProps) => {
           } else {
             toast.error('You have already submitted a request');
           }
+        } else if (error.message.includes('Invalid URL')) {
+          toast.error('Invalid URL. Please submit a valid link from X/Twitter, LinkedIn, Reddit, or YouTube.');
         } else {
           throw error;
         }
