@@ -89,6 +89,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Helper to check maintenance mode before allowing user access
+  const checkMaintenanceAndSignOut = async (userId: string): Promise<boolean> => {
+    try {
+      const { data } = await supabase
+        .from('system_settings_public')
+        .select('value')
+        .eq('key', 'maintenance_mode')
+        .single();
+      
+      const maintenanceEnabled = (data?.value as { enabled?: boolean } | null)?.enabled ?? false;
+      
+      if (maintenanceEnabled) {
+        // Check if user is admin
+        const { data: isAdmin } = await supabase.rpc('has_role', {
+          _user_id: userId,
+          _role: 'admin'
+        });
+        
+        // If not admin during maintenance, sign them out immediately
+        if (!isAdmin) {
+          console.warn('Maintenance mode active - signing out non-admin user');
+          await supabase.auth.signOut();
+          return true; // Signed out
+        }
+      }
+      return false; // Not signed out
+    } catch (error) {
+      console.error('Error checking maintenance mode:', error);
+      return false;
+    }
+  };
+
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -100,7 +132,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Process stored referral code after successful sign-up via OAuth
         if (event === 'SIGNED_IN' && session?.user) {
           // Use setTimeout to avoid Supabase auth deadlock
-          setTimeout(() => {
+          setTimeout(async () => {
+            // CRITICAL FIX: Check maintenance mode and sign out non-admin users
+            const wasSignedOut = await checkMaintenanceAndSignOut(session.user.id);
+            if (wasSignedOut) {
+              return; // Don't process referral or track login if signed out
+            }
+            
             processStoredReferralCode(session.user.id);
             // Track login to capture IP address
             if (session.access_token) {

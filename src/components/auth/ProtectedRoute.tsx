@@ -39,7 +39,14 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
           .eq('user_id', user.id)
           .single();
 
+        // CRITICAL FIX: If profile not found, user was deleted - force sign out
         if (error) {
+          if (error.code === 'PGRST116') {
+            // Profile not found - user was deleted by admin
+            console.warn('User profile not found - account may have been deleted');
+            await signOut();
+            return;
+          }
           console.error('Error checking user status:', error);
           setCheckingStatus(false);
           return;
