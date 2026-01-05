@@ -108,6 +108,32 @@ serve(async (req) => {
     console.log('Authenticated user:', userId);
 
     // ============================================
+    // SECURITY: Check maintenance mode
+    // ============================================
+    const { data: maintenanceData } = await supabaseClient
+      .from('system_settings')
+      .select('value')
+      .eq('key', 'maintenance_mode')
+      .single();
+
+    const maintenanceEnabled = (maintenanceData?.value as { enabled?: boolean })?.enabled ?? false;
+
+    if (maintenanceEnabled) {
+      // Check if user is admin
+      const { data: roleData } = await supabaseClient
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .eq('role', 'admin')
+        .maybeSingle();
+
+      if (!roleData) {
+        console.log('Security: Maintenance mode active, blocking non-admin user', userId);
+        return errorResponse(503, 'System is under maintenance. Please try again later.', corsHeaders);
+      }
+    }
+
+    // ============================================
     // SECURITY: Check if user is banned/suspended
     // ============================================
     const { data: profile, error: profileError } = await supabaseClient

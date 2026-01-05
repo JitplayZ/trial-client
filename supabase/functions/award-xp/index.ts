@@ -83,6 +83,35 @@ serve(async (req) => {
       );
     }
 
+    // ============================================
+    // SECURITY: Check maintenance mode
+    // ============================================
+    const { data: maintenanceData } = await supabaseAdmin
+      .from('system_settings')
+      .select('value')
+      .eq('key', 'maintenance_mode')
+      .single();
+
+    const maintenanceEnabled = (maintenanceData?.value as { enabled?: boolean })?.enabled ?? false;
+
+    if (maintenanceEnabled) {
+      // Check if user is admin
+      const { data: roleData } = await supabaseAdmin
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'admin')
+        .maybeSingle();
+
+      if (!roleData) {
+        console.log('Security: Maintenance mode active, blocking non-admin user', user.id);
+        return new Response(
+          JSON.stringify({ ok: false, message: 'System is under maintenance. Please try again later.' }),
+          { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
     // Parse and validate request
     const body = await req.json();
     const { event_type } = body;
