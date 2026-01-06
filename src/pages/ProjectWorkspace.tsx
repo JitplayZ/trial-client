@@ -302,94 +302,106 @@ export default function ProjectWorkspace() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center space-x-4">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-7xl">
+        {/* Header - stacks on mobile */}
+        <div className="flex flex-col gap-4 mb-6 sm:mb-8">
+          <div className="flex items-start gap-3 sm:gap-4">
             <Button
               variant="ghost"
               size="icon"
+              className="shrink-0 mt-1"
               onClick={() => navigate('/dashboard')}
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">{briefData.company_name}</h1>
-              <p className="text-muted-foreground text-lg mt-1">{briefData.tagline}</p>
-              <div className="flex items-center space-x-2 mt-2">
-                <Badge variant="outline">{project.level}</Badge>
-                <Badge variant="outline">{project.type}</Badge>
-                <Badge variant="outline">{project.industry}</Badge>
+            <div className="min-w-0 flex-1">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground break-words">
+                {briefData.company_name}
+              </h1>
+              <p className="text-muted-foreground text-sm sm:text-base lg:text-lg mt-1 break-words">
+                {briefData.tagline}
+              </p>
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-2">
+                <Badge variant="outline" className="text-xs">{project.level}</Badge>
+                <Badge variant="outline" className="text-xs">{project.type}</Badge>
+                <Badge variant="outline" className="text-xs">{project.industry}</Badge>
               </div>
             </div>
           </div>
 
-          <div className="flex space-x-2">
-            <Button variant="outline" size="sm" onClick={downloadBriefAsPDF}>
+          {/* Action buttons - full width on mobile */}
+          <div className="flex gap-2 ml-0 sm:ml-12">
+            <Button variant="outline" size="sm" onClick={downloadBriefAsPDF} className="flex-1 sm:flex-none">
               <Download className="h-4 w-4 mr-2" />
-              Download PDF
+              <span className="hidden xs:inline">Download </span>PDF
             </Button>
-            <Button variant="outline" size="sm" onClick={shareBrief}>
+            <Button variant="outline" size="sm" onClick={shareBrief} className="flex-1 sm:flex-none">
               <Share2 className="h-4 w-4 mr-2" />
               Share
             </Button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Left sidebar - Project info */}
-          <div className="lg:col-span-1">
-            <Card className="glass-card sticky top-4">
-              <CardHeader>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
+          {/* Left sidebar - Project info (shows at top on mobile, side on desktop) */}
+          <div className="lg:col-span-1 order-1 lg:order-none">
+            <Card className="glass-card lg:sticky lg:top-4">
+              <CardHeader className="pb-3 sm:pb-4">
                 <CardTitle className="text-sm">Project Details</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4 text-sm">
+              <CardContent className="space-y-3 sm:space-y-4 text-sm">
                 <div>
-                  <p className="text-muted-foreground">Slogan</p>
-                  <p className="font-medium text-foreground">{briefData.slogan}</p>
+                  <p className="text-muted-foreground text-xs sm:text-sm">Slogan</p>
+                  <p className="font-medium text-foreground break-words">{briefData.slogan}</p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">Location</p>
-                  <p className="font-medium text-foreground">{briefData.location}</p>
+                  <p className="text-muted-foreground text-xs sm:text-sm">Location</p>
+                  <p className="font-medium text-foreground break-words">{briefData.location}</p>
                 </div>
-                <div>
-                  <p className="text-muted-foreground">Type</p>
-                  <p className="font-medium text-foreground">{project.type}</p>
+                
+                {/* Grid for metadata on mobile */}
+                <div className="grid grid-cols-3 gap-3 sm:grid-cols-1 sm:gap-3">
+                  <div>
+                    <p className="text-muted-foreground text-xs sm:text-sm">Type</p>
+                    <p className="font-medium text-foreground text-xs sm:text-sm">{project.type}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground text-xs sm:text-sm">Industry</p>
+                    <p className="font-medium text-foreground text-xs sm:text-sm">{project.industry}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground text-xs sm:text-sm">Level</p>
+                    <p className="font-medium text-foreground capitalize text-xs sm:text-sm">{project.level}</p>
+                  </div>
                 </div>
+                
                 <div>
-                  <p className="text-muted-foreground">Industry</p>
-                  <p className="font-medium text-foreground">{project.industry}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Level</p>
-                  <p className="font-medium text-foreground capitalize">{project.level}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground mb-2">Color Palette</p>
+                  <p className="text-muted-foreground mb-2 text-xs sm:text-sm">Color Palette</p>
                   <div className="flex gap-2 flex-wrap">
                     {briefData.primary_color_palette.map((color, idx) => (
                       <div key={idx} className="flex flex-col items-center gap-1">
                         <div 
-                          className="h-8 w-8 rounded-md border border-border shadow-sm"
+                          className="h-6 w-6 sm:h-8 sm:w-8 rounded-md border border-border shadow-sm"
                           style={{ backgroundColor: color }}
                         />
-                        <span className="text-xs text-muted-foreground">{color}</span>
+                        <span className="text-[10px] sm:text-xs text-muted-foreground">{color}</span>
                       </div>
                     ))}
                   </div>
                 </div>
                 <div>
-                  <p className="text-muted-foreground mb-2">Design Style</p>
+                  <p className="text-muted-foreground mb-2 text-xs sm:text-sm">Design Style</p>
                   <div className="flex flex-wrap gap-1">
                     {briefData.design_style_keywords.map((keyword, idx) => (
-                      <Badge key={idx} variant="secondary" className="text-xs">
+                      <Badge key={idx} variant="secondary" className="text-[10px] sm:text-xs">
                         {keyword}
                       </Badge>
                     ))}
                   </div>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">Generated</p>
-                  <p className="font-medium text-foreground">
+                  <p className="text-muted-foreground text-xs sm:text-sm">Generated</p>
+                  <p className="font-medium text-foreground text-xs sm:text-sm">
                     {new Date(project.created_at).toLocaleDateString()}
                   </p>
                 </div>
@@ -398,7 +410,7 @@ export default function ProjectWorkspace() {
           </div>
 
           {/* Main content - Brief sections */}
-          <div className="lg:col-span-3 space-y-6">
+          <div className="lg:col-span-3 space-y-4 sm:space-y-6 order-2">
             {sections.map((section, index) => (
               <motion.div
                 key={section.key}
@@ -406,23 +418,24 @@ export default function ProjectWorkspace() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
               >
-                <Card className="glass-card">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">{section.title}</CardTitle>
-                      <div className="flex space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => copySection(section.content, section.title)}
-                        >
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                      </div>
+                <Card className="glass-card overflow-hidden">
+                  <CardHeader className="pb-2 sm:pb-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <CardTitle className="text-base sm:text-lg leading-tight">
+                        {section.title}
+                      </CardTitle>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="shrink-0 h-8 w-8 p-0"
+                        onClick={() => copySection(section.content, section.title)}
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
                     </div>
                   </CardHeader>
-                  <CardContent>
-                    <p className="text-foreground leading-relaxed whitespace-pre-wrap">
+                  <CardContent className="pt-0">
+                    <p className="text-foreground text-sm sm:text-base leading-relaxed whitespace-pre-wrap break-words">
                       {section.content}
                     </p>
                   </CardContent>
