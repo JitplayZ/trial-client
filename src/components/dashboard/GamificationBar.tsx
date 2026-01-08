@@ -41,7 +41,7 @@ const GamificationBar = () => {
 
   return (
     <>
-      <Card className="glass-card mb-6 bg-card/50 backdrop-blur-xl border-border/50 relative overflow-hidden">
+      <Card className="glass-card mb-4 sm:mb-6 bg-card/50 backdrop-blur-xl border-border/50 relative overflow-hidden">
         {/* XP Gain Animation */}
         <AnimatePresence>
           {showXPGain && (
@@ -49,56 +49,78 @@ const GamificationBar = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="absolute top-1 right-4 flex items-center gap-1 text-accent font-bold"
+              className="absolute top-1 right-4 flex items-center gap-1 text-accent font-bold text-sm"
             >
-              <Sparkles className="h-4 w-4" />
+              <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
               <span>+XP!</span>
             </motion.div>
           )}
         </AnimatePresence>
         
-        <CardContent className="p-4">
-          <div className="flex items-center space-x-4">
-            {/* Level indicator */}
-            <motion.div 
-              className="flex items-center space-x-2 text-primary font-semibold"
-              key={userXP.level}
-              initial={{ scale: 1 }}
-              animate={{ scale: [1, 1.2, 1] }}
-              transition={{ duration: 0.3 }}
-            >
-              <Star className="h-5 w-5" />
-              <span>Level {userXP.level}</span>
-            </motion.div>
+        <CardContent className="p-3 sm:p-4">
+          {/* Mobile: Stack vertically, Desktop: Row */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+            {/* Top row on mobile: Level + Badges + Streak */}
+            <div className="flex items-center justify-between sm:justify-start sm:gap-4">
+              {/* Level indicator */}
+              <motion.div 
+                className="flex items-center gap-1.5 sm:gap-2 text-primary font-semibold"
+                key={userXP.level}
+                initial={{ scale: 1 }}
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ duration: 0.3 }}
+              >
+                <Star className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="text-sm sm:text-base">Lvl {userXP.level}</span>
+              </motion.div>
 
-            {/* XP Progress bar */}
-            <div className="flex-1">
-              <div className="flex justify-between text-sm text-muted-foreground mb-1">
-                <span>XP: {progressXP} / {neededXP}</span>
-                <span>{userXP.total_xp} total</span>
+              {/* Mobile only: Badges & Streak inline */}
+              <div className="flex items-center gap-2 sm:hidden">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowBadgesModal(true)}
+                  className="flex items-center gap-1.5 bg-surface/50 border-border/50 hover:bg-surface-hover h-8 px-2"
+                >
+                  <Trophy className="h-3.5 w-3.5" />
+                  <span className="text-xs">{badges.length}</span>
+                </Button>
+
+                <div className="flex items-center gap-1 text-accent">
+                  <Flame className="h-3.5 w-3.5" />
+                  <span className="text-xs font-medium">-</span>
+                </div>
+              </div>
+            </div>
+
+            {/* XP Progress bar - Full width on mobile */}
+            <div className="flex-1 w-full">
+              <div className="flex justify-between text-xs sm:text-sm text-muted-foreground mb-1">
+                <span>{progressXP} / {neededXP} XP</span>
+                <span className="hidden sm:inline">{userXP.total_xp} total</span>
               </div>
               <motion.div
                 key={progressPercentage}
                 initial={{ opacity: 0.8 }}
                 animate={{ opacity: 1 }}
               >
-                <Progress value={progressPercentage} className="h-2" variant="gradient" />
+                <Progress value={progressPercentage} className="h-2 sm:h-2.5" variant="gradient" />
               </motion.div>
             </div>
 
-            {/* Badges */}
+            {/* Desktop only: Badges */}
             <Button
               variant="outline"
               size="sm"
               onClick={() => setShowBadgesModal(true)}
-              className="flex items-center space-x-2 bg-surface/50 border-border/50 hover:bg-surface-hover"
+              className="hidden sm:flex items-center space-x-2 bg-surface/50 border-border/50 hover:bg-surface-hover"
             >
               <Trophy className="h-4 w-4" />
               <span>{badges.length}</span>
             </Button>
 
-            {/* Streak placeholder */}
-            <div className="flex items-center space-x-1 text-accent">
+            {/* Desktop only: Streak */}
+            <div className="hidden sm:flex items-center space-x-1 text-accent">
               <Flame className="h-4 w-4" />
               <span className="text-sm font-medium">-</span>
             </div>
