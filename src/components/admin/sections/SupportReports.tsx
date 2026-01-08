@@ -366,11 +366,11 @@ export const SupportReports = () => {
               className="min-h-[80px]"
             />
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <Button 
               onClick={() => handleSendNotification(true)} 
               disabled={sendingNotification}
-              className="gap-2"
+              className="gap-2 w-full sm:w-auto"
             >
               <Globe className="h-4 w-4" />
               Send to All Users
@@ -379,7 +379,7 @@ export const SupportReports = () => {
               variant="outline"
               onClick={() => handleSendNotification(false)} 
               disabled={sendingNotification || !targetUserId.trim()}
-              className="gap-2"
+              className="gap-2 w-full sm:w-auto"
             >
               <User className="h-4 w-4" />
               Send to Specific User
