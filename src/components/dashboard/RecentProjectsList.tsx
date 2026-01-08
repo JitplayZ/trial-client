@@ -122,29 +122,29 @@ const RecentProjectsList = () => {
       </CardHeader>
       <CardContent>
         {projects.length === 0 ? (
-          <div className="text-center py-8">
-            <FolderOpen className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-            <p className="text-foreground">No projects yet</p>
-            <p className="text-sm text-muted-foreground">Generate your first project to get started!</p>
+          <div className="text-center py-6 sm:py-8">
+            <FolderOpen className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground mx-auto mb-3" />
+            <p className="text-foreground text-sm sm:text-base">No projects yet</p>
+            <p className="text-xs sm:text-sm text-muted-foreground">Generate your first project to get started!</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {projects.map((project) => (
               <div 
                 key={project.id} 
-                className="flex items-center justify-between p-4 bg-background/40 backdrop-blur-sm rounded-lg border border-border/30 hover:bg-background/60 transition-colors"
+                className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between p-3 sm:p-4 bg-background/40 backdrop-blur-sm rounded-lg border border-border/30 hover:bg-background/60 transition-colors"
               >
-                <div className="flex-1">
-                  <h3 className="font-semibold text-foreground">{project.title}</h3>
-                  <p className="text-sm text-muted-foreground line-clamp-1">
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-foreground text-sm sm:text-base truncate">{project.title}</h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground line-clamp-1">
                     {project.description || 'No description'}
                   </p>
-                  <div className="flex items-center space-x-4 mt-2">
-                    <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
+                  <div className="flex flex-wrap items-center gap-2 mt-2">
+                    <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 sm:py-1 rounded">
                       {getTypeLabel(project.type)}
                     </span>
                     {project.status && (
-                      <span className={`text-xs px-2 py-1 rounded ${
+                      <span className={`text-xs px-2 py-0.5 sm:py-1 rounded ${
                         project.status === 'completed' 
                           ? 'bg-green-500/10 text-green-500' 
                           : project.status === 'generating'
@@ -154,19 +154,20 @@ const RecentProjectsList = () => {
                         {project.status}
                       </span>
                     )}
-                    <div className="flex items-center space-x-1 text-xs text-muted-foreground">
-                      <Calendar className="h-3 w-3" />
-                      <span>{formatDate(project.created_at)}</span>
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <Calendar className="h-3 w-3 flex-shrink-0" />
+                      <span className="truncate">{formatDate(project.created_at)}</span>
                     </div>
                   </div>
                 </div>
                 <Button 
                   size="sm" 
                   variant="outline" 
-                  className="hover-lift"
+                  className="hover-lift w-full sm:w-auto min-h-[40px] sm:min-h-0"
                   onClick={() => navigate(`/projects/${project.id}`)}
                 >
-                  <ExternalLink className="h-4 w-4" />
+                  <ExternalLink className="h-4 w-4 mr-2 sm:mr-0" />
+                  <span className="sm:hidden">View Project</span>
                 </Button>
               </div>
             ))}

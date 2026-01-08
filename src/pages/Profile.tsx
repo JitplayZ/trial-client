@@ -368,21 +368,21 @@ export default function Profile() {
 
         <h1 className="text-3xl font-bold text-foreground mb-8">Account Settings</h1>
 
-        <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
           {/* Profile Info */}
           <Card className="glass-card bg-card/50 backdrop-blur-xl border-border/50">
-            <CardHeader className="bg-surface/20 border-b border-border/50">
-              <CardTitle>Profile Information</CardTitle>
+            <CardHeader className="bg-surface/20 border-b border-border/50 px-4 sm:px-6">
+              <CardTitle className="text-base sm:text-lg">Profile Information</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center space-x-4">
-                <Avatar className="h-20 w-20">
+            <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6">
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
+                <Avatar className="h-20 w-20 sm:h-24 sm:w-24 flex-shrink-0">
                   <AvatarImage src={avatarUrl || undefined} />
-                  <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
+                  <AvatarFallback className="bg-primary text-primary-foreground text-2xl sm:text-3xl">
                     {displayName.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <div className="space-y-2">
+                <div className="space-y-2 text-center sm:text-left w-full sm:w-auto">
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -390,12 +390,13 @@ export default function Profile() {
                     onChange={handleAvatarUpload}
                     className="hidden"
                   />
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                     <Button 
                       variant="outline" 
                       size="sm" 
                       onClick={handleAvatarClick}
                       disabled={uploading || removingAvatar}
+                      className="w-full sm:w-auto min-h-[44px] sm:min-h-0"
                     >
                       <Camera className="h-4 w-4 mr-2" />
                       {uploading ? 'Uploading...' : 'Change Avatar'}
@@ -406,7 +407,7 @@ export default function Profile() {
                         size="sm"
                         onClick={handleRemoveAvatar}
                         disabled={uploading || removingAvatar}
-                        className="text-muted-foreground hover:text-destructive"
+                        className="text-muted-foreground hover:text-destructive w-full sm:w-auto min-h-[44px] sm:min-h-0"
                       >
                         <Trash2 className="h-4 w-4 mr-2" />
                         {removingAvatar ? 'Removing...' : 'Remove'}
@@ -451,14 +452,14 @@ export default function Profile() {
 
           {/* Preferences */}
           <Card className="glass-card bg-card/50 backdrop-blur-xl border-border/50">
-            <CardHeader className="bg-surface/20 border-b border-border/50">
-              <CardTitle>Preferences</CardTitle>
+            <CardHeader className="bg-surface/20 border-b border-border/50 px-4 sm:px-6">
+              <CardTitle className="text-base sm:text-lg">Preferences</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>Gamification</Label>
-                  <p className="text-sm text-muted-foreground">
+            <CardContent className="space-y-4 px-4 sm:px-6">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <Label className="text-sm sm:text-base">Gamification</Label>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     Show XP, levels, and badges
                   </p>
                 </div>
@@ -471,10 +472,10 @@ export default function Profile() {
                 />
               </div>
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>Email Notifications</Label>
-                  <p className="text-sm text-muted-foreground">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <Label className="text-sm sm:text-base">Email Notifications</Label>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     Receive updates via email
                   </p>
                 </div>
@@ -491,49 +492,49 @@ export default function Profile() {
 
           {/* Credits & Quota */}
           <Card className="glass-card bg-card/50 backdrop-blur-xl border-border/50">
-            <CardHeader className="bg-surface/20 border-b border-border/50">
-              <CardTitle className="flex items-center gap-2">
-                <CreditCard className="h-5 w-5" />
+            <CardHeader className="bg-surface/20 border-b border-border/50 px-4 sm:px-6">
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <CreditCard className="h-4 w-4 sm:h-5 sm:w-5" />
                 Credits & Quota
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-xs sm:text-sm">
                 Your current plan usage and remaining credits
               </CardDescription>
             </CardHeader>
-            <CardContent className="pt-6">
+            <CardContent className="pt-4 sm:pt-6 px-4 sm:px-6">
               {quotaLoading ? (
                 <div className="flex items-center justify-center py-4">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
               ) : quotaData ? (
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   <div className="flex items-center justify-between p-3 bg-primary/10 rounded-lg">
-                    <span className="font-medium">Current Plan</span>
-                    <span className="font-bold text-primary uppercase">{quotaData.plan}</span>
+                    <span className="font-medium text-sm sm:text-base">Current Plan</span>
+                    <span className="font-bold text-primary uppercase text-sm sm:text-base">{quotaData.plan}</span>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-3 bg-background/40 rounded-lg">
-                      <p className="text-sm text-muted-foreground">Beginner Projects</p>
-                      <p className="text-xl font-bold">{quotaData.quotas.beginnerLeft}</p>
+                  <div className="grid grid-cols-2 gap-2 sm:gap-4">
+                    <div className="p-2 sm:p-3 bg-background/40 rounded-lg">
+                      <p className="text-xs sm:text-sm text-muted-foreground">Beginner</p>
+                      <p className="text-lg sm:text-xl font-bold">{quotaData.quotas.beginnerLeft}</p>
                     </div>
-                    <div className="p-3 bg-background/40 rounded-lg">
-                      <p className="text-sm text-muted-foreground">Intermediate Projects</p>
-                      <p className="text-xl font-bold">{quotaData.quotas.intermediateLeft}</p>
+                    <div className="p-2 sm:p-3 bg-background/40 rounded-lg">
+                      <p className="text-xs sm:text-sm text-muted-foreground">Intermediate</p>
+                      <p className="text-lg sm:text-xl font-bold">{quotaData.quotas.intermediateLeft}</p>
                     </div>
-                    <div className="p-3 bg-background/40 rounded-lg">
-                      <p className="text-sm text-muted-foreground">Veteran Projects</p>
-                      <p className="text-xl font-bold">
+                    <div className="p-2 sm:p-3 bg-background/40 rounded-lg">
+                      <p className="text-xs sm:text-sm text-muted-foreground">Veteran</p>
+                      <p className="text-lg sm:text-xl font-bold">
                         {quotaData.plan === 'free' ? (
-                          <span className="text-muted-foreground text-sm">Locked</span>
+                          <span className="text-muted-foreground text-xs sm:text-sm">Locked</span>
                         ) : (
                           quotaData.quotas.veteranLeft
                         )}
                       </p>
                     </div>
-                    <div className="p-3 bg-background/40 rounded-lg">
-                      <p className="text-sm text-muted-foreground">Purchased Credits</p>
-                      <p className="text-xl font-bold text-accent">{quotaData.credits}</p>
+                    <div className="p-2 sm:p-3 bg-background/40 rounded-lg">
+                      <p className="text-xs sm:text-sm text-muted-foreground">Credits</p>
+                      <p className="text-lg sm:text-xl font-bold text-accent">{quotaData.credits}</p>
                     </div>
                   </div>
 
@@ -543,22 +544,22 @@ export default function Profile() {
 
                   <Button 
                     variant="outline" 
-                    className="w-full"
+                    className="w-full min-h-[44px]"
                     onClick={() => navigate('/pricing')}
                   >
                     Upgrade Plan
                   </Button>
                 </div>
               ) : (
-                <p className="text-muted-foreground text-center py-4">
+                <p className="text-muted-foreground text-center py-4 text-sm">
                   Unable to load quota information
                 </p>
               )}
             </CardContent>
           </Card>
 
-          <div className="flex justify-end">
-            <Button onClick={handleSave} className="bg-gradient-primary">
+          <div className="flex justify-center sm:justify-end">
+            <Button onClick={handleSave} className="bg-gradient-primary w-full sm:w-auto min-h-[44px]">
               <Save className="h-4 w-4 mr-2" />
               Save Changes
             </Button>
@@ -566,18 +567,18 @@ export default function Profile() {
 
           {/* Delete Account Card */}
           <Card className="glass-card border-destructive/20 bg-card/50 backdrop-blur-xl">
-            <CardHeader className="bg-destructive/5 border-b border-destructive/20">
-              <CardTitle className="text-destructive">Danger Zone</CardTitle>
-              <CardDescription>
+            <CardHeader className="bg-destructive/5 border-b border-destructive/20 px-4 sm:px-6">
+              <CardTitle className="text-destructive text-base sm:text-lg">Danger Zone</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">
                 Permanently delete your account and all associated data
               </CardDescription>
             </CardHeader>
-            <CardContent className="pt-6">
+            <CardContent className="pt-4 sm:pt-6 px-4 sm:px-6">
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button 
                     variant="destructive" 
-                    className="w-full"
+                    className="w-full min-h-[44px]"
                     disabled={deleting}
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
