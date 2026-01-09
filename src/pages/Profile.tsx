@@ -12,6 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { z } from 'zod';
 import { useQuotaManagement } from '@/hooks/useQuotaManagement';
+import ImageCropper from '@/components/ImageCropper';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -51,6 +52,8 @@ export default function Profile() {
   const [gamificationEnabled, setGamificationEnabled] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [cropperImage, setCropperImage] = useState<string | null>(null);
+  const [showCropper, setShowCropper] = useState(false);
 
   useEffect(() => {
     if (user?.id) {
@@ -139,43 +142,66 @@ export default function Profile() {
     fileInputRef.current?.click();
   };
 
-  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user?.id) return;
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        title: 'Invalid File Type',
+        description: 'Please upload a JPG, PNG, or WebP image.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: 'File Too Large',
+        description: 'Please upload an image smaller than 2MB.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Create object URL for cropper
+    const objectUrl = URL.createObjectURL(file);
+    setCropperImage(objectUrl);
+    setShowCropper(true);
+    
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleCropComplete = async (croppedBlob: Blob) => {
+    if (!user?.id) return;
+    
+    setShowCropper(false);
+    setUploading(true);
+    
+    // Cleanup object URL
+    if (cropperImage) {
+      URL.revokeObjectURL(cropperImage);
+      setCropperImage(null);
+    }
+
     try {
-      const file = event.target.files?.[0];
-      if (!file || !user?.id) return;
-
-      // Validate file type
-      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-      if (!allowedTypes.includes(file.type)) {
-        toast({
-          title: 'Invalid File Type',
-          description: 'Please upload a JPG, PNG, or WebP image.',
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      // Validate file size (max 2MB)
-      if (file.size > 2 * 1024 * 1024) {
-        toast({
-          title: 'File Too Large',
-          description: 'Please upload an image smaller than 2MB.',
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      setUploading(true);
-
       // Generate safe filename - use timestamp to ensure uniqueness
       const timestamp = Date.now();
-      const fileExt = file.type.split('/')[1]; // Extract extension from MIME type
-      const sanitizedFilename = `avatar-${timestamp}.${fileExt}`;
+      const sanitizedFilename = `avatar-${timestamp}.jpg`;
       const filePath = `${user.id}/${sanitizedFilename}`;
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(filePath, file, { upsert: true });
+        .upload(filePath, croppedBlob, { 
+          upsert: true,
+          contentType: 'image/jpeg'
+        });
 
       if (uploadError) throw uploadError;
 
@@ -212,6 +238,14 @@ export default function Profile() {
       });
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleCropCancel = () => {
+    setShowCropper(false);
+    if (cropperImage) {
+      URL.revokeObjectURL(cropperImage);
+      setCropperImage(null);
     }
   };
 
@@ -342,6 +376,16 @@ export default function Profile() {
   };
 
   return (
+    <>
+      {/* Image Cropper Modal */}
+      {showCropper && cropperImage && (
+        <ImageCropper
+          imageSrc={cropperImage}
+          onCropComplete={handleCropComplete}
+          onCancel={handleCropCancel}
+        />
+      )}
+      
     <div className="min-h-screen bg-background py-6 sm:py-12">
       <div className="container mx-auto px-4 max-w-4xl">
         {/* Close/Back buttons */}
@@ -387,7 +431,7 @@ export default function Profile() {
                     ref={fileInputRef}
                     type="file"
                     accept="image/*"
-                    onChange={handleAvatarUpload}
+                    onChange={handleFileSelect}
                     className="hidden"
                   />
                   <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
@@ -615,5 +659,6 @@ export default function Profile() {
         </div>
       </div>
     </div>
+    </>
   );
 }
