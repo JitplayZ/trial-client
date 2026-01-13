@@ -24,6 +24,9 @@ import Help from "./pages/Help";
 import Notifications from "./pages/Notifications";
 import Blog from "./pages/Blog";
 import Sitemap from "./pages/Sitemap";
+import About from "./pages/About";
+import Support from "./pages/Support";
+import Contact from "./pages/Contact";
 import { ForbiddenPage, ServerErrorPage, MaintenancePage } from "./pages/ErrorPages";
 
 const queryClient = new QueryClient();
@@ -50,6 +53,9 @@ const App = () => (
               <Route path="/help" element={<ProtectedRoute><Help /></ProtectedRoute>} />
               <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
               <Route path="/blog" element={<Blog />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/support" element={<Support />} />
+              <Route path="/contact" element={<Contact />} />
               <Route path="/sitemap.xml" element={<Sitemap />} />
               <Route path="/admin/*" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
               <Route path="/403" element={<ForbiddenPage />} />

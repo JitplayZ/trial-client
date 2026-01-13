@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import Navbar from "@/components/navbar";
 import Hero from "@/components/hero";
 import Features from "@/components/features";
@@ -94,10 +95,10 @@ const Index = () => {
             <div>
               <h3 className="font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Company</h3>
               <ul className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-foreground-secondary">
-                <li><a href="#" className="hover:text-foreground">About</a></li>
-                <li><a href="#" className="hover:text-foreground">Blog</a></li>
-                <li><a href="#" className="hover:text-foreground">Support</a></li>
-                <li><a href="#" className="hover:text-foreground">Contact</a></li>
+                <li><Link to="/about" className="hover:text-foreground">About</Link></li>
+                <li><Link to="/blog" className="hover:text-foreground">Blog</Link></li>
+                <li><Link to="/support" className="hover:text-foreground">Support</Link></li>
+                <li><Link to="/contact" className="hover:text-foreground">Contact</Link></li>
               </ul>
             </div>
           </div>
