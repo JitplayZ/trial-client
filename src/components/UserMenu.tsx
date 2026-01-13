@@ -18,6 +18,7 @@ import {
   Moon,
   Sun,
   Monitor,
+  Check,
   Share2,
   CreditCard,
   Crown,
@@ -262,24 +263,33 @@ const UserMenu = ({ onReferClick }: UserMenuProps) => {
           <DropdownMenuSubContent className="bg-popover border border-border shadow-lg">
             <DropdownMenuItem
               onClick={() => handleThemeToggle('light')}
-              className="cursor-pointer"
+              className="cursor-pointer flex items-center justify-between"
             >
-              <Sun className="mr-2 h-4 w-4" />
-              <span>Light</span>
+              <div className="flex items-center">
+                <Sun className="mr-2 h-4 w-4" />
+                <span>Light</span>
+              </div>
+              {theme === 'light' && <Check className="h-4 w-4 text-primary" />}
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => handleThemeToggle('dark')}
-              className="cursor-pointer"
+              className="cursor-pointer flex items-center justify-between"
             >
-              <Moon className="mr-2 h-4 w-4" />
-              <span>Dark</span>
+              <div className="flex items-center">
+                <Moon className="mr-2 h-4 w-4" />
+                <span>Dark</span>
+              </div>
+              {theme === 'dark' && <Check className="h-4 w-4 text-primary" />}
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => handleThemeToggle('system')}
-              className="cursor-pointer"
+              className="cursor-pointer flex items-center justify-between"
             >
-              <Monitor className="mr-2 h-4 w-4" />
-              <span>System</span>
+              <div className="flex items-center">
+                <Monitor className="mr-2 h-4 w-4" />
+                <span>System</span>
+              </div>
+              {theme === 'system' && <Check className="h-4 w-4 text-primary" />}
             </DropdownMenuItem>
           </DropdownMenuSubContent>
         </DropdownMenuSub>
