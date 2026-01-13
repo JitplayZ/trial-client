@@ -216,7 +216,7 @@ const UserMenu = ({ onReferClick }: UserMenuProps) => {
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
-        className="w-56 bg-background/95 backdrop-blur-lg border-border/50"
+        className="w-56 bg-popover border border-border shadow-lg"
         role="menu"
       >
         <DropdownMenuLabel>My Account</DropdownMenuLabel>
@@ -232,7 +232,7 @@ const UserMenu = ({ onReferClick }: UserMenuProps) => {
             )}
             <span>Appearance</span>
           </DropdownMenuSubTrigger>
-          <DropdownMenuSubContent className="bg-background/95 backdrop-blur-lg border-border/50">
+          <DropdownMenuSubContent className="bg-popover border border-border shadow-lg">
             <DropdownMenuItem
               onClick={() => handleThemeToggle('light')}
               className="cursor-pointer"
